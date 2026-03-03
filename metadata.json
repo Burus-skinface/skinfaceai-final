@@ -1,0 +1,7 @@
+{
+  "name": "AI Facial Progress Tracker",
+  "description": "Track your daily facial and skin improvements with AI analysis. Upload a photo each day to monitor your progress, get a score, and receive personalized feedback.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "short_name": "Facial Tracker",
+  "name": "AI Facial Progress Tracker",
+  "description": "Track your daily facial and skin improvements with AI analysis. Upload a photo each day to monitor your progress, get a score, and receive personalized feedback.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#8b5cf6",
+  "background_color": "#0f172a"
+}

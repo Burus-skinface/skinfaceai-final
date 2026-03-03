@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Facial Progress Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Facial Tracker">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind is bundled via PostCSS (see index.css + postcss.config.cjs) -->
+  <!-- Google Sign-In - Load synchronously -->
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script>
+    // Suppress FedCM warnings in console (they're expected and don't affect functionality)
+    const originalError = console.error;
+    console.error = function(...args) {
+      const message = args.join(' ');
+      // Filter out FedCM-related warnings and origin errors (we handle them in UI)
+      if (message.includes('FedCM') || 
+          message.includes('fedcm') || 
+          message.includes('GSI_LOGGER') ||
+          message.includes('Federated Credential Management') ||
+          message.includes('Cross-Origin-Opener-Policy') ||
+          message.includes('origin is not allowed')) {
+        return; // Don't log these warnings
+      }
+      originalError.apply(console, args);
+    };
+  </script>
+  <style>
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: 'Inter', sans-serif;
+    }
+    .fade-in-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1), transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* For hiding scrollbars on carousels */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+    
+    /* Face Scanning Animation */
+    @keyframes scan {
+      0% {
+        top: 0;
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        top: 100%;
+        opacity: 0;
+      }
+    }
+    
+    .animate-scan {
+      animation: scan 2s ease-in-out infinite;
+    }
+    
+    /* Pulse animation for status text */
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+    
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+  <div id="root"></div>
+  <script>
+    // Only register service worker for built production deploys.
+    // IMPORTANT: dev over ngrok is still "dev" and SW will aggressively cache index.html,
+    // leading to stale JS bundles (e.g., old MediaPipe locateFile URLs).
+    //
+    // Heuristic: only enable SW when served from a production hostname you control.
+    // If you need SW later, replace this with a build-time flag.
+    const host = window.location.hostname;
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const isNgrok = host.includes('ngrok');
+    const enableServiceWorker = !isLocal && !isNgrok;
+
+    if ('serviceWorker' in navigator && enableServiceWorker) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+          .catch(err => console.log('ServiceWorker registration failed: ', err));
+      });
+    } else if ('serviceWorker' in navigator) {
+      // Unregister service worker in dev / ngrok to avoid stale caches.
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          registration.unregister().then(() => {
+            console.log('ServiceWorker unregistered (dev/ngrok)');
+          });
+        });
+      });
+    }
+  </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
