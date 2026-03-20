@@ -2,6 +2,7 @@ import type { ComprehensiveFaceState } from '../faceScan/faceState';
 import type { AnalysisResults } from '../analysis/types';
 import type { ScoringResults } from '../scoring/types';
 import type { RecommendationsResult, UserPreferences } from '../recommendations/recommendsEngine';
+import type { DailyReport } from '../../types';
 
 import { detectSkinIssues } from '../analysis/skinDetection';
 import { detectFaceStructure } from '../analysis/faceStructureDetection';
@@ -33,13 +34,16 @@ export interface PipelineResult {
  */
 export async function runFullPipeline(
   faceState: ComprehensiveFaceState,
-  userPreferences?: UserPreferences
+  userPreferences?: UserPreferences,
+  previousScanData?: DailyReport,
+  onLog?: (msg: string) => void
 ): Promise<PipelineResult> {
   if (!faceState.scanId) {
     throw new Error("[PIPELINE] Invalid FACE_STATE — missing scanId");
   }
 
   debugLog.info('PIPELINE', `Starting analysis for scan ${faceState.scanId}`);
+  onLog?.('⏳ Stage 2: Detection starting...');
 
   // STAGE 2: Detection Modules (parallel execution)
   debugLog.info('PIPELINE', 'Stage 2: Running detection modules...');
@@ -71,8 +75,10 @@ export async function runFullPipeline(
   };
 
   debugLog.info('PIPELINE', 'Stage 2 complete ✓');
+  onLog?.('✅ Stage 2: Detection done');
 
   // STAGE 3: Scoring Modules (parallel execution)
+  onLog?.('⏳ Stage 3: Scoring...');
   debugLog.info('PIPELINE', 'Stage 3: Running scoring modules...');
 
   const [skinScores, faceScores, spectralScores] = await Promise.all([
@@ -117,8 +123,10 @@ export async function runFullPipeline(
   };
 
   debugLog.info('PIPELINE', `Stage 3 complete ✓ — Global Score: ${scoring.globalScore}/10`);
+  onLog?.(`✅ Stage 3: Score = ${scoring.globalScore}/10`);
 
   // STAGE 4: Recommendations Engine (LLM reasoning)
+  onLog?.('⏳ Stage 4: Calling Gemini LLM (may take 30s)...');
   debugLog.info('PIPELINE', 'Stage 4: Generating recommendations...');
 
   let recommendations;
@@ -126,7 +134,8 @@ export async function runFullPipeline(
     recommendations = await generateRecommendations(
       analysis,
       scoring,
-      userPreferences
+      userPreferences,
+      previousScanData
     );
   } catch (err: any) {
     debugLog.error('PIPELINE', 'Stage 4 failed', err?.message);
@@ -134,6 +143,7 @@ export async function runFullPipeline(
   }
 
   debugLog.info('PIPELINE', 'Pipeline complete ✓');
+  onLog?.('✅ Stage 4: LLM recommendations received');
 
   return {
     faceState,

@@ -25,32 +25,7 @@ const OnboardingManager: React.FC<OnboardingManagerProps & { onCompleteWithData?
         }
     }, [initialStep]);
 
-    const warmupStreamRef = React.useRef<MediaStream | null>(null);
 
-    // PRE-HEAT CAMERA: Request permission early (Step 2+) & KEEP HOT
-    useEffect(() => {
-        if (step >= 2 && !warmupStreamRef.current) {
-            // Use specific constraints to warm up the correct (Front) camera
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-                .then(stream => {
-                    console.log("🔥 Camera Hardware Warmup Active");
-                    warmupStreamRef.current = stream;
-                    // DO NOT STOP TRACKS HERE! Keep hardware awake for seamless transition.
-                })
-                .catch(err => console.log("Camera Permission/Warmup Deferred:", err));
-        }
-    }, [step]);
-
-    // Cleanup Only on Unmount (Transition to FaceScan)
-    useEffect(() => {
-        return () => {
-            if (warmupStreamRef.current) {
-                console.log("♻️ Releasing Warmup Stream for Handover");
-                warmupStreamRef.current.getTracks().forEach(t => t.stop());
-                warmupStreamRef.current = null;
-            }
-        };
-    }, []);
 
     const [direction, setDirection] = useState(0);
 

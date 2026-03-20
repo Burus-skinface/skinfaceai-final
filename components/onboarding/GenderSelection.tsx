@@ -15,29 +15,27 @@ const GenderSelection: React.FC<GenderSelectionProps> = ({ onNext, onBack }) => 
     };
 
     return (
-        <div className="relative flex flex-col h-full bg-[#050505] text-white font-sans overflow-hidden">
-            {/* Background Aurora - Dual Orbs */}
-            <div className="absolute inset-x-0 -top-20 h-[70%] bg-purple-900/30 blur-[120px] rounded-full pointer-events-none animate-pulse" />
-            <div className="absolute -inset-x-20 top-20 h-[60%] bg-indigo-900/20 blur-[120px] rounded-full pointer-events-none" />
-            <div className="bg-noise-subtle absolute inset-0 pointer-events-none" />
+        <div className="relative flex flex-col h-full bg-[#FFFFFF] text-[#1D1D1F] font-sans overflow-hidden">
+            {/* Background Ambience */}
+            <div className="absolute inset-x-0 -top-20 h-[70%] bg-[#F5F5F7] blur-[120px] rounded-full pointer-events-none" />
 
             {/* Navbar */}
             <div className="relative z-10 px-6 pt-12 pb-4 flex items-center justify-between">
                 <button
                     onClick={onBack}
-                    className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white/90 hover:text-white hover:bg-black/60 transition-all border border-white/20 shadow-lg"
+                    className="w-10 h-10 rounded-full bg-[#F5F5F7] hover:bg-[#E5E5EA] transition-all flex items-center justify-center text-[#1D1D1F]"
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-widest">Step 2/4</div>
+                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest">Step 2/4</div>
                 <div className="w-10" />
             </div>
 
-            <div className="relative z-10 px-6 mb-8 mt-6">
-                <h2 className="text-3xl font-bold mb-2 tracking-tight">Gender</h2>
-                <p className="text-gray-400 text-[15px] leading-relaxed max-w-xs">
+            <div className="relative z-10 px-8 mb-8 mt-6">
+                <h2 className="text-3xl font-bold mb-3 tracking-tight text-[#1D1D1F]">Gender</h2>
+                <p className="text-[#86868B] text-[15px] leading-relaxed max-w-xs">
                     Skin characteristics vary based on biological factors. This helps us personalize your analysis.
                 </p>
             </div>
@@ -68,26 +66,30 @@ const GenderSelection: React.FC<GenderSelectionProps> = ({ onNext, onBack }) => 
                         }}
                         whileTap={{ scale: 0.97 }}
                         onClick={() => handleSelect(option.id)}
-                        className={`w-full border rounded-3xl p-6 text-left transition-colors duration-200 active:bg-white/10 ${selected === option.id
-                                ? 'bg-purple-500/20 border-purple-400/60'
-                                : 'bg-white/5 border-white/10'
+                        className={`w-full rounded-[2rem] p-6 px-8 border text-left transition-all duration-200 shadow-sm ${selected === option.id
+                                ? 'bg-[#1D1D1F] border-[#1D1D1F] text-white'
+                                : 'bg-white border-black/5 text-[#1D1D1F] hover:bg-[#F5F5F7]'
                             }`}
                     >
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-2xl font-semibold text-white">{option.label}</span>
-                            <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors duration-200 ${selected === option.id ? 'border-purple-400 bg-purple-500' : 'border-white/20'
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-2xl font-semibold tracking-tight">{option.label}</span>
+                            <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors duration-200 ${selected === option.id ? 'border-none bg-none' : 'border-black/10'
                                 }`}>
                                 {selected === option.id && (
                                     <motion.div
-                                        className="w-3 h-3 rounded-full bg-white shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                                        className="w-full h-full rounded-full flex items-center justify-center bg-white"
                                         initial={{ scale: 0 }}
                                         animate={{ scale: 1 }}
                                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                    />
+                                    >
+                                        <svg className="w-4 h-4 text-[#1D1D1F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </motion.div>
                                 )}
                             </div>
                         </div>
-                        <div className="text-sm text-gray-400">
+                        <div className={`text-sm ${selected === option.id ? 'text-white/70' : 'text-[#86868B]'}`}>
                             {option.sub}
                         </div>
                     </motion.button>

@@ -164,12 +164,10 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
     const rightLabels = FACE_LANDMARKS.filter(l => l.side === 'right');
 
     return (
-        <div className="relative flex flex-col h-full bg-[#050505] text-white font-sans overflow-hidden">
+        <div className="relative flex flex-col h-full bg-[#FFFFFF] text-[#1D1D1F] font-sans overflow-hidden">
 
-            {/* Dark Theme Ambience */}
-            <div className="bg-noise-subtle absolute inset-0 pointer-events-none z-10" />
-            <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[50%] bg-purple-900/20 blur-[100px] rounded-full point-events-none z-0" />
-            <div className="absolute bottom-[-10%] left-[-20%] w-[140%] h-[70%] bg-indigo-900/10 blur-[80px] z-0" />
+            {/* Light Theme Ambience */}
+            <div className="absolute inset-0 bg-[#F5F5F7] z-0" />
 
             {/* Gradient Masked Portrait Background */}
             <div className="absolute top-0 inset-x-0 h-[65vh] z-0 pointer-events-none" style={{
@@ -180,11 +178,11 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                     ref={imgRef}
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80"
                     alt="Clinical Face Scan"
-                    className="w-full h-full object-cover opacity-85 mix-blend-luminosity"
+                    className="w-full h-full object-cover opacity-90 mix-blend-multiply"
                 />
             </div>
 
-            {/* AI Scanning Data Visualization (Unmasked, sharp glow) */}
+            {/* AI Scanning Data Visualization */}
             <div ref={containerRef} className={`absolute top-0 inset-x-0 h-[65vh] z-10 ${DEBUG_MODE ? 'pointer-events-auto' : 'pointer-events-none'}`} onClick={handleContainerTap} onTouchStart={handleContainerTap}>
                 {facePoints.length > 0 && (
                     <>
@@ -206,7 +204,7 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                                         key={lm.id}
                                         x1={`${point.x}%`} y1={`${point.y}%`}
                                         x2={`${labelX}%`} y2={`${labelY}%`}
-                                        stroke={lm.lineColor} strokeWidth="1" strokeDasharray="2 4"
+                                        stroke="#1D1D1F" strokeOpacity={0.15} strokeWidth="1" strokeDasharray="2 4"
                                         initial={{ pathLength: 0, opacity: 0 }}
                                         animate={{ pathLength: 1, opacity: 1 }}
                                         transition={{ duration: 1.5, delay: 0.2 + i * 0.4, ease: "easeInOut" }}
@@ -215,25 +213,17 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                             })}
                         </svg>
 
-                        {/* Facial Tracking Nodes - dynamically positioned */}
+                        {/* Facial Tracking Nodes */}
                         {FACE_LANDMARKS.map((lm, i) => {
                             const point = facePoints[i];
                             if (!point) return null;
-                            const dotColorClass = lm.color === 'white' ? 'bg-white' :
-                                lm.color === 'purple-400' ? 'bg-purple-400' :
-                                    lm.color === 'blue-400' ? 'bg-blue-400' :
-                                        lm.color === 'rose-400' ? 'bg-rose-400' : 'bg-white';
-                            const glowColor = lm.color === 'white' ? 'white' :
-                                lm.color === 'purple-400' ? 'purple' :
-                                    lm.color === 'blue-400' ? 'blue' :
-                                        lm.color === 'rose-400' ? 'rose' : 'white';
 
                             return (
                                 <motion.div
                                     key={`dot-${lm.id}`}
-                                    className={`absolute w-1.5 h-1.5 rounded-full ${dotColorClass} shadow-[0_0_8px_${glowColor}] -translate-x-1/2 -translate-y-1/2`}
+                                    className="absolute w-2 h-2 rounded-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.15)] border border-[#1D1D1F]/10 -translate-x-1/2 -translate-y-1/2"
                                     style={{ top: `${point.y}%`, left: `${point.x}%` }}
-                                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                                    animate={{ scale: [1, 1.25, 1], opacity: [0.7, 1, 0.7] }}
                                     transition={{ duration: 1.5, repeat: Infinity, delay: 0.1 + i * 0.4 }}
                                 />
                             );
@@ -251,9 +241,9 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                                     className="absolute left-[5%] -translate-y-1/2 flex items-center"
                                     style={{ top: `${labelY}%` }}
                                 >
-                                    <div className={`absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-${lm.color} shadow-[${lm.dotShadow}] z-10 animate-pulse`} />
-                                    <div className={`bg-black/60 backdrop-blur-md border ${lm.borderColor} rounded-full px-2.5 py-1 ml-2 shadow-lg z-0`}>
-                                        <span className="text-white text-[9px] font-medium tracking-wide whitespace-nowrap">{lm.label}</span>
+                                    <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#007AFF] z-10 animate-pulse shadow-sm" />
+                                    <div className="bg-white/90 backdrop-blur-md border border-black/5 rounded-full px-3 py-1.5 ml-3 shadow-[0_4px_12px_rgba(0,0,0,0.06)] z-0">
+                                        <span className="text-[#1D1D1F] text-[10px] font-semibold tracking-wide whitespace-nowrap">{lm.label}</span>
                                     </div>
                                 </motion.div>
                             );
@@ -271,51 +261,20 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                                     className="absolute left-[88%] -translate-x-full -translate-y-1/2 flex items-center justify-end"
                                     style={{ top: `${labelY}%` }}
                                 >
-                                    <div className={`bg-black/60 backdrop-blur-md border ${lm.borderColor} rounded-full px-2.5 py-1 mr-2 shadow-lg z-0`}>
-                                        <span className="text-white text-[9px] font-medium tracking-wide whitespace-nowrap">{lm.label}</span>
+                                    <div className="bg-white/90 backdrop-blur-md border border-black/5 rounded-full px-3 py-1.5 mr-3 shadow-[0_4px_12px_rgba(0,0,0,0.06)] z-0">
+                                        <span className="text-[#1D1D1F] text-[10px] font-semibold tracking-wide whitespace-nowrap">{lm.label}</span>
                                     </div>
-                                    <div className={`absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-${lm.color} shadow-[${lm.dotShadow}] z-10 animate-pulse`} />
+                                    <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#007AFF] z-10 animate-pulse shadow-sm" />
                                 </motion.div>
                             );
                         })}
                     </>
                 )}
-
-                {/* DEBUG: Show tapped positions as red crosshairs */}
-                {DEBUG_MODE && tappedPoints.map((tp, i) => (
-                    <div
-                        key={`tap-${i}`}
-                        className="absolute w-3 h-3 rounded-full bg-red-500 border-2 border-white -translate-x-1/2 -translate-y-1/2 z-50"
-                        style={{ left: tp.screenX, top: tp.screenY }}
-                    />
-                ))}
             </div>
 
-            {/* DEBUG PANEL: Shows coordinates */}
-            {DEBUG_MODE && (
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/90 backdrop-blur-lg rounded-xl p-3 border border-green-500/50 max-w-[90%]">
-                    <div className="text-green-400 text-[10px] font-mono mb-1 text-center">
-                        TAP MODE: Sırayla dokun → {FEATURE_NAMES[tappedPoints.length] || 'TAMAM!'}
-                    </div>
-                    <div className="text-green-300 text-[9px] font-mono space-y-0.5">
-                        {tappedPoints.map((tp, i) => (
-                            <div key={i}>{FEATURE_NAMES[i]}: imgX={tp.imgX}, imgY={tp.imgY}</div>
-                        ))}
-                    </div>
-                    {tappedPoints.length >= 6 && (
-                        <button
-                            className="mt-2 w-full bg-green-600 text-white text-xs py-1 rounded font-bold"
-                            onClick={(e) => { e.stopPropagation(); setTappedPoints([]); }}
-                        >
-                            Sıfırla
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {/* Gentle AI Scanner Overlay Line - Moving over the whole screen */}
+            {/* Gentle AI Scanner Overlay Line */}
             <motion.div
-                className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-purple-400 to-transparent shadow-[0_0_20px_rgba(168,85,247,1)] z-10 pointer-events-none"
+                className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#007AFF]/40 to-transparent shadow-[0_0_15px_rgba(0,122,255,0.2)] z-10 pointer-events-none"
                 animate={{ top: ['15%', '85%', '15%'] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -324,43 +283,43 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
             <div className="relative z-20 px-6 pt-12 flex justify-between items-center w-full">
                 <button
                     onClick={onBack}
-                    className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white/90 hover:text-white hover:bg-black/60 transition-all border border-white/20 shadow-lg"
+                    className="w-10 h-10 rounded-full bg-[#FFFFFF] hover:bg-[#F5F5F7] shadow-sm transition-all flex items-center justify-center text-[#1D1D1F]"
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-black/40 px-4 py-2 rounded-full backdrop-blur-md border border-white/10">Step 3/4</div>
+                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-black/5">Step 3/4</div>
             </div>
 
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Dark Glass Bottom Sheet */}
+            {/* Light Glass Bottom Sheet */}
             <motion.div
                 initial={{ y: "100%", opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.1 }}
-                className="relative z-20 bg-[#111111]/90 backdrop-blur-xl border-t border-white/10 rounded-t-[2.5rem] px-8 pt-10 pb-12 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] text-center w-full"
+                className="relative z-20 bg-white/90 backdrop-blur-xl border-t border-[#E5E5EA] rounded-t-[2.5rem] px-8 pt-10 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] text-center w-full"
             >
-                {/* Step Indicator Glow */}
-                <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-400/50 flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
-                    <span className="text-purple-300 font-bold text-xl">2</span>
+                {/* Step Indicator */}
+                <div className="w-12 h-12 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 flex items-center justify-center mx-auto mb-6">
+                    <span className="text-[#007AFF] font-bold text-xl">3</span>
                 </div>
 
-                <h2 className="text-[26px] leading-[34px] sm:text-3xl font-semibold tracking-tight text-white mb-4 max-w-[280px] mx-auto drop-shadow-lg">
-                    Clinical-grade <span className="text-purple-300">AI Engine.</span>
+                <h2 className="text-[26px] leading-[34px] sm:text-3xl font-bold tracking-tight text-[#1D1D1F] mb-3 max-w-[280px] mx-auto">
+                    Clinical-grade <span className="text-[#007AFF]">AI Engine.</span>
                 </h2>
 
-                <p className="text-gray-400 text-[15px] leading-relaxed mb-8 max-w-[280px] mx-auto">
+                <p className="text-[#86868B] text-[15px] leading-relaxed mb-8 max-w-[280px] mx-auto text-balance">
                     We map over 100+ facial data points to deeply analyze skin texture, hydration, and key aging signs.
                 </p>
 
                 <motion.button
-                    whileHover={{ scale: 1.02, boxShadow: "0px 0px 20px rgba(255,255,255,0.2)" }}
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onNext}
-                    className="w-full py-4 rounded-2xl font-bold text-lg bg-white text-black hover:bg-gray-100 shadow-lg shadow-white/10 transition-all transform mx-auto max-w-sm"
+                    className="w-full h-[60px] rounded-[2rem] font-bold text-[18px] bg-[#1D1D1F] text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center mx-auto max-w-sm"
                 >
                     Continue
                 </motion.button>

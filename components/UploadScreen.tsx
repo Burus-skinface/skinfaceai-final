@@ -12,10 +12,13 @@ import { runFullPipeline } from '../services/pipeline/analysisPipeline';
 
 interface UploadScreenProps {
     onAnalysisComplete: (report: DailyReport) => void;
+    onNeedAuth: () => void;
     onSkip: () => void;
     history: DailyReport[];
     autoStartCamera?: boolean;
     userData?: { age: string; gender: string } | null;
+    user: any;
+    forceStartAnalysis?: boolean;
 }
 
 const ANALYSIS_STEPS = [
@@ -36,7 +39,7 @@ const DETECTION_LABELS = [
     { label: "Elasticity", x: 72, y: 72, delay: 7.0 },
 ];
 
-const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState }> = ({ faceState }) => {
+const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; debugLogs?: string[] }> = ({ faceState, debugLogs = [] }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [progress, setProgress] = useState(0);
     const [visibleLabels, setVisibleLabels] = useState(0);
@@ -72,15 +75,29 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState }> =
 
             {/* ═══ HERO PHOTO SECTION (~60% of screen) ═══ */}
             <div className="relative w-full flex-[0_0_58%] overflow-hidden">
-                {/* User's front photo — large, cinematic */}
+                {/* User's front photo — large, cinematic (base layer) */}
                 {userPhoto ? (
                     <img
                         src={userPhoto}
                         className="absolute inset-0 w-full h-full object-cover"
+                        style={{ transform: 'scaleX(-1)' }}
                         alt=""
                     />
                 ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-indigo-900/30" />
+                )}
+
+                {/* Mirror overlay — same photo, scaleX(-1), animasyonlu fade */}
+                {userPhoto && (
+                    <motion.img
+                        src={userPhoto}
+                        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                        style={{ scaleX: -1 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0, 0.35, 0.15, 0.35, 0] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                        alt=""
+                    />
                 )}
 
                 {/* Cinematic vignette */}
@@ -179,12 +196,12 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState }> =
                     <h2 className="text-[22px] font-bold text-white tracking-tight mb-1">
                         Analyzing Your Skin
                     </h2>
-                    <p className="text-xs text-gray-500 mb-6">
+                    <p className="text-xs text-gray-500 mb-3">
                         Processing 120+ data points from your scan
                     </p>
 
                     {/* Animated step indicator */}
-                    <div className="w-full mb-6">
+                    <div className="w-full mb-3">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={currentStep}
@@ -210,7 +227,7 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState }> =
                     </div>
 
                     {/* Progress bar */}
-                    <div className="w-full">
+                    <div className="w-full mb-2">
                         <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden mb-2.5">
                             <motion.div
                                 className="h-full rounded-full"
@@ -228,17 +245,34 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState }> =
                             </span>
                         </div>
                     </div>
+
+                    {/* DEBUG LOG OVERLAY — visible on phone */}
+                    {debugLogs.length > 0 && (
+                        <div className="w-full max-h-28 overflow-y-auto bg-black/60 border border-yellow-500/30 rounded-lg p-2 mt-1">
+                            <p className="text-[9px] text-yellow-400 font-bold mb-1">🔍 DEBUG LOG</p>
+                            {debugLogs.map((log, i) => (
+                                <p key={i} className={`text-[9px] font-mono leading-tight ${
+                                    log.startsWith('❌') ? 'text-red-400' :
+                                    log.startsWith('✅') ? 'text-green-400' :
+                                    log.startsWith('⏳') ? 'text-yellow-300' :
+                                    'text-gray-400'
+                                }`}>{log}</p>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </motion.div>
         </div>
     );
 };
 
-const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onSkip, history, autoStartCamera = false, userData }) => {
+const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedAuth, onSkip, history, autoStartCamera = false, userData, user, forceStartAnalysis }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [debugLogs, setDebugLogs] = useState<string[]>([]);
     const [useCameraScan, setUseCameraScan] = useState(false); // Default false, strictly controlled
     const [currentFaceState, setCurrentFaceState] = useState<ComprehensiveFaceState | undefined>(undefined);
+    const [pendingFaceState, setPendingFaceState] = useState<ComprehensiveFaceState | null>(null);
 
     const dayNumber = history.length + 1;
     const hasUploadedToday = history.length > 0 && isToday(history[history.length - 1].date);
@@ -250,19 +284,52 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onSkip,
         }
     }, [autoStartCamera]);
 
+    // Auto-trigger pipeline when user logs in (or guest) after face capture
+    useEffect(() => {
+        if (pendingFaceState && (user || forceStartAnalysis)) {
+            const fs = pendingFaceState;
+            setPendingFaceState(null);
+            runAnalysisPipeline(fs);
+        }
+    }, [user, forceStartAnalysis, pendingFaceState]);
 
-    const handleFaceState = async (faceState: ComprehensiveFaceState) => {
-        // Allow multiple scans per day
+    const addLog = (msg: string) => setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()} ${msg}`]);
+
+    // Step 1: Face captured from camera — check auth before running pipeline
+    const handleFaceCaptured = (faceState: ComprehensiveFaceState) => {
+        setCurrentFaceState(faceState);
+        setUseCameraScan(false);
+
+        if (user) {
+            // User already logged in — run pipeline immediately
+            runAnalysisPipeline(faceState);
+        } else {
+            // Not logged in — save face state and show auth gate
+            setPendingFaceState(faceState);
+            onNeedAuth();
+        }
+    };
+
+    // Step 2: Actual analysis pipeline
+    const runAnalysisPipeline = async (faceState: ComprehensiveFaceState) => {
         setCurrentFaceState(faceState);
         setLoading(true);
         setError(null);
-        setUseCameraScan(false);
+        setDebugLogs([]);
+
+        addLog('⏳ Pipeline starting...');
 
         try {
             const previewUrl = `data:image/jpeg;base64,${faceState.primaryImageJpegBase64}`;
+            addLog(`✅ Image ready (${Math.round(previewUrl.length / 1024)}KB)`);
+
+            // Get previous scan data for Delta (Δ) trend analysis
+            const previousScanData = history.length > 0 ? history[history.length - 1] : undefined;
+            addLog(`⏳ Running full pipeline (detection + scoring + LLM)...`);
 
             // NEW PIPELINE: Run full analysis pipeline
-            const pipelineResult = await runFullPipeline(faceState, userData);
+            const pipelineResult = await runFullPipeline(faceState, userData, previousScanData, addLog);
+            addLog(`✅ Pipeline done! Score: ${pipelineResult.scoring.globalScore}`);
 
             // [SECURITY] Fetch Authorized Score from Backend
             // We send the 'faceState' or metrics to server, server calculates Score.
@@ -271,10 +338,11 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onSkip,
             let authorizedPotentialScore: number | null = pipelineResult.scoring.potentialScore;
 
             try {
-                // Mocking the request payload structure the controller expects
-                // We send local scores so the server can "authorize" them (or return null if free user)
-                // rather than overwriting with mock data.
-                const response = await fetch('http://localhost:3003/api/dashboard', {
+                // Use relative URL (goes through Vite proxy to server.js)
+                const dashController = new AbortController();
+                const dashTimeout = setTimeout(() => dashController.abort(), 10000);
+
+                const response = await fetch('/api/dashboard', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -283,15 +351,15 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onSkip,
                             general: pipelineResult.scoring.globalScore,
                             potential: pipelineResult.scoring.potentialScore
                         }
-                    })
+                    }),
+                    signal: dashController.signal,
                 });
+
+                clearTimeout(dashTimeout);
 
                 if (response.ok) {
                     const serverRes = await response.json();
                     if (serverRes.success && serverRes.data.scores) {
-                        // RECOVERY: If server returns null (Free User), we currently fallback to Local Score
-                        // to ensure the user sees 'Analysis Worked'.
-                        // In strict mode, we would enforce null here.
                         authorizedGeneralScore = serverRes.data.scores.general ?? pipelineResult.scoring.globalScore;
                         authorizedPotentialScore = serverRes.data.scores.potential ?? pipelineResult.scoring.potentialScore;
                     }
@@ -322,15 +390,18 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onSkip,
                 daily_note: pipelineResult.recommendations.motivationalNote,
             };
 
+            addLog('✅ Report created, navigating...');
+            setLoading(false);
             onAnalysisComplete(newReport);
         } catch (err: any) {
+            addLog(`❌ FAILED: ${err.message}`);
             setError(`${t.analysisFailed} (${err.message})`);
             setLoading(false);
         }
     };
 
     if (loading) {
-        return <ScanAnalysisVisualizer faceState={currentFaceState} />;
+        return <ScanAnalysisVisualizer faceState={currentFaceState} debugLogs={debugLogs} />;
     }
 
     // Main Render
@@ -407,7 +478,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onSkip,
                         </button>
 
                         <FaceScanCamera
-                            onFaceState={handleFaceState}
+                            onFaceState={handleFaceCaptured}
                             onError={(e) => {
                                 console.error(e);
                                 setError("Camera failed. Please check permissions.");

@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Webcam from "react-webcam";
-import { FilesetResolver, FaceLandmarker } from "@mediapipe/tasks-vision";
+import type { FaceLandmarker } from "@mediapipe/tasks-vision";
+import { getPrewarmedLandmarker, isLandmarkerReady } from "../services/mediaPipeWarmup";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, ScanFace, CheckCircle2, AlertCircle } from "lucide-react";
 
@@ -10,6 +11,12 @@ import type { AngleBucket, NormalizedLandmark } from "../services/faceScan/types
 import type { ComprehensiveFaceState } from "../services/faceScan/faceState";
 import FaceMeshOverlay from "./FaceMeshOverlay";
 import { t } from "../localization";
+
+declare global {
+    interface Window {
+        __prewarmed_camera_stream?: MediaStream | null;
+    }
+}
 
 export interface FaceScanCameraProps {
   onFaceState: (faceState: ComprehensiveFaceState) => void;
@@ -57,7 +64,9 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
   const lastProgressUiRef = useRef<number>(0);
   const permissionGrantedAtRef = useRef<number>(0);
 
-  const [phase, setPhase] = useState<Phase>("loading");
+  const [phase, setPhase] = useState<Phase>(() => {
+    return (isLandmarkerReady() && window.__prewarmed_camera_stream) ? "waiting_face" : "loading";
+  });
   const [scanActive, setScanActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scanWarning, setScanWarning] = useState<string | null>(null);
@@ -106,36 +115,20 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
     };
   }
 
-  // --- INIT FACE LANDMARKER (V5) ---
+  // --- INIT FACE LANDMARKER (V5) — Use pre-warmed LOCAL model ---
   useEffect(() => {
     let active = true;
     const initLandmarker = async () => {
       try {
         setModelStatus("wasm_load");
-        // Loading logs removed
-        const filesetResolver = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
-        );
-        if (!active) return;
-
-        const landmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
-          baseOptions: {
-            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-            delegate: "CPU"
-          },
-          outputFaceBlendshapes: true,
-          outputFacialTransformationMatrixes: true,
-          runningMode: "VIDEO",
-          numFaces: 1,
-          minFaceDetectionConfidence: 0.5,
-          minFacePresenceConfidence: 0.5,
-          minTrackingConfidence: 0.7
-        });
+        const landmarker = await getPrewarmedLandmarker();
 
         if (!active) return;
-        // Logic loaded
         setModelStatus("ready");
         landmarkerRef.current = landmarker;
+        console.log("⚡ FaceLandmarker ready, transitioning to waiting_face");
+        // Immediately transition out of "loading" phase
+        setPhase(prev => prev === "loading" ? "waiting_face" : prev);
       } catch (e) {
         console.error("Failed to load FaceLandmarker", e);
         if (active) { setError("AI Model Failed to Load. Check connection."); setModelStatus("error"); }
@@ -143,7 +136,7 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
     };
 
     initLandmarker();
-    return () => { active = false; landmarkerRef.current?.close(); };
+    return () => { active = false; };
   }, []);
 
   const stop = useCallback((reason: string = "unknown") => {
@@ -480,13 +473,17 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
               frameRate: { ideal: 30, max: 60 }
             }}
             className="absolute w-full h-full object-cover"
-            onUserMedia={() => {
-              // Webcam ready logs removed
-              permissionGrantedAtRef.current = Date.now();
-              // We don't need manual constraints as much with V5 but can add if needed
-              setVideoReady(true);
+            onUserMedia={(stream) => {
+                permissionGrantedAtRef.current = Date.now();
+                setVideoReady(true); // Ensure videoReady is set
+                // If a pre-warmed stream exists, we'll handle it in a separate useEffect
+                // to ensure it's applied as early as possible to the video element.
             }}
-            onUserMediaError={(err) => setError("Camera error")}
+            onUserMediaError={(err) => {
+              console.error(err);
+              setError("No camera access. Please allow camera permissions in your browser.");
+              setPhase("complete"); // Indicate a terminal state
+            }}
           />
 
           {/* Soft vignette overlay */}

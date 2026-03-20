@@ -1,17 +1,8 @@
 
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { DailyReport } from '../types';
 import { Sparkles } from './icons/SparklesIcon';
 import { t, getLocale } from '../localization';
-
-interface ProgressProps {
-  history: DailyReport[];
-  onSelectReport: (reportId: string) => void;
-  compliment: string | null;
-  latestImprovement?: string;
-}
-
 import HistoryCalendar from './HistoryCalendar';
 import WeeklyRecap from './WeeklyRecap';
 
@@ -32,12 +23,6 @@ const Progress: React.FC<ProgressProps> = ({ history, onSelectReport, compliment
     );
   }
 
-  const chartData = history.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(report => ({
-    name: new Date(report.date).toLocaleDateString(getLocale(), { month: 'short', day: 'numeric' }),
-    score: Math.round(report.global_score),
-    id: report.id
-  }));
-
   return (
     <div className="w-full max-w-lg mx-auto pb-20 pt-16">
       {/* 1. Compliment */}
@@ -48,7 +33,8 @@ const Progress: React.FC<ProgressProps> = ({ history, onSelectReport, compliment
         </div>
       )}
 
-      {/* 2. Graph - REMOVED AS REQUESTED BY USER */}
+      {/* 2. Weekly Recap */}
+      <WeeklyRecap history={history} />
 
       {/* 3. Calendar (History Interaction) */}
       <div className="px-1">

@@ -60,61 +60,51 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 pb-2 bg-gradient-to-b from-[#09090b] via-[#09090b]/95 to-transparent backdrop-blur-sm transition-all duration-300">
-            <div className="w-full max-w-lg mx-auto flex items-center justify-between mb-2">
-                {/* Skinface.ai Logo */}
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 flex items-center justify-center relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <svg className="w-5 h-5 text-white/90 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 7a5 5 0 00-5 5h10a5 5 0 00-5-5z" opacity="0.5" />
-                        </svg>
-                    </div>
-                    <div className="text-lg font-black tracking-tight">
-                        <span className="text-white">Skinface</span>
-                        <span className="bg-gradient-to-r from-purple-400 to-indigo-600 bg-clip-text text-transparent">.ai</span>
-                    </div>
+        <div className="fixed top-0 left-0 right-0 z-[100] px-4 pt-3 pb-1.5 bg-[#09090b]/90 backdrop-blur-xl border-b border-white/[0.04] transition-all duration-300">
+            <div className="w-full max-w-lg mx-auto flex items-center justify-between">
+                {/* Wordmark only — no logo icon */}
+                <div className="text-[15px] font-black tracking-tight">
+                    <span className="text-white/90">SKINFACE</span>
+                    <span className="text-white/30">.</span>
+                    <span className="text-purple-400/80 text-[13px] font-extrabold">ai</span>
                 </div>
 
-                {/* Right Side: Bell + User */}
-                <div className="flex items-center gap-3">
+                {/* Right: Bell + Avatar */}
+                <div className="flex items-center gap-2">
                     {/* Notification Bell */}
                     <button
                         onClick={handleBellClick}
-                        className="relative p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                        className="relative p-1.5 rounded-full hover:bg-white/[0.06] transition-colors"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px] text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
-                        {/* Red dot — only if unread notifications exist */}
                         {unreadCount > 0 && (
-                            <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#09090b] animate-pulse"></div>
+                            <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border border-[#09090b]"></div>
                         )}
                     </button>
 
-                    {/* User Account */}
+                    {/* User Avatar */}
                     <div className="relative">
                         <button
                             onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifPanel(false); }}
-                            className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold text-sm shadow-lg"
+                            className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-purple-500/80 to-indigo-600/80 text-white font-bold text-[11px]"
                         >
                             {user?.email ? user.email[0].toUpperCase() : 'U'}
                         </button>
 
-                        {/* User Dropdown */}
                         {showUserMenu && (
-                            <div className="absolute right-0 top-12 w-56 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                                <div className="p-4 border-b border-white/5">
-                                    <p className="text-sm font-semibold text-white truncate">{user?.email || 'Guest'}</p>
-                                    <p className="text-xs text-gray-500 mt-0.5">{user?.app_metadata?.provider || 'Email'}</p>
+                            <div className="absolute right-0 top-10 w-52 bg-[#1C1C1E] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden">
+                                <div className="px-3.5 py-3 border-b border-white/5">
+                                    <p className="text-[13px] font-semibold text-white truncate">{user?.email || 'Guest'}</p>
+                                    <p className="text-[10px] text-gray-500 mt-0.5">{user?.app_metadata?.provider || 'Email'}</p>
                                 </div>
-                                <div className="py-2">
+                                <div className="py-1">
                                     <button
                                         onClick={() => { setShowUserMenu(false); onLogout?.(); }}
-                                        className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/5 flex items-center gap-3"
+                                        className="w-full px-3.5 py-2 text-left text-[13px] text-gray-400 hover:bg-white/5 flex items-center gap-2.5 transition-colors"
                                     >
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                         </svg>
                                         Log Out

@@ -25,6 +25,8 @@ import OnboardingManager from "./components/onboarding/OnboardingManager";
 import ScanCTA from "./components/onboarding/ScanCTA";
 import GlobalAppHeader from "./components/GlobalAppHeader";
 import NotificationSettings from "./components/NotificationSettings";
+import AuthGate from "./components/AuthGate";
+import SplashScreen from "./components/SplashScreen";
 import { scheduleAllNotifications, getNotificationPreferences } from "./utils/notifications";
 
 
@@ -55,6 +57,12 @@ const App: React.FC = () => {
   const [showDailyPrompt, setShowDailyPrompt] = useState(false);
   const [showScanCamera, setShowScanCamera] = useState(false);
   const [showReadyToScan, setShowReadyToScan] = useState(false);
+  const [pendingReport, setPendingReport] = useState<DailyReport | null>(null);
+  const [showAuthGate, setShowAuthGate] = useState(false);
+  const [forceStartAnalysis, setForceStartAnalysis] = useState(false);
+
+  // Splash + Auth loading screen
+  const [showSplash, setShowSplash] = useState(true);
 
   // Onboarding State
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -169,6 +177,47 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Effect: When user logs in and there's a pending report, save it
+  useEffect(() => {
+    if (user && pendingReport) {
+      const saveAndShow = async () => {
+        // Save to local history
+        const updatedHistory = [...history, pendingReport];
+        setHistory(updatedHistory);
+        try {
+          localStorage.setItem("face_analysis_history", JSON.stringify(updatedHistory));
+        } catch (err: any) {
+          console.error("Storage Save Failed:", err);
+        }
+
+        // Save to Supabase
+        try {
+          const { error } = await supabase.from('scans').insert({
+            id: pendingReport.id,
+            user_id: user.id,
+            image_url: pendingReport.imageUrl,
+            face_state: pendingReport.faceState,
+            analysis_results: pendingReport.analysis,
+            recommendations: pendingReport.recommendations,
+            created_at: pendingReport.date
+          });
+          if (error) console.error("Supabase Save Error:", error);
+        } catch (err) {
+          console.error("Failed to save scan to cloud:", err);
+        }
+
+        // Show results
+        setAnalysisData(pendingReport);
+        setPendingReport(null);
+        setShowAuthGate(false);
+        setShowScanCamera(false);
+        setActiveTab("results");
+        setContentKey(prev => prev + 1);
+      };
+      saveAndShow();
+    }
+  }, [user, pendingReport]);
+
   const handleShowPaywall = () => {
     setIsPaywallVisible(true);
   };
@@ -199,6 +248,7 @@ const App: React.FC = () => {
   };
 
   const handleAnalysisComplete = async (newReport: DailyReport) => {
+    // Pipeline only runs after auth (user or guest), so always save
     // 1. Add to history (Optimistic UI Update)
     const updatedHistory = [...history, newReport];
     setHistory(updatedHistory);
@@ -207,7 +257,6 @@ const App: React.FC = () => {
       localStorage.setItem("face_analysis_history", JSON.stringify(updatedHistory));
     } catch (err: any) {
       console.error("Storage Save Failed:", err);
-      // User requested "UI Log":
       alert(`⚠️ HISTORY SAVE FAILED (Storage Full?)\nError: ${err.message}\n\nAnalysis will still be shown!`);
     }
 
@@ -233,10 +282,27 @@ const App: React.FC = () => {
     // 3. Set as current Analysis
     setAnalysisData(newReport);
     setShowScanCamera(false);
+    setForceStartAnalysis(false);
     setActiveTab("results");
 
     // 4. Increment content key to force re-render/animation
     setContentKey(prev => prev + 1);
+  };
+
+  // Auth gate handlers
+  const handleNeedAuth = () => {
+    setShowAuthGate(true);
+  };
+
+  const handleAuthGateAuthenticated = () => {
+    // Auth listener in useEffect will set user → UploadScreen useEffect detects user + pendingFaceState → pipeline starts
+    setShowAuthGate(false);
+  };
+
+  const handleAuthGateGuest = () => {
+    // Guest mode: close auth gate and signal UploadScreen to start pipeline
+    setShowAuthGate(false);
+    setForceStartAnalysis(true);
   };
 
   const handleSelectReport = (reportId: string) => {
@@ -249,22 +315,12 @@ const App: React.FC = () => {
   };
 
   // Loading screen during auth check
-  if (isAuthChecking) {
+  if (showSplash || isAuthChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#09090b] text-white overflow-hidden">
-        <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15),transparent_70%)] animate-pulse-slow" />
-        <div className="relative z-10 flex flex-col items-center">
-          <h1 className="text-3xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] animate-fade-in-up"
-            style={{ fontFamily: 'Inter, sans-serif' }}>
-            SKINFACE<span className="text-white/50">.AI</span>
-          </h1>
-          <div className="mt-4 flex gap-1">
-            <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce delay-[0ms]" />
-            <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce delay-[150ms]" />
-            <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce delay-[300ms]" />
-          </div>
-        </div>
-      </div>
+      <SplashScreen
+        onReady={() => setShowSplash(false)}
+        minDisplayMs={2200}
+      />
     );
   }
 
@@ -280,7 +336,25 @@ const App: React.FC = () => {
 
   // Show camera for scanning
   if (showScanCamera) {
-    return <UploadScreen onAnalysisComplete={handleAnalysisComplete} onSkip={() => setShowScanCamera(false)} history={history} autoStartCamera={true} userData={userData} />;
+    return <>
+      <UploadScreen
+        onAnalysisComplete={handleAnalysisComplete}
+        onNeedAuth={handleNeedAuth}
+        onSkip={() => setShowScanCamera(false)}
+        history={history}
+        autoStartCamera={true}
+        userData={userData}
+        user={user}
+        forceStartAnalysis={forceStartAnalysis}
+      />
+      {/* Auth Gate must render here too — otherwise the early return hides it */}
+      {showAuthGate && (
+        <AuthGate
+          onAuthenticated={handleAuthGateAuthenticated}
+          onGuest={handleAuthGateGuest}
+        />
+      )}
+    </>;
   }
 
   // If no history and no analysis data, show empty state instead of forcing scan
@@ -380,6 +454,14 @@ const App: React.FC = () => {
         <div className="fixed inset-0 bg-black z-[100] fade-in-up visible">
           <Paywall onClose={handleClosePaywall} onUpgrade={() => console.log('Upgrade clicked')} />
         </div>
+      )}
+
+      {/* Auth Gate Overlay — shown after scan if not logged in */}
+      {showAuthGate && (
+        <AuthGate
+          onAuthenticated={handleAuthGateAuthenticated}
+          onGuest={handleAuthGateGuest}
+        />
       )}
 
       {/* Daily Check-in Overlay */}

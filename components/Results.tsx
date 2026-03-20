@@ -11,7 +11,8 @@ import { FaceIcon } from './icons/FaceIcon';
 import { DropIcon } from './icons/DropIcon';
 import { SunIcon } from './icons/SunIcon';
 import { SpectrumIcon } from './icons/SpectrumIcon';
-import SkinAnalysisResult from './SkinAnalysisResult';
+
+import Big6InsightsResult from './Big6InsightsResult';
 import { generateShareCard } from '../utils/shareCard';
 
 interface ResultsProps {
@@ -126,42 +127,39 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
     });
 
     return (
-        <div className="flex flex-col w-full max-w-3xl mx-auto pt-24 px-4 pb-10 gap-5">
+        <div className="flex flex-col w-full max-w-3xl mx-auto pt-14 px-2 pb-10 gap-2.5">
             {/* Header moved to GlobalAppHeader */}
 
-            {/* 1. GLOWUP HERO CARD (Clean & Compact) */}
-            <div className="w-full bg-[#1C1C1E] rounded-2xl p-5 border border-white/5 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
-                            <FireIcon className={`w-4 h-4 ${dayNumber >= 3 ? 'text-orange-500' : 'text-gray-500'}`} />
-                        </div>
-                        {/* STYLE: Compact Silver/Premium - Smaller */}
-                        <h1 className="text-lg font-black italic text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 tracking-tighter uppercase leading-none">
-                            GLOWUP#{dayNumber}
-                        </h1>
+            {/* 1. GLOWUP — Slim tracker strip */}
+            <div className="w-full bg-[#1C1C1E]/80 rounded-xl border border-white/[0.05]">
+                {/* Day label + progress link */}
+                <div className="flex items-center justify-between px-3.5 pt-2.5 pb-1.5">
+                    <div className="flex items-center gap-1.5">
+                        <FireIcon className={`w-3 h-3 ${dayNumber >= 3 ? 'text-orange-500' : 'text-gray-600'}`} />
+                        <span className="text-[12px] font-bold text-white/80 tracking-tight">
+                            Day {dayNumber}
+                        </span>
                     </div>
-
                     <button
                         onClick={onNavigateToProgress}
-                        className="group flex items-center gap-1 text-[10px] font-bold text-gray-500 hover:text-white transition-colors uppercase tracking-wider"
+                        className="group flex items-center gap-0.5 text-[11px] font-medium text-gray-500 hover:text-white transition-colors"
                     >
-                        See your progress
-                        <svg className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        Progress
+                        <svg className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                     </button>
                 </div>
 
-                {/* Tracker Row */}
-                <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
+                {/* 7-day dot tracker */}
+                <div className="flex items-center justify-between px-3.5 pb-2.5">
                     {last7Days.map((day, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1 group/day">
-                            <span className={`text-[9px] font-bold uppercase ${day.isToday ? 'text-white' : 'text-gray-600'}`}>{day.day}</span>
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${day.hasData
-                                ? 'bg-purple-600 shadow-md shadow-purple-900/40'
-                                : 'bg-white/5'
+                        <div key={i} className="flex flex-col items-center gap-0.5">
+                            <span className={`text-[7px] font-bold tracking-wide ${day.isToday ? 'text-white/60' : 'text-gray-600'}`}>{day.day}</span>
+                            <div className={`w-[26px] h-[20px] rounded-[5px] flex items-center justify-center ${day.hasData
+                                ? 'bg-purple-600/80'
+                                : day.isToday ? 'bg-white/[0.06] ring-1 ring-white/[0.08]' : 'bg-white/[0.03]'
                                 }`}>
                                 {day.hasData && (
-                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
                                     </svg>
                                 )}
@@ -171,25 +169,28 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                 </div>
             </div>
 
-            {/* 2. RESTORED SCORES CARD (General / Potential) */}
-            <div className="flex items-center justify-between gap-3 bg-[#1C1C1E] p-4 rounded-2xl border border-white/5">
-                {/* General Score */}
-                <div className="flex items-center gap-4 flex-1 justify-center border-r border-white/5">
-                    <span className="text-[10px] font-black italic text-gray-500 uppercase tracking-widest">General</span>
+            {/* 2. Scores — standalone inline row */}
+            <div className="flex items-center px-1">
+                {/* General */}
+                <div className="flex items-center gap-1.5 flex-1">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Score</span>
                     {score === null ? (
-                        <span className="text-3xl font-black italic text-white/30 blur-[1px]">9.4</span>
+                        <span className="text-lg font-black tabular-nums text-white/15 blur-[1px]">9.4</span>
                     ) : (
-                        <span className={`text-3xl font-black italic tabular-nums transition-all duration-300 ${getScoreColor(animatedScore)}`}>{animatedScore.toFixed(1)}</span>
+                        <span className={`text-lg font-black tabular-nums ${getScoreColor(animatedScore)}`}>{animatedScore.toFixed(1)}</span>
                     )}
                 </div>
 
-                {/* Potential Score */}
-                <div className="flex items-center gap-4 flex-1 justify-center">
-                    <span className="text-[10px] font-black italic text-gray-500 uppercase tracking-widest">Potential</span>
+                {/* Dot separator */}
+                <div className="w-1 h-1 rounded-full bg-white/10" />
+
+                {/* Potential */}
+                <div className="flex items-center gap-1.5 flex-1 justify-end">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Potential</span>
                     {score === null ? (
-                        <span className="text-3xl font-black italic text-white/30 blur-[1px]">9.9</span>
+                        <span className="text-lg font-black tabular-nums text-white/15 blur-[1px]">9.9</span>
                     ) : (
-                        <span className="text-3xl font-black italic text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.4)]">
+                        <span className="text-lg font-black tabular-nums text-emerald-400">
                             {(potential ?? ((score || 0) * 1.1)).toFixed(1)}
                         </span>
                     )}
@@ -213,10 +214,15 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                 </div>
             </div>
 
-            {/* 4. NEW ELITE SKIN SYSTEM UI (Daily Skin Score) */}
-            <div className="w-full">
-                <SkinAnalysisResult report={data} />
-            </div>
+            {/* 3.5. BIG 6 AI SYNTHESIS */}
+            {data.recommendations?.big6Insights && (
+                <div className="w-full">
+                    <Big6InsightsResult
+                        insights={data.recommendations.big6Insights}
+                        metrics={data.scoring?.advancedSkinMetrics}
+                    />
+                </div>
+            )}
 
             {/* 5. Skin Profile Card */}
             {data.analysis?.skin?.profile && (
