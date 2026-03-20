@@ -71,7 +71,7 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
         : null;
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[#FAFAFA] overflow-hidden">
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#050505] overflow-hidden">
 
             {/* ═══ HERO PHOTO SECTION (~60% of screen) ═══ */}
             <div className="relative w-full flex-[0_0_58%] overflow-hidden">
@@ -84,7 +84,7 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
                         alt=""
                     />
                 ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-indigo-900/30" />
                 )}
 
                 {/* Mirror overlay — same photo, scaleX(-1), animasyonlu fade */}
@@ -144,11 +144,11 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
                     >
                         {/* Pulsing dot */}
                         <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-black shadow-sm" />
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
                         </span>
                         {/* Label pill */}
-                        <span className="text-[10px] font-semibold text-gray-800 bg-white backdrop-blur-sm px-2 py-0.5 rounded-full border border-gray-200 whitespace-nowrap">
+                        <span className="text-[10px] font-semibold text-white/90 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10 whitespace-nowrap">
                             {dl.label}
                         </span>
                     </motion.div>
@@ -161,10 +161,10 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
-                        className="flex items-center gap-2 bg-white backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200"
+                        className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-purple-500/30"
                     >
-                        <div className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
-                        <span className="text-[11px] font-semibold text-gray-800 tracking-wide">AI ACTIVE</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                        <span className="text-[11px] font-semibold text-purple-300 tracking-wide">AI ACTIVE</span>
                     </motion.div>
                 </div>
 
@@ -189,7 +189,7 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
                 transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
                 {/* Top edge glow line */}
-                <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+                <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
 
                 <div className="flex flex-col items-center justify-center h-full px-8 pb-6 pt-4">
                     {/* Title */}
@@ -209,10 +209,10 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -8 }}
                                 transition={{ duration: 0.3 }}
-                                className="flex items-center justify-center gap-2.5 h-10 bg-gray-50 rounded-xl border border-gray-200 px-4"
+                                className="flex items-center justify-center gap-2.5 h-10 bg-white/[0.04] rounded-xl border border-white/[0.06] px-4"
                             >
                                 <span className="text-base">{ANALYSIS_STEPS[currentStep].icon}</span>
-                                <span className="text-sm font-medium text-gray-800">
+                                <span className="text-sm font-medium text-gray-300">
                                     {ANALYSIS_STEPS[currentStep].label}
                                 </span>
                                 <motion.span
@@ -228,7 +228,7 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
 
                     {/* Progress bar */}
                     <div className="w-full mb-2">
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2.5">
+                        <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden mb-2.5">
                             <motion.div
                                 className="h-full rounded-full"
                                 style={{
@@ -248,7 +248,7 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
 
                     {/* DEBUG LOG OVERLAY — visible on phone */}
                     {debugLogs.length > 0 && (
-                        <div className="w-full max-h-28 overflow-y-auto bg-white border border-yellow-500/30 rounded-lg p-2 mt-1">
+                        <div className="w-full max-h-28 overflow-y-auto bg-black/60 border border-yellow-500/30 rounded-lg p-2 mt-1">
                             <p className="text-[9px] text-yellow-400 font-bold mb-1">🔍 DEBUG LOG</p>
                             {debugLogs.map((log, i) => (
                                 <p key={i} className={`text-[9px] font-mono leading-tight ${
@@ -406,7 +406,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
 
     // Main Render
     return (
-        <div className="flex flex-col h-full bg-[#FAFAFA] text-white relative overflow-hidden">
+        <div className="flex flex-col h-full bg-[#050505] text-white relative overflow-hidden">
             {/* Modern Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[100px]" />
@@ -420,7 +420,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                     <div className="flex flex-col items-center max-w-sm animate-fade-in-up">
                         {/* Hero Visual - Face Guide */}
                         <div className="relative mb-8 group cursor-pointer" onClick={() => setUseCameraScan(true)}>
-                            <div className="absolute inset-0 bg-black rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
                             <div className="relative w-40 h-40 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
                                 <img
                                     src="/images/face_guide.png"
@@ -439,7 +439,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
 
                         <button
                             onClick={() => setUseCameraScan(true)}
-                            className="w-full bg-black  text-white font-bold py-4 px-8 rounded-2xl shadow-lg shadow-sm transform active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group"
+                            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-2xl shadow-lg shadow-purple-500/20 transform active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group"
                         >
                             <CameraIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                             <span>{t.startScan || "Start Live Scan"}</span>
@@ -470,7 +470,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                                 setUseCameraScan(false);
                                 if (autoStartCamera) onSkip(); // Return to results when in autoStart mode
                             }}
-                            className="absolute top-6 right-6 z-[60] p-2 bg-white/80 backdrop-blur-md rounded-full text-gray-500 hover:text-white border border-gray-200"
+                            className="absolute top-6 right-6 z-[60] p-2 bg-black/40 backdrop-blur-md rounded-full text-white/70 hover:text-white border border-white/10"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
