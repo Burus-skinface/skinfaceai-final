@@ -20,7 +20,7 @@ export const DebugLogViewer: React.FC = () => {
     if (logs.length === 0) return null;
 
     return (
-        <div className="absolute top-20 left-4 right-4 h-64 bg-gray-900/90 backdrop-blur-md rounded-xl border border-white/10 p-4 overflow-hidden z-[100] font-mono text-xs shadow-2xl">
+        <div className="absolute top-20 left-4 right-4 h-64 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 p-4 overflow-hidden z-[100] font-mono text-xs shadow-2xl">
             <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-2">
                 <span className="text-gray-400 font-bold tracking-wider">DEBUG CONSOLE</span>
                 <button
@@ -45,7 +45,7 @@ export const DebugLogViewer: React.FC = () => {
                         <span className={`${log.level === 'error' ? 'text-red-400 font-bold bg-red-900/20 px-1 rounded' :
                                 log.level === 'success' ? 'text-green-400' :
                                     log.level === 'warn' ? 'text-yellow-400' :
-                                        'text-gray-300'
+                                        'text-white/80'
                             }`}>
                             {log.message}
                         </span>
