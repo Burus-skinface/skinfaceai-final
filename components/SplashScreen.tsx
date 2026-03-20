@@ -25,12 +25,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, minDisplayMs = 240
     }, [onReady, minDisplayMs]);
 
     return (
-        <div className="fixed inset-0 z-[300] bg-[#050505] flex items-center justify-center overflow-hidden">
+        <div className="fixed inset-0 z-[300] bg-[#FAFAFA] flex items-center justify-center overflow-hidden">
 
             {/* Cinematic background pulse — very subtle */}
             <motion.div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full pointer-events-none"
-                style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%)' }}
+                style={{ background: 'radial-gradient(circle, rgba(0,0,0,0.05) 0%, transparent 70%)' }}
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{
                     scale: phase === 'exit' ? 2.5 : phase === 'hold' ? 1.2 : 0.5,
@@ -57,7 +57,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, minDisplayMs = 240
                 <motion.img
                     src="/skinface-logo.png"
                     alt="Skinface.ai"
-                    className="w-[300px] h-auto pointer-events-none"
+                    className="w-[80vw] max-w-[400px] h-auto pointer-events-none"
                     initial={{ filter: 'brightness(0)', opacity: 0 }}
                     animate={{
                         filter: phase === 'exit' ? 'brightness(1.3)' : 'brightness(1)',
@@ -65,14 +65,14 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, minDisplayMs = 240
                     }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     style={{
-                        filter: phase === 'hold' ? 'drop-shadow(0 0 40px rgba(168,85,247,0.35))' : undefined
+                        filter: phase === 'hold' ? 'drop-shadow(0 0 40px rgba(0,0,0,0.1))' : undefined
                     }}
                 />
             </motion.div>
 
             {/* Screen flash on exit — cinematic wipe */}
             <motion.div
-                className="absolute inset-0 bg-[#050505] pointer-events-none z-20"
+                className="absolute inset-0 bg-[#FAFAFA] pointer-events-none z-20"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: phase === 'exit' ? 1 : 0 }}
                 transition={{ duration: 0.4, delay: phase === 'exit' ? 0.2 : 0 }}

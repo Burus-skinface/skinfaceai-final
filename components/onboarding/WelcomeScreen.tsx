@@ -48,7 +48,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                             <img
                                 src="/skinface-icon.png"
                                 alt="Skinface.ai"
-                                className="w-[50vw] max-w-[200px] aspect-square object-contain mx-auto drop-shadow-[0_12px_40px_rgba(0,0,0,0.08)] pointer-events-none rounded-[3rem]"
+                                className="w-full max-w-[280px] h-auto object-cover mx-auto drop-shadow-sm pointer-events-none"
                             />
                         </motion.div>
                         <motion.h2
