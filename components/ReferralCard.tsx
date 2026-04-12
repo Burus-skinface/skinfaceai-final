@@ -1,95 +1,246 @@
-import React, { useState } from 'react';
-import { GiftIcon } from './icons/GiftIcon';
-import { CheckIcon } from './icons/CheckIcon';
-import { t } from '../localization';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  getReferralStats,
+  shareReferralLink,
+  REFERRAL_CONSTANTS,
+  type ReferralStats,
+} from '../services/referralService';
 
 interface ReferralCardProps {
   userId: string;
 }
 
 const ReferralCard: React.FC<ReferralCardProps> = ({ userId }) => {
-  const [copied, setCopied] = useState(false);
+  const [stats, setStats] = useState<ReferralStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'failed'>('idle');
+  const [showCelebration, setShowCelebration] = useState(false);
 
-  // Generate referral link
-  const referralCode = userId.substring(0, 8).toUpperCase();
-  const referralLink = `${window.location.origin}?ref=${referralCode}`;
+  useEffect(() => {
+    if (!userId) return;
+    loadStats();
+  }, [userId]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const loadStats = async () => {
+    setLoading(true);
+    const data = await getReferralStats(userId);
+    setStats(data);
+    setLoading(false);
+
+    // Show celebration if premium just became active
+    if (data.isPremiumActive) {
+      const celebrated = localStorage.getItem(`referral_celebrated_${userId}`);
+      if (!celebrated) {
+        setShowCelebration(true);
+        localStorage.setItem(`referral_celebrated_${userId}`, 'true');
+      }
+    }
   };
 
-  return (
-    <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 rounded-2xl border-2 border-yellow-500/30 p-6 mb-6">
-      <div className="flex items-start gap-3 mb-4">
-        <div className="p-2 bg-yellow-500/20 rounded-lg">
-          <GiftIcon className="w-6 h-6 text-yellow-400" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-white mb-1">Arkadaşını Davet Et, Pro+ Kazan</h3>
-          <p className="text-sm text-gray-300">
-            Özel davet kodunu arkadaşlarınla paylaş. Onlar ilk analizlerini yaptıklarında, ikiniz de 1 hafta ücretsiz Pro+ kazanın!
-          </p>
-        </div>
-      </div>
+  const handleShare = async () => {
+    if (!stats?.referralCode) return;
+    const result = await shareReferralLink(stats.referralCode);
+    setShareStatus(result);
+    if (result === 'copied') {
+      setTimeout(() => setShareStatus('idle'), 2500);
+    }
+  };
 
-      {/* Referral Link */}
-      <div className="bg-black/30 rounded-xl p-4 mb-4">
-        <p className="text-xs text-gray-400 mb-2">DAVET KODUN</p>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-white/10 px-3 py-2 rounded-lg font-mono text-white text-sm">
-            {referralCode}
+  const { REFERRALS_NEEDED, PREMIUM_DAYS_REWARD } = REFERRAL_CONSTANTS;
+
+  // Progress calculation
+  const progressInCycle = stats ? (stats.completedReferrals % REFERRALS_NEEDED) : 0;
+  const progressPercent = (progressInCycle / REFERRALS_NEEDED) * 100;
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="rounded-2xl bg-white/[0.04] border border-white/[0.08] p-5 mb-5 animate-pulse">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-white/10" />
+          <div className="flex-1">
+            <div className="h-4 w-32 bg-white/10 rounded mb-2" />
+            <div className="h-3 w-48 bg-white/5 rounded" />
           </div>
-          <button
-            onClick={handleCopy}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${copied
-                ? 'bg-green-500 text-white'
-                : 'bg-yellow-500 text-black hover:bg-yellow-400'
-              }`}
+        </div>
+        <div className="h-2 bg-white/5 rounded-full" />
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  return (
+    <>
+      {/* Celebration Modal */}
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
+            onClick={() => setShowCelebration(false)}
           >
-            {copied ? (
-              <>
-                <CheckIcon className="w-4 h-4 inline mr-1" />
-                Kopyalandı!
-              </>
-            ) : (
-              'Kopyala'
-            )}
-          </button>
-        </div>
-      </div>
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', damping: 15 }}
+              className="bg-gradient-to-br from-purple-900/90 to-indigo-900/90 backdrop-blur-xl rounded-3xl p-8 max-w-sm w-full border border-purple-500/30 text-center"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-2xl font-bold text-white mb-2">Premium Unlocked!</h2>
+              <p className="text-purple-200/80 text-sm mb-6">
+                You earned {PREMIUM_DAYS_REWARD} days of free Premium by inviting {REFERRALS_NEEDED} friends!
+              </p>
+              <button
+                onClick={() => setShowCelebration(false)}
+                className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold rounded-xl active:scale-95 transition-transform"
+              >
+                Awesome! 🚀
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* How it Works */}
-      <div className="space-y-2">
-        <div className="flex items-start gap-2 text-sm text-gray-300">
-          <span className="text-yellow-400 font-bold">1.</span>
-          <p>Bağlantıyı paylaş</p>
-        </div>
-        <div className="flex items-start gap-2 text-sm text-gray-300">
-          <span className="text-yellow-400 font-bold">2.</span>
-          <p>Arkadaşın kaydolsun</p>
-        </div>
-        <div className="flex items-start gap-2 text-sm text-gray-300">
-          <span className="text-yellow-400 font-bold">3.</span>
-          <p>Ödülünü kazan</p>
-        </div>
-      </div>
+      {/* Main Card */}
+      <div className="rounded-2xl bg-gradient-to-br from-purple-500/[0.08] to-indigo-500/[0.04] border border-purple-500/15 p-5 mb-5 overflow-hidden relative">
+        {/* Subtle glow */}
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Stats */}
-      <div className="mt-4 pt-4 border-t border-yellow-500/20 flex items-center justify-between text-center">
-        <div>
-          <p className="text-2xl font-bold text-yellow-400">0</p>
-          <p className="text-xs text-gray-400">Davet Edilen</p>
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-4 relative">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/20 flex items-center justify-center text-lg flex-shrink-0">
+            🎁
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-bold text-white leading-tight">Invite Friends, Earn Premium</h3>
+            <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
+              Invite {REFERRALS_NEEDED} friends who complete a scan → get {PREMIUM_DAYS_REWARD} days free Premium
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-2xl font-bold text-yellow-400">0</p>
-          <p className="text-xs text-gray-400">Kazanılan Hafta</p>
+
+        {/* Active Premium Badge */}
+        {stats.isPremiumActive && stats.premiumExpiresAt && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2"
+          >
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-xs font-semibold text-green-400">
+              Premium Active — expires {new Date(stats.premiumExpiresAt).toLocaleDateString()}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Progress Section */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-400 font-medium">Progress to next reward</span>
+            <span className="text-xs font-bold text-purple-400">
+              {progressInCycle}/{REFERRALS_NEEDED}
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="relative h-2.5 bg-white/[0.06] rounded-full overflow-hidden">
+            <motion.div
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{
+                background: 'linear-gradient(90deg, #9333ea, #6366f1, #8b5cf6)',
+              }}
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            />
+            {/* Milestone dots */}
+            {Array.from({ length: REFERRALS_NEEDED }).map((_, i) => (
+              <div
+                key={i}
+                className={`absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                  i < progressInCycle ? 'bg-white/80' : 'bg-white/15'
+                }`}
+                style={{ left: `${((i + 1) / REFERRALS_NEEDED) * 100 - 1}%` }}
+              />
+            ))}
+          </div>
+
+          {/* Milestone text */}
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[10px] text-gray-600">0</span>
+            <span className="text-[10px] text-purple-400/60 flex items-center gap-0.5">
+              🏆 {REFERRALS_NEEDED}
+            </span>
+          </div>
         </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="bg-white/[0.04] rounded-xl p-2.5 text-center">
+            <p className="text-xl font-bold text-white">{stats.totalReferred}</p>
+            <p className="text-[10px] text-gray-500 font-medium">Invited</p>
+          </div>
+          <div className="bg-white/[0.04] rounded-xl p-2.5 text-center">
+            <p className="text-xl font-bold text-purple-400">{stats.completedReferrals}</p>
+            <p className="text-[10px] text-gray-500 font-medium">Scanned</p>
+          </div>
+          <div className="bg-white/[0.04] rounded-xl p-2.5 text-center">
+            <p className="text-xl font-bold text-green-400">{stats.totalPremiumDays}d</p>
+            <p className="text-[10px] text-gray-500 font-medium">Earned</p>
+          </div>
+        </div>
+
+        {/* Share Button */}
+        <button
+          onClick={handleShare}
+          className="w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 active:scale-[0.97] flex items-center justify-center gap-2 relative overflow-hidden"
+          style={{
+            background: shareStatus === 'copied'
+              ? 'linear-gradient(135deg, #22c55e, #16a34a)'
+              : 'linear-gradient(135deg, #9333ea, #6366f1)',
+          }}
+        >
+          {shareStatus === 'copied' ? (
+            <motion.span
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="flex items-center gap-1.5 text-white"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Link Copied!
+            </motion.span>
+          ) : shareStatus === 'shared' ? (
+            <span className="text-white">Shared! ✨</span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-white">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Share Invite Link
+            </span>
+          )}
+        </button>
+
+        {/* Referral Code display */}
+        {stats.referralCode && (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <span className="text-[10px] text-gray-600">Your code:</span>
+            <span className="text-[11px] font-mono font-bold text-purple-400/70 bg-purple-500/10 px-2 py-0.5 rounded-md">
+              {stats.referralCode}
+            </span>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 };
 
 export default ReferralCard;
-

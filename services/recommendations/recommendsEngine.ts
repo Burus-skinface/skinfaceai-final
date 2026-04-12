@@ -2,6 +2,7 @@
 import type { AnalysisResults } from '../analysis/types';
 import type { ScoringResults } from '../scoring/types';
 import type { DailyReport } from '../../types';
+import { PRODUCT_CATALOG } from '../../utils/products';
 
 // SECURITY UPDATE: Gemini API Key is no longer used here.
 // All requests are routed through the secure backend proxy.
@@ -41,9 +42,25 @@ export interface Big6Insights {
   visualFatigue: string;
 }
 
+export interface FaceBig6Insights {
+  eyes: string;
+  nose: string;
+  jawline: string;
+  chin: string;
+  midface: string;
+  harmony: string;
+}
+
+export interface RecommendedProduct {
+  productId: string;
+  confidenceScore: number;
+  reason: string;
+}
+
 export interface RecommendationsResult {
-  big6Insights: Big6Insights; // Dynamic AI Insights
-  eliteReport?: EliteReport; // Optional for backward compatibility
+  big6Insights: Big6Insights;           // Skin Big 6 AI Insights
+  faceBig6Insights?: FaceBig6Insights;  // [NEW] Face Big 6 AI Insights
+  eliteReport?: EliteReport;            // Optional for backward compatibility
   priorityOrder: string[];
   focusAreas: {
     area: string;
@@ -65,6 +82,7 @@ export interface RecommendationsResult {
   };
 
   motivationalNote: string;
+  recommendedProducts?: RecommendedProduct[];
 }
 
 /**
@@ -114,6 +132,16 @@ DATA AGGREGATION MAPPING (THE BIG 6):
   `;
 
   // Provide raw data to the LLM (Current vs Previous)
+  const faceBig6Data = scoringResults.faceBig6 ? JSON.stringify({
+    eyes:    { score: scoringResults.faceBig6.eyes.score,    breakdown: scoringResults.faceBig6.eyes.breakdown },
+    nose:    { score: scoringResults.faceBig6.nose.score,    breakdown: scoringResults.faceBig6.nose.breakdown },
+    jawline: { score: scoringResults.faceBig6.jawline.score, breakdown: scoringResults.faceBig6.jawline.breakdown },
+    chin:    { score: scoringResults.faceBig6.chin.score,    breakdown: scoringResults.faceBig6.chin.breakdown },
+    midface: { score: scoringResults.faceBig6.midface.score, breakdown: scoringResults.faceBig6.midface.breakdown },
+    harmony: { score: scoringResults.faceBig6.harmony.score, breakdown: scoringResults.faceBig6.harmony.breakdown },
+    overall: scoringResults.faceBig6.overallFaceBig6,
+  }) : 'NOT_AVAILABLE';
+
   const currentData = JSON.stringify({
     advancedMetrics: scoringResults.advancedSkinMetrics,
     spectral: {
@@ -127,6 +155,8 @@ DATA AGGREGATION MAPPING (THE BIG 6):
     advancedMetrics: previousScanData.scoring?.advancedSkinMetrics,
     spectral: previousScanData.scoring?.spectral?.statusScores
   }) : "NO PREVIOUS SCAN (BASELINE DAY 1)";
+
+  const catalogStr = PRODUCT_CATALOG.map(p => `ID: ${p.id} | Name: ${p.name} | Tags: ${p.tags.join(', ')} | Desc: ${p.description}`).join('\n');
 
   return [
     {
@@ -144,19 +174,28 @@ ${guardrails}
 ${big6Mapping}
 
 --- RAW DATA FEED ---
-CURRENT SCAN:
+CURRENT SCAN (SKIN):
 ${currentData}
+
+CURRENT SCAN (FACE STRUCTURE — Big 6):
+${faceBig6Data}
 
 PREVIOUS SCAN:
 ${previousData}
 ---------------------
+--- PRODUCT CATALOG ---
+You MUST recommend AT LEAST 4 and AT MOST 6 products from this exact catalog based on the user's needs.
+${catalogStr}
+-----------------------
 
 OUTPUT REQUIREMENTS:
-1. **big6Insights**: One short, punchy, continuous paragraph for each of the 6 categories, strictly following the Data Mapping and Guardrails.
-2. **motivationalNote**: A 2-sentence FRIENDLY summary of today's SKIN analysis findings.
-3. **eliteReport**: A structural aesthetic breakdown (Front Architecture, Side Profile, Jawline, Harmony, Spectral).
-4. **priorityOrder**: Ordered list of focus areas.
-5. **focusAreas**, **dailyRoutine**, **monthlyGoals**: Actionable plans based on current deficits.
+1. **big6Insights**: One short, punchy, continuous paragraph for each of the 6 SKIN categories, strictly following the Data Mapping and Guardrails.
+2. **faceBig6Insights**: One short, punchy, continuous paragraph for each of the 6 FACE categories (Eyes, Nose, Jawline, Chin, Midface, Harmony). Translate scores and breakdowns into human-readable, actionable insights. Use looksmaxxing language for male users. Never output raw numbers — translate them into verdicts.
+3. **motivationalNote**: A 2-sentence FRIENDLY summary of today's SKIN analysis findings.
+4. **eliteReport**: A structural aesthetic breakdown (Front Architecture, Side Profile, Jawline, Harmony, Spectral).
+5. **priorityOrder**: Ordered list of focus areas.
+6. **focusAreas**, **dailyRoutine**, **monthlyGoals**: Actionable plans based on current deficits.
+7. **recommendedProducts**: Based on the exact PRODUCT CATALOG provided above, return exactly 4-6 appropriate products. Include the exact "productId" string, a "confidenceScore" (integer 0-100 indicating how strong the fit is based on their unique scanning deficits), and a brief "reason" why it will fix their specific problem.
 `
         }
       ]
@@ -231,6 +270,18 @@ export async function generateRecommendations(
         },
         required: ['acneClarity', 'texturePores', 'barrierDefense', 'sebumDynamics', 'toneUniformity', 'visualFatigue']
       },
+      faceBig6Insights: {
+        type: "OBJECT",
+        properties: {
+          eyes:    { type: "STRING" },
+          nose:    { type: "STRING" },
+          jawline: { type: "STRING" },
+          chin:    { type: "STRING" },
+          midface: { type: "STRING" },
+          harmony: { type: "STRING" }
+        },
+        required: ['eyes', 'nose', 'jawline', 'chin', 'midface', 'harmony']
+      },
       priorityOrder: {
         type: "ARRAY",
         items: { type: "STRING" },
@@ -279,9 +330,21 @@ export async function generateRecommendations(
         },
         required: ['month1', 'month3', 'month6', 'month12']
       },
-      motivationalNote: { type: "STRING" }
+      motivationalNote: { type: "STRING" },
+      recommendedProducts: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            productId: { type: "STRING" },
+            confidenceScore: { type: "NUMBER" },
+            reason: { type: "STRING" }
+          },
+          required: ['productId', 'confidenceScore', 'reason']
+        }
+      }
     },
-    required: ['big6Insights', 'priorityOrder', 'focusAreas', 'dailyRoutine', 'monthlyGoals', 'motivationalNote']
+    required: ['big6Insights', 'faceBig6Insights', 'priorityOrder', 'focusAreas', 'dailyRoutine', 'monthlyGoals', 'motivationalNote']
   };
 
   const prompt = buildPrompt(analysisResults, scoringResults, userPreferences, previousScanData);

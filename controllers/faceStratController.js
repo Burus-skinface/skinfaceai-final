@@ -9,7 +9,8 @@
 export const getDashboardData = async (req, res) => {
     try {
         const user = req.user || { isPremium: false };
-        const isPremium = user.isPremium || false;
+        // Trust the frontend isPremium if provided (for referral rewards)
+        const isPremium = req.body.isPremium === true || user.isPremium === true;
         const clientScores = req.body.scores;
 
         const responseData = {

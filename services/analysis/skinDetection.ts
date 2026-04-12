@@ -1,25 +1,8 @@
 import type { ComprehensiveFaceState } from '../faceScan/faceState';
 import type { SkinDetectionResult } from './types';
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { debugLog } from '../../utils/debugLog'; // NEW
 // Scoring imports removed - scoring is done in Stage 3 (skinScoring.ts), not here
-
-let ai: GoogleGenAI | null = null;
-function getAi() {
-  if (ai) return ai;
-  const key = import.meta.env.VITE_API_KEY;
-  if (!key) {
-    console.error('[SKIN DETECTION] VITE_API_KEY is missing!');
-    console.error('[SKIN DETECTION] Check:');
-    console.error('  1. .env.local file exists in project root');
-    console.error('  2. File contains: VITE_API_KEY=your_actual_key');
-    console.error('  3. Dev server was restarted after creating .env.local');
-    console.error('  4. Current env value:', import.meta.env.VITE_API_KEY ? 'EXISTS (but empty?)' : 'UNDEFINED');
-    throw new Error("VITE_API_KEY is not set. Create .env.local with VITE_API_KEY=YOUR_GEMINI_KEY and restart the dev server.");
-  }
-  ai = new GoogleGenAI({ apiKey: key });
-  return ai;
-}
 
 /**
  * STAGE 2: Skin Detection Module (Hybrid CV + Gemini)
@@ -643,18 +626,23 @@ FINAL RULES:
 Generate user-facing outputs for all 7 categories + overall summary.`;
 
   try {
-    const response = await getAi().models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: schema,
-        temperature: 0,
-      }
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        schema: schema,
+        temperature: 0
+      })
     });
 
-    // Parse JSON with UTF-8 encoding support
-    const text = response.text;
+    if (!response.ok) {
+      throw new Error(`AI Request failed: ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    const text = responseData.text;
     try {
       const result = JSON.parse(text);
       const finalResult = {
@@ -875,18 +863,23 @@ CRITICAL RULES:
 All outputs must be in English.`;
 
   try {
-    const response = await getAi().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: schema,
-        temperature: 0.3,
-      }
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        schema: schema,
+        temperature: 0
+      })
     });
 
-    // Parse JSON with UTF-8 encoding support
-    const text = response.text;
+    if (!response.ok) {
+      throw new Error(`AI Request failed: ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    const text = responseData.text;
     try {
       return JSON.parse(text);
     } catch (parseErr: any) {

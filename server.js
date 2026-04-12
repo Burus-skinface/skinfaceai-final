@@ -12,8 +12,21 @@ const app = express();
 const PORT = 3003; // Changed from 3002 to avoid conflict with Vite
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:3002',
+  'https://skinface.ai', 
+  'https://www.skinface.ai'
+];
+
 app.use(cors({
-    origin: true, // Allow all origins for dev/ngrok (or specify array)
+    origin: function(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('ngrok-free.app') || origin.includes('ngrok.io')) {
+            return callback(null, true);
+        }
+        return callback(new Error('CORS policy violation'), false);
+    },
     methods: ['POST']
 }));
 app.use(express.json());
@@ -51,37 +64,28 @@ app.post('/api/analyze', async (req, res) => {
             return res.status(400).json({ error: "Missing prompt" });
         }
 
-        const apiKey = process.env.VITE_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_API_KEY; // Fallback for transition
         if (!apiKey) {
             console.error("API Key missing in server environment");
-            return res.status(500).json({ error: "Server configuration error" });
+            return res.status(500).json({ error: "Server configuration error. GEMINI_API_KEY is missing." });
         }
 
         const ai = new GoogleGenAI({ apiKey });
 
         // Call Gemini
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
+            model: req.body.model || 'gemini-2.5-flash',
+            contents: req.body.contents || prompt, // Support both formats
             config: {
+                systemInstruction: req.body.systemInstruction,
                 responseMimeType: "application/json",
                 responseSchema: schema,
-                temperature: 0.3,
+                temperature: req.body.temperature || 0,
             }
         });
 
-        // Parse response
-        const text = response.text;
-        let result;
-        try {
-            // Handle potential unicode issues or raw text
-            result = JSON.parse(text);
-        } catch (e) {
-            const fixedText = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-            result = JSON.parse(fixedText);
-        }
-
-        res.json(result);
+        // Return raw text, frontend performs custom parsing
+        res.json({ text: response.text });
 
     } catch (error) {
         console.error("Proxy Error:", error);

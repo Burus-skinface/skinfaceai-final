@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { startMediaPipeWarmup } from '../services/mediaPipeWarmup';
+import { startMediaPipeWarmup, getPrewarmedLandmarker, isLandmarkerReady } from '../services/mediaPipeWarmup';
 
 interface SplashScreenProps {
     onReady: () => void;
@@ -9,19 +9,63 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, minDisplayMs = 2400 }) => {
     const [phase, setPhase] = useState<'enter' | 'hold' | 'exit'>('enter');
+    const [statusText, setStatusText] = useState('');
+    const exitStartedRef = useRef(false);
 
     useEffect(() => {
-        // Pre-warm MediaPipe model ONLY (no camera permission here)
+        // Start warmup immediately
         startMediaPipeWarmup();
 
-        // Phase transitions
-        const holdTimer = setTimeout(() => setPhase('hold'), 400);
-        const exitTimer = setTimeout(() => {
-            setPhase('exit');
-            setTimeout(onReady, 600);
-        }, minDisplayMs);
+        const t0 = Date.now();
+        const MAX_WAIT = 15000; // 15s absolute max wait
 
-        return () => { clearTimeout(holdTimer); clearTimeout(exitTimer); };
+        // Phase: enter → hold after 400ms
+        const holdTimer = setTimeout(() => setPhase('hold'), 400);
+
+        // Show status text after 2s if still loading
+        const statusTimer = setTimeout(() => {
+            if (!isLandmarkerReady()) {
+                setStatusText('Loading AI model...');
+            }
+        }, 2000);
+
+        // Wait for BOTH: minDisplayMs elapsed AND model loaded (or timeout)
+        const checkReady = async () => {
+            try {
+                // Start loading model (will resolve from cache if already loaded)
+                const modelPromise = getPrewarmedLandmarker();
+
+                // Also create a timeout promise
+                const timeoutPromise = new Promise<void>((resolve) => {
+                    setTimeout(resolve, MAX_WAIT);
+                });
+
+                // Race: model load vs timeout
+                await Promise.race([modelPromise, timeoutPromise]);
+            } catch (e) {
+                console.warn('MediaPipe warmup error in splash:', e);
+            }
+
+            // Ensure minimum display time
+            const elapsed = Date.now() - t0;
+            if (elapsed < minDisplayMs) {
+                await new Promise(r => setTimeout(r, minDisplayMs - elapsed));
+            }
+
+            // Start exit animation
+            if (!exitStartedRef.current) {
+                exitStartedRef.current = true;
+                setPhase('exit');
+                setTimeout(onReady, 600);
+            }
+        };
+
+        checkReady();
+
+        return () => {
+            clearTimeout(holdTimer);
+            clearTimeout(statusTimer);
+        };
     }, [onReady, minDisplayMs]);
 
     return (
@@ -55,9 +99,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, minDisplayMs = 240
             >
                 {/* App logo image */}
                 <motion.img
-                    src="/skinface-logo.png"
+                    src="/skinface-icon.png"
                     alt="Skinface.ai"
-                    className="w-[300px] h-auto pointer-events-none"
+                    className="w-[390px] max-w-[90vw] h-auto pointer-events-none"
                     initial={{ filter: 'brightness(0)', opacity: 0 }}
                     animate={{
                         filter: phase === 'exit' ? 'brightness(1.3)' : 'brightness(1)',
@@ -68,6 +112,19 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, minDisplayMs = 240
                         filter: phase === 'hold' ? 'drop-shadow(0 0 40px rgba(168,85,247,0.35))' : undefined
                     }}
                 />
+
+                {/* Status text - shows when model is loading */}
+                {statusText && phase !== 'exit' && (
+                    <motion.div
+                        className="mt-8 flex items-center gap-2.5"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+                        <span className="text-white/50 text-sm font-medium tracking-wide">{statusText}</span>
+                    </motion.div>
+                )}
             </motion.div>
 
             {/* Screen flash on exit — cinematic wipe */}

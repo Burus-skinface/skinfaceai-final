@@ -14,6 +14,7 @@ import { SpectrumIcon } from './icons/SpectrumIcon';
 
 import Big6InsightsResult from './Big6InsightsResult';
 import { generateShareCard } from '../utils/shareCard';
+import ReferralCard from './ReferralCard';
 
 interface ResultsProps {
     data: DailyReport;
@@ -341,7 +342,12 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
             {/* Divider */}
             <div className="h-px bg-white/5 w-full my-2"></div>
 
-            {/* 7. Share Button */}
+            {/* 7. Referral Card — invite friends for premium */}
+            {user?.id && (
+                <ReferralCard userId={user.id} />
+            )}
+
+            {/* 8. Share Button */}
             <div className="w-full flex justify-center pb-4">
                 <button
                     onClick={handleShare}

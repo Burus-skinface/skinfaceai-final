@@ -1,13 +1,13 @@
 import React from 'react';
 import { DailyReport } from '../types';
 import { t } from '../localization';
-import FacialAnalysisResult from './FacialAnalysisResult';
+import FaceBig6InsightsResult from './FaceBig6InsightsResult';
 
 const FaceAnalysis: React.FC<{ data: DailyReport | null, dayNumber: number }> = ({ data, dayNumber }) => {
     // Force Re-render: UI Polish V2 applied
     const [showDebug, setShowDebug] = React.useState(false);
 
-    if (!data?.analysis?.face || !data?.faceState || !data?.recommendations?.eliteReport) {
+    if (!data?.analysis?.face || !data?.faceState) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[70vh] text-gray-400 text-center">
                 <h2 className="text-2xl font-semibold">{t.noFaceData}</h2>
@@ -60,8 +60,13 @@ const FaceAnalysis: React.FC<{ data: DailyReport | null, dayNumber: number }> = 
                 </h2>
             </div>
 
-            {/* NEW 4-CARD ANALYSIS MODULE */}
-            <FacialAnalysisResult report={data} />
+            {/* FACE BIG 6 — AI Synthesis (replaces old 4-card system) */}
+            <div className="mb-6">
+                <FaceBig6InsightsResult
+                    insights={data.recommendations?.faceBig6Insights}
+                    scores={data.scoring?.faceBig6}
+                />
+            </div>
 
             {/* Qualitative Assets (Secondary) */}
             <div className="grid grid-cols-1 gap-4 mt-8">

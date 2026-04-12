@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       port: 3002,
-      host: '0.0.0.0', // Network üzerinden erişilebilir yapar
-      strictPort: false, // Port kullanılıyorsa otomatik başka port seçer
+      host: '0.0.0.0',
+      strictPort: false,
       allowedHosts: [
         '.ngrok.io',
         '.ngrok-free.app',
@@ -23,7 +23,21 @@ export default defineConfig(({ mode }) => {
         }
       }
     },
-    plugins: [react()],
+    // Plugin to add cache headers for model files
+    plugins: [
+      react(),
+      {
+        name: 'cache-model-files',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url && (req.url.endsWith('.wasm') || req.url.endsWith('.task'))) {
+              res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+            }
+            next();
+          });
+        }
+      }
+    ],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)

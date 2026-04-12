@@ -65,7 +65,7 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
   const permissionGrantedAtRef = useRef<number>(0);
 
   const [phase, setPhase] = useState<Phase>(() => {
-    return (isLandmarkerReady() && window.__prewarmed_camera_stream) ? "waiting_face" : "loading";
+    return isLandmarkerReady() ? "waiting_face" : "loading";
   });
   const [scanActive, setScanActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +131,12 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
         setPhase(prev => prev === "loading" ? "waiting_face" : prev);
       } catch (e) {
         console.error("Failed to load FaceLandmarker", e);
-        if (active) { setError("AI Model Failed to Load. Check connection."); setModelStatus("error"); }
+        if (active) {
+          const errMsg = "AI Model Failed to Load. Check connection.";
+          setError(errMsg);
+          setModelStatus("error");
+          onError?.(e);
+        }
       }
     };
 
@@ -483,6 +488,7 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
               console.error(err);
               setError("No camera access. Please allow camera permissions in your browser.");
               setPhase("complete"); // Indicate a terminal state
+              onError?.(err);
             }}
           />
 

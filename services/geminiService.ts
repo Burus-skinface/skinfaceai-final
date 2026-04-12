@@ -1,24 +1,7 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
+// GoogleGenAI import removed for security - AI calls proxied through backend
+import { Type } from "@google/genai"; // Only needed for Type enums used in schema
 import { DailyReport } from "../types";
 import { t } from "../localization";
-
-let ai: GoogleGenAI | null = null;
-function getAi() {
-  if (ai) return ai;
-  const key = import.meta.env.VITE_API_KEY;
-  if (!key) {
-    console.error('[GEMINI SERVICE] VITE_API_KEY is missing!');
-    console.error('[GEMINI SERVICE] Check:');
-    console.error('  1. .env.local file exists in project root');
-    console.error('  2. File contains: VITE_API_KEY=your_actual_key');
-    console.error('  3. Dev server was restarted after creating .env.local');
-    console.error('  4. Current env value:', import.meta.env.VITE_API_KEY ? 'EXISTS (but empty?)' : 'UNDEFINED');
-    throw new Error("VITE_API_KEY is not set. Create .env.local with VITE_API_KEY=YOUR_GEMINI_KEY and restart the dev server.");
-  }
-  ai = new GoogleGenAI({ apiKey: key });
-  return ai;
-}
 
 // --- SCHEMA DEFINITIONS ---
 
@@ -333,19 +316,24 @@ export async function analyzeDailyProgress(imageBase64: string, history: any[]) 
     ]
   };
 
-  const response = await getAi().models.generateContent({
-    model: model,
-    contents: contents,
-    config: {
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: model,
+      contents: contents,
       systemInstruction: systemInstruction,
-      responseMimeType: "application/json",
-      responseSchema: dailyReportSchema,
-      temperature: 0,
-    }
+      schema: dailyReportSchema,
+      temperature: 0
+    })
   });
 
-  // Parse JSON with UTF-8 encoding support
-  const text = response.text;
+  if (!response.ok) {
+     throw new Error(`AI Request failed: ${response.statusText}`);
+  }
+  
+  const responseData = await response.json();
+  const text = responseData.text;
   try {
     return JSON.parse(text);
   } catch (parseErr: any) {
@@ -363,10 +351,17 @@ export async function generateProgressCompliment(scores: number[]): Promise<stri
   const model = 'gemini-2.5-flash';
   const prompt = `Based on these global aesthetic scores (${scores.join(', ')}), write a short, single-sentence motivational compliment.`;
 
-  const response = await getAi().models.generateContent({
-    model: model,
-    contents: prompt,
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: model,
+      contents: prompt,
+    })
   });
 
-  return response.text.trim();
+  if (!response.ok) return "Keep up the great work!";
+  
+  const responseData = await response.json();
+  return responseData.text.trim();
 }

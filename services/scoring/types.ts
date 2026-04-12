@@ -275,6 +275,7 @@ export interface FaceScores {
 }
 
 import type { SpectralDetectionResult } from '../analysis/types';
+import type { FaceBig6Scores } from './faceBig6Scoring';
 
 export interface SpectralScores extends Partial<SpectralDetectionResult> {
   statusScores: {
@@ -303,7 +304,8 @@ export interface ScoringResults {
   skin: SkinScores;
   face: FaceScores;
   spectral: SpectralScores;
-  advancedSkinMetrics?: AdvancedSkinMetrics; // NEW: 12 Advanced Metrics
+  advancedSkinMetrics?: AdvancedSkinMetrics; // 12 Advanced Skin Metrics
+  faceBig6?: FaceBig6Scores;                 // [NEW] Face Big 6 Scores
   globalScore: number;  // weighted average of overalls
   potentialScore: number; // Glow Up Potential
 }

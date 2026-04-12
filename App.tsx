@@ -28,6 +28,7 @@ import NotificationSettings from "./components/NotificationSettings";
 import AuthGate from "./components/AuthGate";
 import SplashScreen from "./components/SplashScreen";
 import { scheduleAllNotifications, getNotificationPreferences } from "./utils/notifications";
+import { savePendingReferral, trackReferralSignup } from "./services/referralService";
 
 
 
@@ -80,6 +81,20 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, [activeTab]);
 
+  // Detect referral code from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+      savePendingReferral(refCode);
+      // Clean URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('ref');
+      window.history.replaceState({}, '', url.pathname);
+      console.log('📎 Referral code detected:', refCode);
+    }
+  }, []);
+
   // Auto-schedule notifications on mount
   useEffect(() => {
     const prefs = getNotificationPreferences();
@@ -106,6 +121,11 @@ const App: React.FC = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
+
+      // Track referral signup when user authenticates
+      if (session?.user && event === 'SIGNED_IN') {
+        trackReferralSignup(session.user.id).catch(console.error);
+      }
 
       if (session?.user) {
         try {
@@ -157,7 +177,17 @@ const App: React.FC = () => {
 
               const sorted = combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-              localStorage.setItem("face_analysis_history", JSON.stringify(sorted));
+              // Save to localStorage WITHOUT base64 data to prevent QuotaExceededError
+              const historyToSave = sorted.map(report => ({
+                  ...report,
+                  imageUrl: undefined,
+                  faceState: report.faceState ? {
+                      ...report.faceState,
+                      primaryImageJpegBase64: undefined,
+                      retainedCropJpegBase64: undefined
+                  } : undefined
+              }));
+              localStorage.setItem("face_analysis_history", JSON.stringify(historyToSave));
 
               // Set latest as analysisData
               if (sorted.length > 0) {
@@ -229,7 +259,7 @@ const App: React.FC = () => {
   const changeTab = (tab: string) => {
     // [TEASER LOCK] Check if scores are masked (Free User)
     const isLocked = analysisData?.global_score === null;
-    const premiumTabs = ['face', 'spectral', 'recommendations'];
+    const premiumTabs = ['face', 'recommendations'];
 
     if (premiumTabs.includes(tab) && isLocked) {
       setIsPaywallVisible(true);
@@ -254,7 +284,16 @@ const App: React.FC = () => {
     setHistory(updatedHistory);
 
     try {
-      localStorage.setItem("face_analysis_history", JSON.stringify(updatedHistory));
+      const historyToSave = updatedHistory.map(report => ({
+          ...report,
+          imageUrl: undefined, // Strip large base64 image to prevent QuotaExceededError
+          faceState: report.faceState ? {
+              ...report.faceState,
+              primaryImageJpegBase64: undefined,
+              retainedCropJpegBase64: undefined
+          } : undefined
+      }));
+      localStorage.setItem("face_analysis_history", JSON.stringify(historyToSave));
     } catch (err: any) {
       console.error("Storage Save Failed:", err);
       alert(`⚠️ HISTORY SAVE FAILED (Storage Full?)\nError: ${err.message}\n\nAnalysis will still be shown!`);
@@ -375,7 +414,12 @@ const App: React.FC = () => {
     // Clear user data and redirect to login
     setUser(null);
     setOnboardingComplete(false);
-    localStorage.removeItem('onboardingComplete');
+    localStorage.removeItem('onboarding_completed');
+    localStorage.removeItem('user_demographics');
+    localStorage.removeItem('face_analysis_history');
+    setHistory([]);
+    setAnalysisData(null);
+    await supabase.auth.signOut();
   };
 
   const renderContent = () => {

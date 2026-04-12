@@ -1,6 +1,6 @@
 {
-  "short_name": "Facial Tracker",
-  "name": "AI Facial Progress Tracker",
+  "short_name": "Skinface",
+  "name": "Skinface AI",
   "description": "Track your daily facial and skin improvements with AI analysis. Upload a photo each day to monitor your progress, get a score, and receive personalized feedback.",
   "icons": [
     {

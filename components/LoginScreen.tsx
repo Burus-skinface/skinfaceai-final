@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { t } from '../localization';
+import LegalModal, { LegalTab } from './LegalModal';
 
 interface LoginScreenProps {
   onLoginWithGoogle: () => void;
@@ -13,6 +14,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showLegalTab, setShowLegalTab] = useState<LegalTab | null>(null);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,7 +237,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
               {/* Google Sign In Option */}
               <button
                 onClick={onLoginWithGoogle}
-                className="w-full py-3.5 px-6 bg-white/10 backdrop-blur-sm text-white text-sm sm:text-base font-medium rounded-full border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-200 flex items-center justify-center gap-3"
+                className="w-full py-3.5 px-6 bg-white/10 backdrop-blur-sm text-white text-sm sm:text-base font-medium rounded-full border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-200 flex items-center justify-center gap-3 mb-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -245,22 +247,40 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
                 </svg>
                 {t.continueWithGoogle}
               </button>
+
+              {/* Apple Sign In Option (Required alongside Google for App Store) */}
+              <button
+                onClick={() => alert("Apple Sign in will be enabled upon App Store Connect configuration.")}
+                className="w-full py-3.5 px-6 bg-white text-black text-sm sm:text-base font-bold rounded-full border border-white hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-3"
+              >
+                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 384 512">
+                  <path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.3-67.9 36.9-14.1 18.1-25.7 47.1-22.8 71.2 25.2 2 46.6-12.2 66.7-35.6z"/>
+                </svg>
+                Continue with Apple
+              </button>
             </div>
           )}
 
           {/* Terms & Privacy */}
-          <p className="text-center text-xs text-gray-400 px-2 leading-relaxed mt-4">
-            By proceeding to use <span className="text-teal-400 font-medium">Skinface AI</span>, you agree to our{' '}
-            <button className="text-gray-300 underline hover:text-white transition-colors">
-              terms of use
-            </button>{' '}
-            and acknowledge that you have read our{' '}
-            <button className="text-gray-300 underline hover:text-white transition-colors">
-              privacy policy
-            </button>
-          </p>
+          <div className="text-center px-2 mt-6">
+            <p className="text-[10px] text-gray-500 leading-relaxed font-medium">
+              By proceeding, you agree to our{' '}
+              <button onClick={() => setShowLegalTab('terms')} className="text-teal-400 hover:text-teal-300 underline transition-colors">Terms</button>
+              ,{' '}
+              <button onClick={() => setShowLegalTab('privacy')} className="text-teal-400 hover:text-teal-300 underline transition-colors">Privacy</button>
+              , and{' '}
+              <button onClick={() => setShowLegalTab('medical')} className="text-teal-400 hover:text-teal-300 underline transition-colors">Medical Disclaimer</button>.
+              <br/><span className="text-[9px] text-gray-600 mt-1 block">Face scans are processed securely and never stored.</span>
+            </p>
+          </div>
         </div>
       </div>
+      
+      <LegalModal 
+        isOpen={showLegalTab !== null} 
+        initialTab={showLegalTab || 'terms'} 
+        onClose={() => setShowLegalTab(null)} 
+      />
     </div>
   );
 };

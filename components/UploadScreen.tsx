@@ -8,6 +8,7 @@ import { t } from '../localization';
 import FaceScanCamera from './FaceScanCamera';
 import type { ComprehensiveFaceState } from '../services/faceScan/faceState';
 import { runFullPipeline } from '../services/pipeline/analysisPipeline';
+import { markReferralScanComplete, getPremiumStatus } from '../services/referralService';
 
 
 interface UploadScreenProps {
@@ -273,6 +274,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
     const [useCameraScan, setUseCameraScan] = useState(false); // Default false, strictly controlled
     const [currentFaceState, setCurrentFaceState] = useState<ComprehensiveFaceState | undefined>(undefined);
     const [pendingFaceState, setPendingFaceState] = useState<ComprehensiveFaceState | null>(null);
+    const [cameraError, setCameraError] = useState<string | null>(null);
 
     const dayNumber = history.length + 1;
     const hasUploadedToday = history.length > 0 && isToday(history[history.length - 1].date);
@@ -338,6 +340,17 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
             let authorizedPotentialScore: number | null = pipelineResult.scoring.potentialScore;
 
             try {
+                // Check local referral premium status
+                let hasPremium = false;
+                if (!user || user.isAnonymous) {
+                    // Guests get FULL PREMIUM access by default
+                    hasPremium = true;
+                } else if (user?.id) {
+                    // Registered users must earn premium
+                    const premiumStatus = await getPremiumStatus(user.id);
+                    hasPremium = premiumStatus.isActive;
+                }
+
                 // Use relative URL (goes through Vite proxy to server.js)
                 const dashController = new AbortController();
                 const dashTimeout = setTimeout(() => dashController.abort(), 10000);
@@ -347,6 +360,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         image: previewUrl,
+                        isPremium: hasPremium, // Pass premium status to backend
                         scores: {
                             general: pipelineResult.scoring.globalScore,
                             potential: pipelineResult.scoring.potentialScore
@@ -392,10 +406,24 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
 
             addLog('✅ Report created, navigating...');
             setLoading(false);
+            
+            // Mark referral as complete if this is their first scan
+            if (user?.id) {
+                markReferralScanComplete(user.id).catch(console.error);
+            }
+
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                navigator.vibrate([20, 50, 20]); // Tok "TIK" haptic
+            }
+
             onAnalysisComplete(newReport);
         } catch (err: any) {
             addLog(`❌ FAILED: ${err.message}`);
-            setError(`${t.analysisFailed} (${err.message})`);
+            if (err.message.includes('fetch') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+                setError("Your network connection is too weak to process Glow-up data. Please connect to Wi-Fi.");
+            } else {
+                setError(`${t.analysisFailed} (${err.message})`);
+            }
             setLoading(false);
         }
     };
@@ -462,13 +490,54 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                     </motion.div>
                 )}
 
+                {/* Camera Error Screen — replaces camera view on failure */}
+                {cameraError && !useCameraScan && !loading && (
+                    <div className="fixed inset-0 z-50 bg-[#050505] flex flex-col items-center justify-center p-6 animate-fade-in">
+                        {/* Error icon */}
+                        <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+
+                        <h2 className="text-xl font-bold text-white mb-2">Camera Access Denied</h2>
+                        <p className="text-gray-400 text-sm text-center max-w-xs mb-8 leading-relaxed">
+                            Camera access is closed. To scan your face, please go to Settings &gt; Skinface and enable Camera access.
+                        </p>
+
+                        {/* Open Settings button */}
+                        <button
+                            onClick={() => {
+                                alert("Imagine this opens app settings on iOS/Android.");
+                            }}
+                            className="w-full max-w-xs bg-white text-black font-bold py-4 px-8 rounded-2xl shadow-lg transform active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 mb-4 hover:bg-gray-200"
+                        >
+                            Open Settings
+                        </button>
+
+                        {/* Back button — only if there's history to go back to */}
+                        {history.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    setCameraError(null);
+                                    setError(null);
+                                    onSkip();
+                                }}
+                                className="text-gray-500 hover:text-white text-sm transition-colors duration-300 py-2"
+                            >
+                                Go Back
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {useCameraScan && !loading && (
                     <div className="fixed inset-0 z-50 bg-black animate-fade-in">
                         {/* Close Button */}
                         <button
                             onClick={() => {
                                 setUseCameraScan(false);
-                                if (autoStartCamera) onSkip(); // Return to results when in autoStart mode
+                                if (history.length > 0 && autoStartCamera) onSkip();
                             }}
                             className="absolute top-6 right-6 z-[60] p-2 bg-black/40 backdrop-blur-md rounded-full text-white/70 hover:text-white border border-white/10"
                         >
@@ -481,13 +550,12 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                             onFaceState={handleFaceCaptured}
                             onError={(e) => {
                                 console.error(e);
-                                setError("Camera failed. Please check permissions.");
+                                setCameraError("Camera failed. Please check permissions and try again.");
                                 setUseCameraScan(false);
-                                if (autoStartCamera) onSkip();
                             }}
                             onClose={() => {
                                 setUseCameraScan(false);
-                                if (autoStartCamera) onSkip();
+                                if (history.length > 0 && autoStartCamera) onSkip();
                             }}
                         />
                     </div>

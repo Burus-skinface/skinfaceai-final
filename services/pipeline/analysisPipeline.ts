@@ -11,6 +11,7 @@ import { detectSpectralSignals } from '../analysis/spectralDetection';
 import { scoreSkin } from '../scoring/skinScoring';
 import { scoreFace } from '../scoring/faceScoring';
 import { scoreSpectral } from '../scoring/spectralScoring';
+import { computeFaceBig6 } from '../scoring/faceBig6Scoring';
 
 import { generateRecommendations } from '../recommendations/recommendsEngine';
 import { debugLog } from '../../utils/debugLog';
@@ -101,6 +102,9 @@ export async function runFullPipeline(
   const potentialSpectral = spectralScores.statusScores.overallSpectral + ((10 - spectralScores.statusScores.overallSpectral) * 0.5);
   const potentialScore = (0.45 * potentialSkin) + (0.45 * potentialStructure) + (0.10 * potentialSpectral);
 
+  // Compute Face Big 6 from geometry (wraps faceScores, does not replace them)
+  const faceBig6 = computeFaceBig6(faceState, userPreferences?.gender || 'male');
+
   const scoring: ScoringResults = {
     scanId: faceState.scanId,
     skin: skinScores,
@@ -118,6 +122,7 @@ export async function runFullPipeline(
       avgHealthScore: faceState.advancedSkinMetrics.avgHealthScore,
       avgQualityScore: faceState.advancedSkinMetrics.avgQualityScore,
     } : undefined,
+    faceBig6: faceBig6 ?? undefined,
     globalScore: Math.round(globalScore * 10) / 10,
     potentialScore: Math.round(Math.max(globalScore, potentialScore) * 10) / 10,
   };

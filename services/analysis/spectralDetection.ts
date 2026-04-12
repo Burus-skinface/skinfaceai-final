@@ -1,6 +1,6 @@
 import type { ComprehensiveFaceState } from '../faceScan/faceState';
 import type { SpectralDetectionResult } from './types';
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { separateDiffuseSpecular, computeRednessIndex, computePigmentIndex, computeSallownessIndex, computeFrequencyMaps, computeTextureMetrics } from './spectralMath';
 
 // Helper: Decode Base64 to Uint8ClampedArray (RGBA)
@@ -56,18 +56,6 @@ function encodeMapToBase64(data: Uint8ClampedArray, width: number, height: numbe
   return canvas.toDataURL('image/png');
 }
 
-
-let ai: GoogleGenAI | null = null;
-function getAi() {
-  if (ai) return ai;
-  const key = import.meta.env.VITE_API_KEY;
-  if (!key) {
-    console.error('[SPECTRAL DETECTION] VITE_API_KEY is missing!');
-    throw new Error("VITE_API_KEY is not set.");
-  }
-  ai = new GoogleGenAI({ apiKey: key });
-  return ai;
-}
 
 // --- DYNAMIC LIGHT NORMALIZATION ---
 function getLightingNormalizationFactor(faceState: ComprehensiveFaceState): number {
@@ -418,21 +406,6 @@ function detectSpectralNoise(faceState: ComprehensiveFaceState): SpectralDetecti
  * Gemini: Generate natural language descriptions
  */
 async function generateDescriptions(findings: any): Promise<any> {
-  const schema = {
-    type: Type.OBJECT,
-    properties: {
-      pigmentUniformity: { type: Type.STRING },
-      rednessSignal: { type: Type.STRING },
-      oilReflectance: { type: Type.STRING },
-      opticalClarity: { type: Type.STRING },
-      textureFrequency: { type: Type.STRING },
-      underEyeFreshness: { type: Type.STRING },
-      chromaticStability: { type: Type.STRING },
-      spectralNoise: { type: Type.STRING },
-    },
-    required: ["pigmentUniformity", "rednessSignal", "oilReflectance", "opticalClarity", "textureFrequency", "underEyeFreshness", "chromaticStability", "spectralNoise"]
-  };
-
   const prompt = `
     You are an advanced Dermatological AI. Analyze these spectral findings and provide a unique "AI Insight" for each category.
     This insight should explain WHAT the specific metric reveals about the user's skin health today.
@@ -443,18 +416,22 @@ async function generateDescriptions(findings: any): Promise<any> {
     `;
 
   try {
-    const response = await getAi().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: schema,
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-2.5-flash",
+        contents: prompt,
         temperature: 0,
-      }
+      })
     });
 
-    // Parse JSON with UTF-8 encoding support
-    const text = response.text;
+    if (!response.ok) {
+      throw new Error(`AI Request failed: ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    const text = responseData.text;
     try {
       return JSON.parse(text);
     } catch (e) {
