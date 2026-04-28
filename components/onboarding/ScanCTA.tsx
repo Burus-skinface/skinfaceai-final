@@ -45,7 +45,12 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
 
         return () => {
             cancelled = true;
-            // Do NOT kill the stream here! FaceScanCamera needs it alive.
+            // CRITICAL: Must kill the stream here! Otherwise react-webcam cannot acquire the camera
+            // on Windows/Chrome resulting in a false "Permission Denied / NotReadableError".
+            if (window.__prewarmed_camera_stream) {
+                window.__prewarmed_camera_stream.getTracks().forEach(t => t.stop());
+                window.__prewarmed_camera_stream = null;
+            }
         };
     }, []);
 

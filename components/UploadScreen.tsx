@@ -340,44 +340,9 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
             let authorizedPotentialScore: number | null = pipelineResult.scoring.potentialScore;
 
             try {
-                // Check local referral premium status
-                let hasPremium = false;
-                if (!user || user.isAnonymous) {
-                    // Guests get FULL PREMIUM access by default
-                    hasPremium = true;
-                } else if (user?.id) {
-                    // Registered users must earn premium
-                    const premiumStatus = await getPremiumStatus(user.id);
-                    hasPremium = premiumStatus.isActive;
-                }
-
-                // Use relative URL (goes through Vite proxy to server.js)
-                const dashController = new AbortController();
-                const dashTimeout = setTimeout(() => dashController.abort(), 10000);
-
-                const response = await fetch('/api/dashboard', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        image: previewUrl,
-                        isPremium: hasPremium, // Pass premium status to backend
-                        scores: {
-                            general: pipelineResult.scoring.globalScore,
-                            potential: pipelineResult.scoring.potentialScore
-                        }
-                    }),
-                    signal: dashController.signal,
-                });
-
-                clearTimeout(dashTimeout);
-
-                if (response.ok) {
-                    const serverRes = await response.json();
-                    if (serverRes.success && serverRes.data.scores) {
-                        authorizedGeneralScore = serverRes.data.scores.general ?? pipelineResult.scoring.globalScore;
-                        authorizedPotentialScore = serverRes.data.scores.potential ?? pipelineResult.scoring.potentialScore;
-                    }
-                }
+                // DEV BYPASS: Skip backend dashboard check to avoid delays
+                console.log('[UPLOAD] DEV BYPASS: Skipping backend /api/dashboard call...');
+                // Fallthrough to local scores instantly
             } catch (e) {
                 // Backend auth failed, using local score silently
             }

@@ -212,6 +212,57 @@ export async function generateRecommendations(
   userPreferences?: UserPreferences,
   previousScanData?: DailyReport
 ): Promise<RecommendationsResult> {
+  // DEV BYPASS: Return mock data instantly to skip API calls
+  console.log('[RECOMMENDS] DEV BYPASS: Returning mock recommendations data...');
+  return {
+      eliteReport: {
+          featureBreakdown: [],
+          structuralVerdict: "Your facial symmetry is within the top 15% of your age group. Strong jawline definition provides excellent framing.",
+          technicalAssets: [{ term: "Zygomatic Width", explanation: "Strong cheekbone prominence adds character." }],
+          technicalDeficits: [{ term: "Under-eye support", explanation: "Slight hollowness, easily improved with hydration." }]
+      },
+      big6Insights: {
+          acneClarity: "Your skin is remarkably clear today. The slight redness from yesterday has completely faded. Keep your hands off your face to maintain this baseline.",
+          texturePores: "Pore visibility is minimal across the T-zone. Your current exfoliation routine is working perfectly—don't increase the frequency.",
+          barrierDefense: "Your lipid barrier looks robust. No signs of micro-inflammation or sensitivity detected. Keep using your ceramide moisturizer.",
+          sebumDynamics: "Oil production is balanced. You're in the 'Goldilocks' zone—neither overly matte nor shiny. Your hydration levels are holding strong.",
+          toneUniformity: "Pigment homogenization is excellent. Minor variations around the mouth are normal and do not detract from your overall radiance.",
+          visualFatigue: "High radiance and low puffiness indicate good rest. Your eye area is bright, showing zero signs of chronological fatigue today."
+      },
+      faceBig6Insights: {
+          eyes: "Your eye shape has positive canthal tilt, giving a sharp, alert look. No signs of hooding or fatigue.",
+          nose: "Your nose profile is straight and proportional to your midface. It anchors your facial symmetry well.",
+          jawline: "Strong gonial angle. Your jawline is well-defined and separates cleanly from your neck.",
+          chin: "Chin projection is balanced with your lower lip. No signs of recession.",
+          midface: "Compact midface ratio gives you a highly youthful and aesthetic framing.",
+          harmony: "All facial thirds are exceptionally balanced. Your facial architecture scores very highly."
+      },
+      priorityOrder: ["Hydration", "Sun Protection", "Rest"],
+      focusAreas: [
+          {
+              area: "Under-eye hydration",
+              why: "To prevent future hollowness",
+              actions: ["Apply hyaluronic acid serum on damp skin", "Get 8 hours of sleep"],
+              timeline: "3_months"
+          }
+      ],
+      dailyRoutine: {
+          morning: ["Gentle Cleanser", "Vitamin C Serum", "SPF 50+ Moisturizer"],
+          evening: ["Double Cleanse", "Peptide Serum", "Ceramide Night Cream"]
+      },
+      monthlyGoals: {
+          month1: "Establish consistent hydration",
+          month3: "Improve under-eye elasticity",
+          month6: "Maintain zero breakouts",
+          month12: "Achieve maximal skin radiance"
+      },
+      motivationalNote: "Your structure is elite. Stay consistent with your routine to maximize your natural potential.",
+      recommendedProducts: [
+          { productId: "cerave_moisturizer", confidenceScore: 95, reason: "Perfect for reinforcing your current barrier strength." },
+          { productId: "paulas_choice_bha", confidenceScore: 88, reason: "Will maintain your cleared pores gently." }
+      ]
+  };
+
   console.log('[RECOMMENDS] Generating recommendations via Secure Backend...');
 
   const schema = {

@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
+
 export interface NotificationPreferences {
   enabled: boolean;
   morningRoutineTime: string;   // "HH:MM" — morning skincare routine
@@ -23,10 +26,15 @@ const DEFAULT_PREFS: NotificationPreferences = {
 let scheduledTimeouts: Record<string, number> = {};
 
 export function areNotificationsSupported(): boolean {
+  if (Capacitor.isNativePlatform()) return true;
   return typeof window !== "undefined" && "Notification" in window;
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
+  if (Capacitor.isNativePlatform()) {
+    const res = await LocalNotifications.requestPermissions();
+    return res.display === 'granted';
+  }
   if (!areNotificationsSupported()) return false;
   if (Notification.permission === "granted") return true;
   const res = await Notification.requestPermission();
@@ -184,8 +192,27 @@ export function markAllAsRead(): void {
 
 // ─── Scheduler ──────────────────────────────────────────────────────
 
-function scheduleOne(key: string, time: string, config: NotifConfig): void {
-  // Clear existing
+async function scheduleOne(key: string, time: string, config: NotifConfig, id: number): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    const [hh, mm] = time.split(":").map((x) => parseInt(x, 10));
+    try {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: config.title,
+            body: config.body,
+            id: id,
+            schedule: { allowWhileIdle: true, on: { hour: hh, minute: mm } }
+          }
+        ]
+      });
+    } catch(e) {
+      console.error('LocalNotifications schedule error:', e);
+    }
+    return;
+  }
+
+  // Web Fallback
   if (scheduledTimeouts[key]) {
     window.clearTimeout(scheduledTimeouts[key]);
     delete scheduledTimeouts[key];
@@ -195,27 +222,38 @@ function scheduleOne(key: string, time: string, config: NotifConfig): void {
   scheduledTimeouts[key] = window.setTimeout(() => {
     sendNotification(config);
     // Re-schedule for next day
-    scheduleOne(key, time, config);
+    scheduleOne(key, time, config, id);
   }, delay);
 }
 
 /**
  * Schedule all 3 daily notifications. Call this on app start if enabled.
  */
-export function scheduleAllNotifications(prefs?: NotificationPreferences): void {
+export async function scheduleAllNotifications(prefs?: NotificationPreferences): Promise<void> {
   if (!areNotificationsSupported()) return;
-  if (Notification.permission !== "granted") return;
+
+  if (Capacitor.isNativePlatform()) {
+     const check = await LocalNotifications.checkPermissions();
+     if (check.display !== 'granted') return;
+     // clear pending first to prevent duplication
+     await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}] });
+  } else {
+     if (Notification.permission !== "granted") return;
+  }
 
   const p = prefs ?? getNotificationPreferences();
   if (!p.enabled) return;
 
-  scheduleOne("morning", p.morningRoutineTime, NOTIFICATION_CONFIGS.morning);
-  scheduleOne("scan", p.scanReminderTime, NOTIFICATION_CONFIGS.scan);
-  scheduleOne("evening", p.eveningRoutineTime, NOTIFICATION_CONFIGS.evening);
+  scheduleOne("morning", p.morningRoutineTime, NOTIFICATION_CONFIGS.morning, 1);
+  scheduleOne("scan", p.scanReminderTime, NOTIFICATION_CONFIGS.scan, 2);
+  scheduleOne("evening", p.eveningRoutineTime, NOTIFICATION_CONFIGS.evening, 3);
 }
 
 /** Stop all scheduled notifications */
-export function clearAllScheduled(): void {
+export async function clearAllScheduled(): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}] });
+  }
   Object.values(scheduledTimeouts).forEach((id) => window.clearTimeout(id));
   scheduledTimeouts = {};
 }

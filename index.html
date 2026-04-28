@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skinface AI — Know Your Face</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Skinface: Face Scan & Glow Up</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Skinface">
-  <meta name="description" content="AI-powered facial & skin analysis. Get your Aesthetics Score, glow-up roadmap and daily tracking.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="AI-powered face scan & glow up tracker. Get your Aesthetics Score, personalized skincare routine, and daily facial progress tracking.">
+  <!-- Fonts are bundled locally in /fonts/ — no external CDN dependency -->
+  <link rel="preload" href="/fonts/Inter-400.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/fonts/Inter-700.ttf" as="font" type="font/ttf" crossorigin>
+  
+  <link rel="preload" href="/skinface-icon.png" as="image" fetchpriority="high">
+  <link rel="preload" href="/scan_cta_blonde.png" as="image" fetchpriority="high">
+  <link rel="preload" href="/images/showcase_face.jpg" as="image" fetchpriority="high">
+
   <!-- Tailwind is bundled via PostCSS (see index.css + postcss.config.cjs) -->
   <!-- Google Sign-In - Load synchronously -->
   <script src="https://accounts.google.com/gsi/client"></script>

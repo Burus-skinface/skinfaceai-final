@@ -1,7 +1,7 @@
 {
   "short_name": "Skinface",
-  "name": "Skinface AI",
-  "description": "Track your daily facial and skin improvements with AI analysis. Upload a photo each day to monitor your progress, get a score, and receive personalized feedback.",
+  "name": "Skinface: Face Scan & Glow Up",
+  "description": "AI-powered face scan & glow up tracker. Get your Aesthetics Score, personalized skincare routine, and daily facial progress tracking.",
   "icons": [
     {
       "src": "/icons/icon-192x192.svg",

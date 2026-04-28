@@ -34,7 +34,7 @@ export const FaceScanLoader: React.FC = () => {
                 <div className="relative w-[320px] h-[380px] rounded-[2rem] overflow-hidden border border-white/10 bg-black shadow-2xl group">
 
                     {/* Background Grid */}
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+                    <div className="absolute inset-0 bg-[url('/images/noise.svg')] opacity-20" />
                     <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 to-cyan-900/10" />
 
                     {/* Face Image Container */}
@@ -53,7 +53,7 @@ export const FaceScanLoader: React.FC = () => {
                             />
 
                             {/* Mesh Overlay (Simulated) */}
-                            <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay" />
+                            <div className="absolute inset-0 opacity-40 bg-[url('/images/cubes.png')] mix-blend-overlay" />
 
                             {/* Micro-Coordinates (Animated Dots) */}
                             <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-purple-400 rounded-full animate-ping" />

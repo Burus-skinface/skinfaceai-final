@@ -42,7 +42,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 15 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                             className="mb-10"
                         >
                             <img
@@ -54,7 +54,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                         <motion.h2
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2, duration: 0.8 }}
+                            transition={{ delay: 0.1, duration: 0.4 }}
                             className="text-[26px] sm:text-[30px] font-bold leading-[1.2] tracking-tight text-[#1D1D1F] max-w-[280px] mx-auto text-balance"
                         >
                             Clinical AI Skin Analysis
@@ -62,7 +62,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            transition={{ delay: 0.4, duration: 0.8 }}
+                            transition={{ delay: 0.2, duration: 0.4 }}
                             className="text-[15px] text-[#86868B] mt-5 max-w-[260px] mx-auto leading-relaxed"
                         >
                             Upload a selfie and get an instant, medical-grade breakdown of your skin metrics.

@@ -1,5 +1,5 @@
 // Bump cache version to ensure clients don't get stuck on stale index.html across deployments.
-const CACHE_NAME = 'ai-facial-tracker-v2';
+const CACHE_NAME = 'skinface-v1';
 const URLS_TO_CACHE = [
   '/',
   '/index.html'

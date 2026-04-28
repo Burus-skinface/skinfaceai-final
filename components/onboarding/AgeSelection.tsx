@@ -19,7 +19,7 @@ const AgeSelection: React.FC<AgeSelectionProps> = ({ onNext, onBack }) => {
     return (
         <div className="relative flex flex-col h-full bg-[#FFFFFF] text-[#1D1D1F] font-sans overflow-hidden">
             {/* Background Ambience */}
-            <div className="absolute inset-x-0 -top-20 h-[70%] bg-[#F5F5F7] blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute inset-x-0 -top-20 h-[70%] bg-gradient-to-b from-[#F5F5F7] pb-[-30px] to-transparent pointer-events-none" />
 
             {/* Navbar */}
             <div className="relative z-10 px-6 pt-12 pb-4 flex items-center justify-between">
@@ -44,12 +44,12 @@ const AgeSelection: React.FC<AgeSelectionProps> = ({ onNext, onBack }) => {
 
             {/* List */}
             <motion.div
-                className="flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide space-y-4"
+                className="relative z-10 flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide space-y-4"
                 variants={{
                     hidden: { opacity: 0 },
                     show: {
                         opacity: 1,
-                        transition: { staggerChildren: 0.08 }
+                        transition: { staggerChildren: 0.04 }
                     }
                 }}
                 initial="hidden"
@@ -59,7 +59,7 @@ const AgeSelection: React.FC<AgeSelectionProps> = ({ onNext, onBack }) => {
                     <motion.button
                         key={age}
                         variants={{
-                            hidden: { opacity: 0, y: 20 },
+                            hidden: { opacity: 0, y: 10 },
                             show: { opacity: 1, y: 0 }
                         }}
                         whileTap={{ scale: 0.97 }}
@@ -78,7 +78,7 @@ const AgeSelection: React.FC<AgeSelectionProps> = ({ onNext, onBack }) => {
                                     className="w-full h-full rounded-full flex items-center justify-center bg-white"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                 >
                                     <svg className="w-4 h-4 text-[#1D1D1F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

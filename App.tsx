@@ -29,7 +29,9 @@ import AuthGate from "./components/AuthGate";
 import SplashScreen from "./components/SplashScreen";
 import { scheduleAllNotifications, getNotificationPreferences } from "./utils/notifications";
 import { savePendingReferral, trackReferralSignup } from "./services/referralService";
-
+import { Purchases } from "@revenuecat/purchases-capacitor";
+import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
 
 
 const App: React.FC = () => {
@@ -61,15 +63,20 @@ const App: React.FC = () => {
   const [pendingReport, setPendingReport] = useState<DailyReport | null>(null);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [forceStartAnalysis, setForceStartAnalysis] = useState(false);
+  // Premium subscription state — the single source of truth for feature access
+  const [isPremium, setIsPremium] = useState<boolean>(() => {
+    return localStorage.getItem('is_premium') === 'true';
+  });
 
   // Splash + Auth loading screen
   const [showSplash, setShowSplash] = useState(true);
 
+  // Network State
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+
   // Onboarding State
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [onboardingComplete, setOnboardingComplete] = useState(() => {
-    return localStorage.getItem("onboarding_completed") === "true";
-  });
+  const [sessionOnboardingComplete, setSessionOnboardingComplete] = useState(false);
 
   // Onboarding Data State
   const [userData, setUserData] = useState<{ age: string; gender: string } | null>(() => {
@@ -103,16 +110,88 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Back button handling & Offline detector
+  useEffect(() => {
+    // 1. Offline Listener
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // 2. Android Back Button
+    let backButtonListener: any = null;
+    const registerBackButton = async () => {
+      if (!Capacitor.isNativePlatform()) return;
+      backButtonListener = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+        // Handle overlays first
+        if (isPaywallVisible) { setIsPaywallVisible(false); return; }
+        if (showNotifSettings) { setShowNotifSettings(false); return; }
+        if (showAuthGate) { setShowAuthGate(false); return; }
+        if (showDailyPrompt) { setShowDailyPrompt(false); return; }
+        if (showScanCamera || showReadyToScan) {
+          setShowScanCamera(false);
+          setShowReadyToScan(false);
+          return;
+        }
+
+        // Handle tabs
+        if (activeTab !== "results") {
+          setActiveTab("results");
+          window.scrollTo(0, 0);
+          return;
+        }
+
+        // Exit or regular back
+        if (canGoBack) {
+           window.history.back();
+        } else {
+           CapacitorApp.exitApp();
+        }
+      });
+    };
+    registerBackButton();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      if (backButtonListener && backButtonListener.remove) {
+        backButtonListener.remove();
+      }
+    };
+  }, [activeTab, isPaywallVisible, showAuthGate, showScanCamera, showReadyToScan, showNotifSettings, showDailyPrompt]);
+
+  // Initialize RevenueCat SDK + check existing subscription on startup
+  useEffect(() => {
+    const initRC = async () => {
+      if (!Capacitor.isNativePlatform()) return;
+      try {
+        const platform = Capacitor.getPlatform();
+        if (platform === "ios") {
+          await Purchases.configure({ apiKey: import.meta.env.VITE_REVENUECAT_IOS_KEY || "" });
+        } else if (platform === "android") {
+          await Purchases.configure({ apiKey: import.meta.env.VITE_REVENUECAT_ANDROID_KEY || "" });
+        }
+        // P0 FIX: Always check if the user already has an active subscription on startup
+        const ENTITLEMENT_ID = import.meta.env.VITE_RC_ENTITLEMENT_ID || 'premium';
+        const { customerInfo } = await Purchases.getCustomerInfo();
+        const hasActiveEntitlement = typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
+        setIsPremium(hasActiveEntitlement);
+        localStorage.setItem('is_premium', hasActiveEntitlement ? 'true' : 'false');
+      } catch (e) {
+        console.error("RevenueCat setup error:", e);
+      }
+    };
+    initRC();
+  }, []);
+
   const handleOnboardingComplete = () => {
-    localStorage.setItem("onboarding_completed", "true");
-    setOnboardingComplete(true);
+    setSessionOnboardingComplete(true);
   };
 
   const handleOnboardingCompleteWithData = (data: { age: string; gender: string }) => {
     setUserData(data);
     localStorage.setItem("user_demographics", JSON.stringify(data));
-    localStorage.setItem("onboarding_completed", "true");
-    setOnboardingComplete(true);
+    setSessionOnboardingComplete(true);
     // Auto-start scan after onboarding
     setShowScanCamera(true);
   };
@@ -125,6 +204,9 @@ const App: React.FC = () => {
       // Track referral signup when user authenticates
       if (session?.user && event === 'SIGNED_IN') {
         trackReferralSignup(session.user.id).catch(console.error);
+        if (Capacitor.isNativePlatform()) {
+          try { await Purchases.logIn({ appUserID: session.user.id }); } catch(e){}
+        }
       }
 
       if (session?.user) {
@@ -211,11 +293,21 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user && pendingReport) {
       const saveAndShow = async () => {
-        // Save to local history
+         // Save to local history WITHOUT base64 data (GDPR + QuotaExceededError guard)
+        const stripHeavyData = (report: any) => ({
+          ...report,
+          imageUrl: undefined,
+          faceState: report.faceState ? {
+              ...report.faceState,
+              primaryImageJpegBase64: undefined,
+              retainedCropJpegBase64: undefined
+          } : undefined
+        });
+
         const updatedHistory = [...history, pendingReport];
         setHistory(updatedHistory);
         try {
-          localStorage.setItem("face_analysis_history", JSON.stringify(updatedHistory));
+          localStorage.setItem("face_analysis_history", JSON.stringify(updatedHistory.map(stripHeavyData)));
         } catch (err: any) {
           console.error("Storage Save Failed:", err);
         }
@@ -256,12 +348,29 @@ const App: React.FC = () => {
     setIsPaywallVisible(false);
   };
 
-  const changeTab = (tab: string) => {
-    // [TEASER LOCK] Check if scores are masked (Free User)
-    const isLocked = analysisData?.global_score === null;
-    const premiumTabs = ['face', 'recommendations'];
+  // P0 FIX: Called when RevenueCat confirms a successful purchase
+  const handleUpgrade = async () => {
+    setIsPremium(true);
+    localStorage.setItem('is_premium', 'true');
+    setIsPaywallVisible(false);
+    // Persist premium status to Supabase so other devices also know
+    if (user) {
+      try {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          is_premium: true,
+          premium_since: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error('Failed to sync premium status to cloud:', e);
+      }
+    }
+  };
 
-    if (premiumTabs.includes(tab) && isLocked) {
+  const changeTab = (tab: string) => {
+    // Lock premium tabs for free users
+    const premiumTabs = ['face', 'recommendations'];
+    if (premiumTabs.includes(tab) && !isPremium) {
       setIsPaywallVisible(true);
       return;
     }
@@ -364,14 +473,31 @@ const App: React.FC = () => {
   }
 
   // Onboarding flow
-  if (!onboardingComplete) {
-    return <OnboardingManager onComplete={handleOnboardingComplete} onCompleteWithData={handleOnboardingCompleteWithData} initialStep={user ? 2 : 1} />;
+  const isGuest = !user;
+  const needsOnboarding = isGuest && !sessionOnboardingComplete;
+
+  if (needsOnboarding) {
+    return <OnboardingManager onComplete={handleOnboardingComplete} onCompleteWithData={handleOnboardingCompleteWithData} initialStep={1} />;
+  }
+
+  // CRITICAL PM FIX: User has no scan history → never show empty main app.
+  // Always drive them to first scan (ScanCTA acts as Step 4 fallback).
+  // If user exits/skips camera, they are routed right back here instead of the empty Turkish pages.
+  if (history.length === 0 && !showScanCamera && !showReadyToScan && !showAuthGate) {
+    return <ScanCTA onStart={handleConfirmScan} onBack={() => {
+        if (isGuest) {
+            setSessionOnboardingComplete(false);
+        } else {
+            handleLogout();
+        }
+    }} />;
   }
 
   // Show ready to scan screen — use the premium ScanCTA from onboarding
   if (showReadyToScan) {
     return <ScanCTA onStart={handleConfirmScan} onBack={() => setShowReadyToScan(false)} />;
   }
+
 
   // Show camera for scanning
   if (showScanCamera) {
@@ -413,12 +539,14 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     // Clear user data and redirect to login
     setUser(null);
-    setOnboardingComplete(false);
-    localStorage.removeItem('onboarding_completed');
+    setSessionOnboardingComplete(false);
     localStorage.removeItem('user_demographics');
     localStorage.removeItem('face_analysis_history');
     setHistory([]);
     setAnalysisData(null);
+    if (Capacitor.isNativePlatform()) {
+       try { await Purchases.logOut(); } catch(e) {}
+    }
     await supabase.auth.signOut();
   };
 
@@ -449,8 +577,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#09090b] text-white overflow-x-hidden font-sans">
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]" />
+    <div className="relative min-h-screen bg-[#F5F5F7] text-[#1D1D1F] overflow-x-hidden font-sans w-full h-full pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]">
+      {isOffline && (
+        <div className="fixed top-0 left-0 right-0 bg-red-500/90 text-white text-[11px] sm:text-xs font-bold text-center py-2 z-[200] backdrop-blur-md pt-[calc(env(safe-area-inset-top)+8px)]">
+          You are offline. Features may be limited.
+        </div>
+      )}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(168,85,247,0.05),rgba(255,255,255,0))]" />
 
       {/* Persistent Global Header - Visible on ALL tabs */}
       {contentKey >= 0 && <GlobalAppHeader user={user} onLogout={handleLogout} onShowNotificationSettings={() => setShowNotifSettings(true)} />}
@@ -460,7 +593,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Bottom Navigation — Slim Floating Island */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-white/[0.07] backdrop-blur-2xl border border-white/[0.12] rounded-full px-5 py-2.5 flex items-center gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-50">
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-2xl border border-black/5 rounded-full px-5 py-2.5 flex items-center gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.08)] z-50">
         <button onClick={() => changeTab("results")} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full transition-all duration-200 flex-1 min-w-[48px]">
           <SkinLayerIcon className={`w-5 h-5 ${activeTab === "results" ? "text-purple-400" : "text-gray-500"}`} />
           <span className={`text-[10px] font-medium ${activeTab === "results" ? "text-purple-400" : "text-gray-500"}`}>{t.results}</span>
@@ -471,15 +604,14 @@ const App: React.FC = () => {
           <span className={`text-[10px] font-medium ${activeTab === "face" ? "text-purple-400" : "text-gray-500"}`}>{t.details}</span>
         </button>
 
-        {/* CENTER SCAN BUTTON */}
         <button
           onClick={handleStartScan}
           className="flex flex-col items-center justify-center -mt-5 mx-1 transition-transform duration-200 active:scale-95"
         >
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25 border-[3px] border-[#09090b]">
+          <div className="w-12 h-12 rounded-full bg-[#1D1D1F] flex items-center justify-center shadow-lg shadow-black/20 border-[3px] border-[#F5F5F7]">
             <CameraIcon className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[9px] text-gray-500 mt-0.5 font-medium">Scan</span>
+          <span className="text-[9px] text-[#86868B] mt-0.5 font-medium">Scan</span>
         </button>
 
         <button onClick={() => changeTab("recommendations")} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-full transition-all duration-200 flex-1 min-w-[48px]">
@@ -495,8 +627,8 @@ const App: React.FC = () => {
 
       {/* Paywall Overlay */}
       {isPaywallVisible && (
-        <div className="fixed inset-0 bg-black z-[100] fade-in-up visible">
-          <Paywall onClose={handleClosePaywall} onUpgrade={() => console.log('Upgrade clicked')} />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] fade-in-up visible">
+          <Paywall onClose={handleClosePaywall} onUpgrade={handleUpgrade} />
         </div>
       )}
 

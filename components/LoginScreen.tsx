@@ -46,24 +46,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
       <div className="relative z-10 flex flex-col items-center justify-start flex-1 w-full max-w-md px-6 sm:px-8 pt-12 pb-6">
         {/* Logo/Brand */}
         <div className="text-center mb-6 sm:mb-8 fade-in-up visible">
-          {/* App Icon */}
-          <div className="inline-flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 mb-5 sm:mb-6 bg-gradient-to-br from-teal-500/20 to-purple-600/20 backdrop-blur-xl rounded-[2.5rem] border border-teal-400/30 shadow-2xl shadow-teal-500/20 relative overflow-hidden">
-            {/* Shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-400/20 via-transparent to-purple-400/20"></div>
-            
-            {/* Face outline SVG */}
-            <svg className="w-14 h-14 sm:w-16 sm:h-16 text-teal-400 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              <circle cx="9" cy="10" r="0.5" fill="currentColor" />
-              <circle cx="15" cy="10" r="0.5" fill="currentColor" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 13.5c0.5 0.5 1.5 1 3 1s2.5-0.5 3-1" />
-            </svg>
+          {/* App Icon - using the official splash asset for brand consistency */}
+          <div className="inline-flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 mb-5 sm:mb-6 relative">
+            <img 
+              src="/skinface-icon.png" 
+              alt="Skinface" 
+              className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(168,85,247,0.4)]"
+            />
           </div>
           
           {/* App Title */}
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2 sm:mb-3 tracking-tight px-4 bg-gradient-to-r from-teal-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent" style={{ fontWeight: 700 }}>
-            Skinface AI
+          <h1 className="text-3xl sm:text-4xl font-bold mb-1 tracking-tight px-4 bg-gradient-to-r from-teal-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent" style={{ fontWeight: 700 }}>
+            Skinface
           </h1>
+          <p className="text-sm text-gray-400 mb-2 tracking-widest uppercase font-semibold">Face Scan &amp; Glow Up</p>
           
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-gray-300 font-medium tracking-wide px-4 mb-1">

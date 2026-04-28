@@ -124,7 +124,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                         >
                             <div className="flex items-center gap-2">
                                 <img
-                                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                                    src="/images/google.svg"
                                     alt="Google"
                                     className="w-[18px] h-[18px]"
                                 />

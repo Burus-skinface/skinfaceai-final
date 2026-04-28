@@ -15,10 +15,10 @@ interface FaceBig6InsightsResultProps {
 
 // Score pill color (0-10 scale)
 const pillColor = (s: number) => {
-  if (s >= 8.5) return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', ring: 'ring-emerald-500/20' };
-  if (s >= 7.0) return { bg: 'bg-green-500/10', text: 'text-green-400', ring: 'ring-green-500/15' };
-  if (s >= 5.0) return { bg: 'bg-amber-500/10', text: 'text-amber-400', ring: 'ring-amber-500/15' };
-  return { bg: 'bg-red-500/10', text: 'text-red-400', ring: 'ring-red-500/15' };
+  if (s >= 8.5) return { bg: 'bg-emerald-500/15', text: 'text-emerald-600', ring: 'ring-emerald-500/20' };
+  if (s >= 7.0) return { bg: 'bg-green-500/10', text: 'text-green-600', ring: 'ring-green-500/15' };
+  if (s >= 5.0) return { bg: 'bg-amber-500/10', text: 'text-amber-600', ring: 'ring-amber-500/15' };
+  return { bg: 'bg-red-500/10', text: 'text-red-600', ring: 'ring-red-500/15' };
 };
 
 // Tag badge color
@@ -44,14 +44,14 @@ const FaceBig6Card: React.FC<{
   const colors = score !== undefined ? pillColor(score) : null;
 
   return (
-    <div className="w-full bg-[#1C1C1E] rounded-2xl p-4 border border-white/[0.06] transition-colors">
+    <div className="w-full bg-white rounded-2xl p-4 border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-colors">
       {/* Top row: icon + title + score pill */}
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-xl bg-white/[0.05] flex items-center justify-center">
+          <div className="w-7 h-7 rounded-xl bg-[#F5F5F7] flex items-center justify-center">
             {icon}
           </div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#86868B]">
             {title}
           </span>
         </div>
@@ -66,22 +66,22 @@ const FaceBig6Card: React.FC<{
       </div>
 
       {/* AI Insight text */}
-      <p className="text-[13px] text-gray-300 leading-relaxed mb-3">
+      <p className="text-[13px] text-[#48484A] leading-relaxed mb-3">
         {insight}
       </p>
 
       {/* Breakdown sub-metrics */}
       {metric?.breakdown && metric.breakdown.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-2.5 border-t border-white/[0.05]">
+        <div className="flex flex-wrap gap-1.5 pt-2.5 border-t border-black/5">
           {metric.breakdown.map((b) => {
             const tc = tagColor(b.tag);
             const bc = pillColor(b.score);
             return (
               <div
                 key={b.label}
-                className="flex items-center gap-1.5 px-2 py-1 bg-white/[0.03] rounded-lg border border-white/[0.05]"
+                className="flex items-center gap-1.5 px-2 py-1 bg-[#F5F5F7] rounded-lg border border-black/5"
               >
-                <span className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide">{b.label}</span>
+                <span className="text-[9px] font-semibold text-[#86868B] uppercase tracking-wide">{b.label}</span>
                 <span className={`text-[9px] font-mono px-1 rounded ${tc}`}>{b.tag}</span>
                 <span className={`text-[10px] font-bold tabular-nums ${bc.text}`}>{b.score.toFixed(1)}</span>
               </div>
@@ -145,8 +145,8 @@ const FaceBig6InsightsResult: React.FC<FaceBig6InsightsResultProps> = ({ insight
       {/* Section Header */}
       <div className="flex items-center justify-between gap-2 mb-3 px-1">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-400" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">
+          <Sparkles className="w-4 h-4 text-purple-600" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-purple-600">
             AI Synthesis · Face Big 6
           </span>
         </div>

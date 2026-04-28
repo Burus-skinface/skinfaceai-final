@@ -176,7 +176,7 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
             }}>
                 <img
                     ref={imgRef}
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80"
+                    src="/images/showcase_face.jpg"
                     alt="Clinical Face Scan"
                     className="w-full h-full object-cover opacity-90 mix-blend-multiply"
                 />
@@ -207,7 +207,7 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                                         stroke="#1D1D1F" strokeOpacity={0.15} strokeWidth="1" strokeDasharray="2 4"
                                         initial={{ pathLength: 0, opacity: 0 }}
                                         animate={{ pathLength: 1, opacity: 1 }}
-                                        transition={{ duration: 1.5, delay: 0.2 + i * 0.4, ease: "easeInOut" }}
+                                        transition={{ duration: 0.6, delay: 0.1 + i * 0.15, ease: "easeInOut" }}
                                     />
                                 );
                             })}
@@ -224,7 +224,7 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                                     className="absolute w-2 h-2 rounded-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.15)] border border-[#1D1D1F]/10 -translate-x-1/2 -translate-y-1/2"
                                     style={{ top: `${point.y}%`, left: `${point.x}%` }}
                                     animate={{ scale: [1, 1.25, 1], opacity: [0.7, 1, 0.7] }}
-                                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.1 + i * 0.4 }}
+                                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.15 }}
                                 />
                             );
                         })}
@@ -237,7 +237,7 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                                     key={`label-${lm.id}`}
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.4, delay: 1.7 + sideIdx * 0.4 }}
+                                    transition={{ duration: 0.3, delay: 0.5 + sideIdx * 0.15 }}
                                     className="absolute left-[5%] -translate-y-1/2 flex items-center"
                                     style={{ top: `${labelY}%` }}
                                 >
@@ -257,7 +257,7 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
                                     key={`label-${lm.id}`}
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.4, delay: 2.9 + sideIdx * 0.4 }}
+                                    transition={{ duration: 0.3, delay: 0.8 + sideIdx * 0.15 }}
                                     className="absolute left-[88%] -translate-x-full -translate-y-1/2 flex items-center justify-end"
                                     style={{ top: `${labelY}%` }}
                                 >
@@ -299,7 +299,7 @@ export const AIShowcase: React.FC<AIShowcaseProps> = ({ onNext, onBack }) => {
             <motion.div
                 initial={{ y: "100%", opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.1 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
                 className="relative z-20 bg-white/90 backdrop-blur-xl border-t border-[#E5E5EA] rounded-t-[2.5rem] px-8 pt-10 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] text-center w-full"
             >
                 {/* Step Indicator */}

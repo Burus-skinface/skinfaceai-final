@@ -60,13 +60,12 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[100] px-4 pt-3 pb-1.5 bg-[#09090b]/90 backdrop-blur-xl border-b border-white/[0.04] transition-all duration-300">
+        <div className="fixed top-0 left-0 right-0 z-[100] px-4 pt-3 pb-1.5 bg-[#F5F5F7]/80 backdrop-blur-xl border-b border-black-[0.04] transition-all duration-300">
             <div className="w-full max-w-lg mx-auto flex items-center justify-between">
-                {/* Wordmark only — no logo icon */}
                 <div className="text-[15px] font-black tracking-tight">
-                    <span className="text-white/90">SKINFACE</span>
-                    <span className="text-white/30">.</span>
-                    <span className="text-purple-400/80 text-[13px] font-extrabold">ai</span>
+                    <span className="text-[#1D1D1F]">SKINFACE</span>
+                    <span className="text-[#1D1D1F]/30">.</span>
+                    <span className="text-purple-600 text-[13px] font-extrabold">ai</span>
                 </div>
 
                 {/* Right: Bell + Avatar */}
@@ -74,13 +73,13 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
                     {/* Notification Bell */}
                     <button
                         onClick={handleBellClick}
-                        className="relative p-1.5 rounded-full hover:bg-white/[0.06] transition-colors"
+                        className="relative p-1.5 rounded-full hover:bg-black/[0.04] transition-colors"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px] text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                         {unreadCount > 0 && (
-                            <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border border-[#09090b]"></div>
+                            <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border border-[#F5F5F7]"></div>
                         )}
                     </button>
 
@@ -94,15 +93,15 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
                         </button>
 
                         {showUserMenu && (
-                            <div className="absolute right-0 top-10 w-52 bg-[#1C1C1E] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden">
-                                <div className="px-3.5 py-3 border-b border-white/5">
-                                    <p className="text-[13px] font-semibold text-white truncate">{user?.email || 'Guest'}</p>
-                                    <p className="text-[10px] text-gray-500 mt-0.5">{user?.app_metadata?.provider || 'Email'}</p>
+                            <div className="absolute right-0 top-10 w-52 bg-white border border-black/5 rounded-2xl shadow-xl z-50 overflow-hidden">
+                                <div className="px-3.5 py-3 border-b border-black/5 bg-[#F5F5F7]/30">
+                                    <p className="text-[13px] font-semibold text-[#1D1D1F] truncate">{user?.email || 'Guest'}</p>
+                                    <p className="text-[10px] text-[#86868B] mt-0.5">{user?.app_metadata?.provider || 'Email'}</p>
                                 </div>
                                 <div className="py-1">
                                     <button
                                         onClick={() => { setShowUserMenu(false); onLogout?.(); }}
-                                        className="w-full px-3.5 py-2 text-left text-[13px] text-gray-400 hover:bg-white/5 flex items-center gap-2.5 transition-colors"
+                                        className="w-full px-3.5 py-2 text-left text-[13px] text-[#48484A] hover:bg-black/5 flex items-center gap-2.5 transition-colors"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -110,11 +109,11 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
                                         Log Out
                                     </button>
                                     
-                                    <div className="h-px bg-white/5 w-full my-1"></div>
+                                    <div className="h-px bg-black/5 w-full my-1"></div>
 
                                     <button
                                         onClick={() => { setShowUserMenu(false); window.location.href = 'mailto:support@skinface.ai'; }}
-                                        className="w-full px-3.5 py-2 text-left text-[13px] text-gray-400 hover:bg-white/5 flex items-center gap-2.5 transition-colors"
+                                        className="w-full px-3.5 py-2 text-left text-[13px] text-[#48484A] hover:bg-black/5 flex items-center gap-2.5 transition-colors"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -122,7 +121,7 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
                                         Contact Support
                                     </button>
                                     
-                                    <div className="h-px bg-white/5 w-full my-1"></div>
+                                    <div className="h-px bg-black/5 w-full my-1"></div>
                                     <button
                                         onClick={() => { 
                                             if(window.confirm('Are you sure you want to permanently delete your account and all facial data? This cannot be undone.')){
@@ -131,7 +130,7 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
                                                 onLogout?.(); 
                                             }
                                         }}
-                                        className="w-full px-3.5 py-2 text-left text-[13px] text-red-400 hover:bg-red-500/10 flex items-center gap-2.5 transition-colors"
+                                        className="w-full px-3.5 py-2 text-left text-[13px] text-red-500 hover:bg-red-50 flex items-center gap-2.5 transition-colors"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -147,9 +146,9 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
 
             {/* Notification Panel Dropdown */}
             {showNotifPanel && (
-                <div className="absolute right-4 top-16 w-80 max-h-[70vh] bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                    <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-white">Notifications</h3>
+                <div className="absolute right-4 top-16 w-80 max-h-[70vh] bg-white border border-black/5 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-4 border-b border-black/5 flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-[#1D1D1F]">Notifications</h3>
                         <button
                             onClick={() => { setShowNotifPanel(false); onShowNotificationSettings?.(); }}
                             className="text-[10px] font-bold text-purple-400 uppercase tracking-wider hover:text-purple-300 transition-colors"

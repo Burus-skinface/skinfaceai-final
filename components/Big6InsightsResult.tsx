@@ -31,10 +31,10 @@ function computeBig6Scores(m: AdvancedSkinMetrics) {
 
 // Color for score pill (0-1 scale)
 const pillColor = (s: number) => {
-  if (s >= 0.85) return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', ring: 'ring-emerald-500/20' };
-  if (s >= 0.70) return { bg: 'bg-green-500/10', text: 'text-green-400', ring: 'ring-green-500/15' };
-  if (s >= 0.50) return { bg: 'bg-amber-500/10', text: 'text-amber-400', ring: 'ring-amber-500/15' };
-  return { bg: 'bg-red-500/10', text: 'text-red-400', ring: 'ring-red-500/15' };
+  if (s >= 0.85) return { bg: 'bg-emerald-500/15', text: 'text-emerald-600', ring: 'ring-emerald-500/20' };
+  if (s >= 0.70) return { bg: 'bg-green-500/10', text: 'text-green-600', ring: 'ring-green-500/15' };
+  if (s >= 0.50) return { bg: 'bg-amber-500/10', text: 'text-amber-600', ring: 'ring-amber-500/15' };
+  return { bg: 'bg-red-500/10', text: 'text-red-600', ring: 'ring-red-500/15' };
 };
 
 const Big6Card: React.FC<{
@@ -47,14 +47,14 @@ const Big6Card: React.FC<{
   const colors = score !== undefined ? pillColor(score) : null;
 
   return (
-    <div className="w-full bg-[#1C1C1E] rounded-2xl p-4 border border-white/[0.06] transition-colors">
+    <div className="w-full bg-white rounded-2xl p-4 border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-colors">
       {/* Top row: icon + title + score pill */}
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-xl bg-white/[0.05] flex items-center justify-center">
+          <div className="w-7 h-7 rounded-xl bg-[#F5F5F7] flex items-center justify-center">
             {icon}
           </div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#86868B]">
             {title}
           </span>
         </div>
@@ -69,7 +69,7 @@ const Big6Card: React.FC<{
       </div>
 
       {/* AI Insight text */}
-      <p className="text-[13px] text-gray-300 leading-relaxed">
+      <p className="text-[13px] text-[#48484A] leading-relaxed">
         {insight}
       </p>
     </div>
@@ -124,8 +124,8 @@ const Big6InsightsResult: React.FC<Big6InsightsResultProps> = ({ insights, metri
     <div className="w-full">
       {/* Section Header */}
       <div className="flex items-center gap-2 mb-3 px-1">
-        <Sparkles className="w-4 h-4 text-indigo-400" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+        <Sparkles className="w-4 h-4 text-purple-600" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-purple-600">
           AI Synthesis · The Big 6
         </span>
       </div>

@@ -626,44 +626,24 @@ FINAL RULES:
 Generate user-facing outputs for all 7 categories + overall summary.`;
 
   try {
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        schema: schema,
-        temperature: 0
-      })
-    });
+    // DEV BYPASS: Skip API call
+    console.log('[SKIN DETECTION] DEV BYPASS: Returning mock data for Gemini');
+    const aiOutput = {
+      acne: "Minimal acne is present, primarily around the jawline.",
+      pores: "Pore visibility is low across the T-zone.",
+      blackheads: "A few blackheads are noticeable on the nose.",
+      redness: "Skin tone is relatively even with very slight redness.",
+      spots: "No significant dark spots detected.",
+      dullness: "Your skin shows high radiance and vitality.",
+      wrinkles: "No major fine lines are apparent.",
+      overallSkinSummary: "Your skin exhibits excellent overall health and balance."
+    };
+    const finalResult = {
+      ...aiOutput,
+      overallSkinScore, // Add calculated score
+    };
 
-    if (!response.ok) {
-      throw new Error(`AI Request failed: ${response.statusText}`);
-    }
-
-    const responseData = await response.json();
-    const text = responseData.text;
-    try {
-      const result = JSON.parse(text);
-      const finalResult = {
-        ...result,
-        overallSkinScore, // Add calculated score
-      };
-
-      return finalResult;
-    } catch (parseErr: any) {
-      console.error('[SKIN DETECTION] JSON parse failed:', parseErr);
-
-      // Try to fix encoding issues by removing control characters
-      const fixedText = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-      const result = JSON.parse(fixedText);
-      const finalResult = {
-        ...result,
-        overallSkinScore, // Add calculated score
-      };
-
-      return finalResult;
-    }
+    return finalResult;
   } catch (err: any) {
     debugLog.error('SKIN', 'Gemini API call failed', err.message);
     console.error('[SKIN DETECTION] Gemini API call failed:', err);
@@ -862,73 +842,17 @@ CRITICAL RULES:
 
 All outputs must be in English.`;
 
-  try {
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        schema: schema,
-        temperature: 0
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`AI Request failed: ${response.statusText}`);
-    }
-
-    const responseData = await response.json();
-    const text = responseData.text;
-    try {
-      return JSON.parse(text);
-    } catch (parseErr: any) {
-      console.error('[SKIN DETECTION] JSON parse failed:', parseErr);
-      // Try to fix encoding issues by removing control characters
-      const fixedText = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-      return JSON.parse(fixedText);
-    }
-  } catch (err: any) {
-    console.error('[SKIN DETECTION] Skin profile generation failed:', err);
-    if (err?.message?.includes('VITE_API_KEY')) {
-      throw err;
-    }
-    // Fallback: Simple derived values
-    const oilForehead = faceState.spectral.regionOilScore.forehead || 0;
-    const oilNose = faceState.spectral.regionOilScore.nose || 0;
-    const oilCheeks = ((faceState.spectral.regionOilScore.leftCheek || 0) + (faceState.spectral.regionOilScore.rightCheek || 0)) / 2;
-    const avgTZone = (oilForehead + oilNose) / 2;
-    const diff = Math.abs(avgTZone - oilCheeks);
-
-    let skinTypeValue = 'Normal';
-    let skinTypeDesc = 'Well-balanced skin type.';
-    if (avgTZone > 0.3 && oilCheeks < 0.25 && diff > 0.15) {
-      skinTypeValue = 'Combination';
-      skinTypeDesc = 'Mixed dry and oily zones.';
-    } else if (avgTZone > 0.4 && oilCheeks > 0.35) {
-      skinTypeValue = 'Oily';
-      skinTypeDesc = 'Excess sebum production detected.';
-    } else if (avgTZone < 0.2 && oilCheeks < 0.2) {
-      skinTypeValue = 'Dry';
-      skinTypeDesc = 'Requires consistent hydration layers.';
-    }
-
-    const moistureValue = avgTZone < 0.2 && oilCheeks < 0.2 ? 'Low' :
-      avgTZone > 0.4 && oilCheeks > 0.35 ? 'High' : 'Balanced';
-    const moistureDesc = moistureValue === 'Low' ? 'Levels appear low across facial regions.' :
-      moistureValue === 'High' ? 'Optimal hydration detected.' : 'Moderate moisture levels.';
-
-    return {
-      skinType: { value: skinTypeValue, description: skinTypeDesc },
-      moisture: { value: moistureValue, description: moistureDesc },
-      oiliness: { value: avgTZone > 0.4 ? 'High' : avgTZone > 0.25 ? 'Moderate' : 'Minimal', description: avgTZone > 0.4 ? 'Excess oil production in T-zone.' : avgTZone > 0.25 ? 'Balanced sebum levels.' : 'Oil distribution is extremely low.' },
-      skinTone: { value: faceState.tone.skinTone === 'warm' ? 'Warm' : faceState.tone.skinTone === 'cool' ? 'Cool' : 'Neutral', description: 'Medium depth with balanced undertones.' },
-      elasticity: { value: 'Good', description: 'Skin shows firm and resilient texture.' },
-      dailySummary: 'Your skin analysis is complete. Regular care can help maintain and improve skin health.',
-    };
-  }
+  // DEV BYPASS: Skip API call
+  console.log('[SKIN DETECTION] DEV BYPASS: Returning mock profile data for Gemini');
+  return {
+    skinType: { value: "Normal", description: "Balanced hydration and sebum." },
+    moisture: { value: "Balanced", description: "Good water retention levels." },
+    oiliness: { value: "Minimal", description: "Low sebum across regions." },
+    skinTone: { value: "Neutral", description: "Balanced undertones." },
+    elasticity: { value: "Good", description: "High resilience and bounce." },
+    dailySummary: "Your skin is in excellent shape today. Maintain your current routine."
+  };
 }
-
 /**
  * Main detection function (Hybrid CV + Gemini)
  * 

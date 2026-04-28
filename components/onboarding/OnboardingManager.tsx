@@ -73,7 +73,7 @@ const OnboardingManager: React.FC<OnboardingManagerProps & { onCompleteWithData?
                     animate="center"
                     exit="exit"
                     transition={{
-                        x: { type: "spring", stiffness: 300, damping: 30 },
+                        x: { duration: 0.25, ease: "easeOut" },
                         opacity: { duration: 0.2 }
                     }}
                     className="h-full w-full absolute inset-0"

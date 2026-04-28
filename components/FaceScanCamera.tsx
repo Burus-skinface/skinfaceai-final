@@ -149,6 +149,19 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
     landmarkerRef.current?.close();
     landmarkerRef.current = null;
     finishedRef.current = true;
+
+    // HARDWARE CAMERA KILL-SWITCH (Prevents Play Store Background Camera Violations)
+    if (webcamRef.current?.video) {
+      const stream = webcamRef.current.video.srcObject as MediaStream | null;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    }
+    // Prewarmed cleanup prevention
+    if (window.__prewarmed_camera_stream) {
+      window.__prewarmed_camera_stream.getTracks().forEach(track => track.stop());
+      window.__prewarmed_camera_stream = null;
+    }
   }, []);
 
   const finalizeOnce = useCallback(() => {
@@ -372,6 +385,14 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
     rafRef.current = requestAnimationFrame(processFrame);
     return () => cancelAnimationFrame(rafRef.current);
   }, [processFrame]);
+
+  useEffect(() => {
+    finishedRef.current = false;
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      finishedRef.current = true;
+    };
+  }, []);
 
   // UI Setup - Resize Observer for Container
   const containerRef = useRef<HTMLDivElement>(null);

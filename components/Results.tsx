@@ -90,12 +90,49 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
 
     if (!data || !data.scoring || !data.analysis) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[70vh] text-gray-400 text-center">
-                <h2 className="text-2xl font-semibold">{t.noAnalysisYet || "No analysis yet"}</h2>
-                <p className="mt-2">{t.startJourney || "Start your journey"}</p>
+            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6 pt-16">
+                {/* Hero Icon */}
+                <div className="relative mb-8">
+                    <div className="w-28 h-28 rounded-[2.5rem] bg-gradient-to-br from-purple-500/20 to-indigo-600/20 border border-purple-500/20 flex items-center justify-center shadow-[0_0_60px_rgba(168,85,247,0.2)] mx-auto">
+                        <svg className="w-14 h-14 text-purple-400/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
+                        </svg>
+                    </div>
+                    {/* Animated pulse rings */}
+                    <div className="absolute inset-0 w-28 h-28 mx-auto rounded-[2.5rem] border border-purple-500/10 animate-ping" style={{ animationDuration: '3s' }} />
+                </div>
+
+                <h2 className="text-3xl font-black text-white tracking-tight mb-3">
+                    Your Glow-Up<br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Starts Here</span>
+                </h2>
+                <p className="text-[15px] text-gray-400 leading-relaxed max-w-[280px] mb-10">
+                    Scan your face to get your AI Aesthetics Score, personalized routine, and daily glow-up tracking.
+                </p>
+
+                {/* Feature pills */}
+                <div className="flex flex-wrap gap-2 justify-center mb-10">
+                    {['Face Score', 'Skin Analysis', 'Glow-Up Plan', 'Daily Tracking'].map(f => (
+                        <div key={f} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-gray-400 font-medium">
+                            {f}
+                        </div>
+                    ))}
+                </div>
+
+                {/* No CTA button here — user taps the center Scan button in the nav bar */}
+                <div className="flex items-center gap-2 text-gray-600 text-xs">
+                    <svg className="w-4 h-4 text-purple-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <span>Tap the camera button below to scan</span>
+                    <svg className="w-4 h-4 text-purple-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
             </div>
         );
     }
+
 
     const daily_note = data.recommendations?.motivationalNote || "";
     const score = data.scoring?.globalScore ?? null;
@@ -132,12 +169,12 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
             {/* Header moved to GlobalAppHeader */}
 
             {/* 1. GLOWUP — Slim tracker strip */}
-            <div className="w-full bg-[#1C1C1E]/80 rounded-xl border border-white/[0.05]">
+            <div className="w-full bg-white rounded-xl border border-black/5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 {/* Day label + progress link */}
                 <div className="flex items-center justify-between px-3.5 pt-2.5 pb-1.5">
                     <div className="flex items-center gap-1.5">
-                        <FireIcon className={`w-3 h-3 ${dayNumber >= 3 ? 'text-orange-500' : 'text-gray-600'}`} />
-                        <span className="text-[12px] font-bold text-white/80 tracking-tight">
+                        <FireIcon className={`w-3 h-3 ${dayNumber >= 3 ? 'text-orange-500' : 'text-gray-400'}`} />
+                        <span className="text-[12px] font-bold text-[#1D1D1F] tracking-tight">
                             Day {dayNumber}
                         </span>
                     </div>
@@ -154,10 +191,10 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                 <div className="flex items-center justify-between px-3.5 pb-2.5">
                     {last7Days.map((day, i) => (
                         <div key={i} className="flex flex-col items-center gap-0.5">
-                            <span className={`text-[7px] font-bold tracking-wide ${day.isToday ? 'text-white/60' : 'text-gray-600'}`}>{day.day}</span>
+                            <span className={`text-[7px] font-bold tracking-wide ${day.isToday ? 'text-[#1D1D1F]' : 'text-[#86868B]'}`}>{day.day}</span>
                             <div className={`w-[26px] h-[20px] rounded-[5px] flex items-center justify-center ${day.hasData
-                                ? 'bg-purple-600/80'
-                                : day.isToday ? 'bg-white/[0.06] ring-1 ring-white/[0.08]' : 'bg-white/[0.03]'
+                                ? 'bg-purple-600'
+                                : day.isToday ? 'bg-black/[0.04] ring-1 ring-black/[0.06]' : 'bg-black/[0.02]'
                                 }`}>
                                 {day.hasData && (
                                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,7 +213,7 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                 <div className="flex items-center gap-1.5 flex-1">
                     <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Score</span>
                     {score === null ? (
-                        <span className="text-lg font-black tabular-nums text-white/15 blur-[1px]">9.4</span>
+                        <span className="text-lg font-black tabular-nums text-black/15 blur-[1px]">9.4</span>
                     ) : (
                         <span className={`text-lg font-black tabular-nums ${getScoreColor(animatedScore)}`}>{animatedScore.toFixed(1)}</span>
                     )}
@@ -189,7 +226,7 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                 <div className="flex items-center gap-1.5 flex-1 justify-end">
                     <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Potential</span>
                     {score === null ? (
-                        <span className="text-lg font-black tabular-nums text-white/15 blur-[1px]">9.9</span>
+                        <span className="text-lg font-black tabular-nums text-black/15 blur-[1px]">9.9</span>
                     ) : (
                         <span className="text-lg font-black tabular-nums text-emerald-400">
                             {(potential ?? ((score || 0) * 1.1)).toFixed(1)}
@@ -199,9 +236,9 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
             </div>
 
             {/* 3. Daily AI Analysis Report */}
-            <div className="p-6 rounded-[2.5rem] bg-[#1C1C1E] border border-white/5 relative overflow-hidden group">
+            <div className="p-6 rounded-[2.5rem] bg-white border border-black/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group">
                 {/* Glossy Effect */}
-                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03),transparent_70%)] pointer-events-none" />
+                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.01),transparent_70%)] pointer-events-none" />
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30">
@@ -209,7 +246,7 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                         </div>
                         <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">{t.dailyAICommentary}</p>
                     </div>
-                    <p className="text-md font-medium text-gray-200 italic leading-relaxed">
+                    <p className="text-md font-medium text-[#48484A] italic leading-relaxed">
                         "{daily_note || "Your skin is showing positive signs of adaptation. Stay consistent with the current protocol."}"
                     </p>
                 </div>
@@ -227,7 +264,7 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
 
             {/* 5. Skin Profile Card */}
             {data.analysis?.skin?.profile && (
-                <div className="p-6 rounded-[2.5rem] bg-[#1C1C1E] border border-white/5 relative overflow-hidden group">
+                <div className="p-6 rounded-[2.5rem] bg-white border border-black/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group">
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30">
@@ -238,17 +275,17 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
 
                         <div className="grid grid-cols-2 gap-3">
                             {/* Skin Type Card */}
-                            <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 transition-colors hover:bg-white/[0.05]">
+                            <div className="p-4 bg-[#F5F5F7] rounded-2xl border border-black/5 transition-colors hover:bg-[#E5E5EA]">
                                 <div className="flex justify-between items-start mb-2">
                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{t.skinType}</p>
-                                    <FaceIcon className="w-3.5 h-3.5 text-purple-400" />
+                                    <FaceIcon className="w-3.5 h-3.5 text-purple-500" />
                                 </div>
-                                <p className="text-xl font-bold text-white mb-1">
+                                <p className="text-xl font-bold text-[#1D1D1F] mb-1">
                                     {typeof data.analysis.skin.profile.skinType === 'object'
                                         ? data.analysis.skin.profile.skinType.value
                                         : data.analysis.skin.profile.skinType}
                                 </p>
-                                <p className="text-[10px] text-gray-500 leading-snug">
+                                <p className="text-[10px] text-[#86868B] leading-snug">
                                     {typeof data.analysis.skin.profile.skinType === 'object'
                                         ? data.analysis.skin.profile.skinType.description
                                         : ''}
@@ -261,12 +298,12 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{t.moisture}</p>
                                     <DropIcon className="w-3.5 h-3.5 text-cyan-400" />
                                 </div>
-                                <p className="text-xl font-bold text-white mb-1">
+                                <p className="text-xl font-bold text-[#1D1D1F] mb-1">
                                     {typeof data.analysis.skin.profile.moisture === 'object'
                                         ? data.analysis.skin.profile.moisture.value
                                         : data.analysis.skin.profile.moisture}
                                 </p>
-                                <p className="text-[10px] text-gray-500 leading-snug">
+                                <p className="text-[10px] text-[#86868B] leading-snug">
                                     {typeof data.analysis.skin.profile.moisture === 'object'
                                         ? data.analysis.skin.profile.moisture.description
                                         : ''}
@@ -274,17 +311,17 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                             </div>
 
                             {/* Oiliness Card */}
-                            <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 transition-colors hover:bg-white/[0.05]">
+                            <div className="p-4 bg-[#F5F5F7] rounded-2xl border border-black/5 transition-colors hover:bg-[#E5E5EA]">
                                 <div className="flex justify-between items-start mb-2">
                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{t.oiliness}</p>
                                     <SunIcon className="w-3.5 h-3.5 text-orange-400/70" />
                                 </div>
-                                <p className="text-xl font-bold text-white mb-1">
+                                <p className="text-xl font-bold text-[#1D1D1F] mb-1">
                                     {typeof data.analysis.skin.profile.oiliness === 'object'
                                         ? data.analysis.skin.profile.oiliness.value
                                         : data.analysis.skin.profile.oiliness}
                                 </p>
-                                <p className="text-[10px] text-gray-500 leading-snug">
+                                <p className="text-[10px] text-[#86868B] leading-snug">
                                     {typeof data.analysis.skin.profile.oiliness === 'object'
                                         ? data.analysis.skin.profile.oiliness.description
                                         : ''}
@@ -292,17 +329,17 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                             </div>
 
                             {/* Skin Tone Card */}
-                            <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 transition-colors hover:bg-white/[0.05]">
+                            <div className="p-4 bg-[#F5F5F7] rounded-2xl border border-black/5 transition-colors hover:bg-[#E5E5EA]">
                                 <div className="flex justify-between items-start mb-2">
                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">{t.skinTone}</p>
                                     <SpectrumIcon className="w-3.5 h-3.5 text-gray-400" />
                                 </div>
-                                <p className="text-xl font-bold text-white mb-1">
+                                <p className="text-xl font-bold text-[#1D1D1F] mb-1">
                                     {typeof data.analysis.skin.profile.skinTone === 'object'
                                         ? data.analysis.skin.profile.skinTone.value
                                         : data.analysis.skin.profile.skinTone}
                                 </p>
-                                <p className="text-[10px] text-gray-500 leading-snug">
+                                <p className="text-[10px] text-[#86868B] leading-snug">
                                     {typeof data.analysis.skin.profile.skinTone === 'object'
                                         ? data.analysis.skin.profile.skinTone.description
                                         : ''}
@@ -315,8 +352,8 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
 
             {/* 6. Premium Features Teaser - Only for Free Users */}
             {(data.global_score === null || isFreeUser) && onShowPaywall && (
-                <div className="w-full mt-2 p-6 bg-gradient-to-br from-purple-900/50 to-teal-900/50 rounded-2xl border-2 border-teal-500/30 backdrop-blur-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                <div className="w-full mt-2 p-6 bg-[#1D1D1F] rounded-2xl border border-black/10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
                         <StarIcon className="w-20 h-20 text-white" />
                     </div>
                     <div className="relative z-10">
@@ -324,7 +361,7 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                             <span className="text-2xl">🚀</span>
                             <h3 className="text-lg font-bold text-white">Unlock Full Potential</h3>
                         </div>
-                        <p className="text-xs text-gray-300 mb-4 leading-relaxed">
+                        <p className="text-xs text-gray-400 mb-4 leading-relaxed">
                             Get detailed face scoring, maxxing guides, and advanced skin analysis.
                         </p>
                         <button
@@ -334,13 +371,13 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
                             <LockIcon className="w-4 h-4" />
                             <span>REVEAL SCORES</span>
                         </button>
-                        <p className="text-center text-[10px] text-gray-400 mt-2">Starting from $4.99/week</p>
+                        <p className="text-center text-[10px] text-gray-400 mt-2">Cancel anytime · No commitment</p>
                     </div>
                 </div>
             )}
 
             {/* Divider */}
-            <div className="h-px bg-white/5 w-full my-2"></div>
+            <div className="h-px bg-black/5 w-full my-4"></div>
 
             {/* 7. Referral Card — invite friends for premium */}
             {user?.id && (
@@ -351,11 +388,11 @@ const Results: React.FC<ResultsProps> = ({ data, dayNumber, onShowPaywall, isFre
             <div className="w-full flex justify-center pb-4">
                 <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors text-sm font-medium text-gray-300 disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 rounded-full border border-black/10 shadow-sm transition-colors text-sm font-bold text-[#1D1D1F] disabled:opacity-50"
                     disabled={isSharing}
                 >
                     {isSharing ? (
-                        <div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-[#1D1D1F] rounded-full animate-spin" />
                     ) : (
                         <ShareIcon className="w-4 h-4" />
                     )}
