@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
-import { CheckIcon } from './icons/CheckIcon';
 import { PRICING_PLANS, SubscriptionTier } from '../types/subscription';
 import LegalModal, { LegalTab } from './LegalModal';
 import { Purchases, PurchasesPackage, PACKAGE_TYPE } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
+import { useToast } from './ui/Toast';
+import { localized } from '../localization';
 
 interface PaywallProps {
     onClose: () => void;
@@ -13,23 +14,23 @@ interface PaywallProps {
 
 const features = [
     {
-        title: "Face & Symmetry Scores",
-        desc: "Find out exactly how attractive your features are and how to enhance them.",
+        title: localized("Locked Looksmaxx Metrics", "Kilitli Looksmaxx Metrikleri"),
+        desc: localized("See which ratios pull the glow score down. Stop guessing; open the receipts.", "Glow skorunu hangi oranların düşürdüğünü gör. Tahmin etme; kanıtı aç."),
         icon: "✨"
     },
     {
-        title: "Deep Skin Scan",
-        desc: "Catch hidden acne, dark circles, and skin damage before they even appear.",
+        title: localized("Deep Glow Signals", "Derin Glow Sinyalleri"),
+        desc: localized("Open barrier, tone, oil, and radiance signals. This is where glow ups are won.", "Bariyer, ton, yağ ve parlaklık sinyallerini aç. Glow up burada kazanılır."),
         icon: "🔬"
     },
     {
-        title: "Unlimited Glow-Up Tracking",
-        desc: "Log your daily selfies and literally watch yourself level up over time.",
+        title: localized("Unlimited Glow Streaks", "Sınırsız Glow Serisi"),
+        desc: localized("Scan daily. Miss days, lose signal. Keep the streak alive.", "Her gün tara. Gün kaçarsa sinyal düşer. Seriyi yaşat."),
         icon: "📈"
     },
     {
-        title: "Your Personal Maxxing Plan",
-        desc: "Step-by-step skincare, grooming, and style advice tailored strictly for you.",
+        title: localized("7-Day Looksmaxx Plan", "7 Günlük Looksmaxx Planı"),
+        desc: localized("Daily missions, product matches, and unlocks. No blank days.", "Günlük görevler, ürün eşleşmeleri ve unlock’lar. Boş gün yok."),
         icon: "🎯"
     }
 ];
@@ -41,6 +42,8 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [rcPackages, setRcPackages] = useState<PurchasesPackage[]>([]);
     const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
+    const [statusMessage, setStatusMessage] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
+    const toast = useToast();
 
     React.useEffect(() => {
         const loadOfferings = async () => {
@@ -53,6 +56,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                 }
             } catch (e) {
                 console.error("Error loading offerings", e);
+                setStatusMessage({ kind: 'error', text: "Couldn't load subscription plans. Please check your connection." });
             }
         };
         loadOfferings();
@@ -60,53 +64,65 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
 
     const handleUpgradeClick = async () => {
         setIsPurchasing(true);
-        
+        setStatusMessage(null);
+
         if (Capacitor.isNativePlatform() && selectedPackage) {
             const ENTITLEMENT_ID = import.meta.env.VITE_RC_ENTITLEMENT_ID || 'premium';
             try {
                 const { customerInfo } = await Purchases.purchasePackage({ aPackage: selectedPackage });
                 if (typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== "undefined") {
-                    alert("Purchase successful! Welcome to premium.");
-                    onUpgrade(selectedPlan as SubscriptionTier); 
+                    toast.success(localized('Glow plan unlocked — premium signals are open.', 'Glow planı açıldı — premium sinyallerin açık.'), { title: localized('Purchase complete', 'Satın alma tamamlandı') });
+                    onUpgrade(selectedPlan as SubscriptionTier);
+                } else {
+                    setStatusMessage({ kind: 'error', text: "Purchase didn't finalize. If you were charged, tap Restore — otherwise try again." });
                 }
             } catch (e: any) {
-                if (!e.userCancelled) {
-                    alert("Purchase Error: " + e.message);
+                if (!e?.userCancelled) {
+                    const msg = e?.message || 'Purchase failed. Please try again.';
+                    setStatusMessage({ kind: 'error', text: msg });
+                    toast.error(msg, { title: 'Purchase failed', action: { label: 'Retry', onClick: handleUpgradeClick } });
                 }
             } finally {
                 setIsPurchasing(false);
             }
         } else {
-            // Web Mock
+            // Web sandbox path — no real native IAP available.
             setTimeout(() => {
                 setIsPurchasing(false);
-                alert("Sandbox: Connecting to App Store...\n[RevenueCat SDK will trigger native IAP prompt here in the native build]");
-            }, 1500);
+                setStatusMessage({
+                    kind: 'info',
+                    text: localized('Sandbox: native In-App Purchase only runs in the iOS/Android build. Premium activates on device.', 'Sandbox: gerçek uygulama içi satın alma sadece iOS/Android build içinde çalışır. Premium cihazda aktifleşir.'),
+                });
+            }, 800);
         }
     };
 
     const handleRestore = async () => {
         setIsRestoring(true);
+        setStatusMessage(null);
+
         if (Capacitor.isNativePlatform()) {
             const ENTITLEMENT_ID = import.meta.env.VITE_RC_ENTITLEMENT_ID || 'premium';
             try {
                 const { customerInfo } = await Purchases.restorePurchases();
-                 if (typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== "undefined") {
-                    alert("Purchases restored successfully!");
+                if (typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== "undefined") {
+                    toast.success(localized('Purchases restored — Premium is active again.', 'Satın alımlar geri yüklendi — Premium tekrar aktif.'), { title: localized('Restored', 'Geri yüklendi') });
                     onUpgrade(selectedPlan as SubscriptionTier);
-                 } else {
-                    alert("No active premium purchases found on this account.");
-                 }
-            } catch(e: any) {
-                alert("Restore failed: " + e.message);
+                } else {
+                    setStatusMessage({ kind: 'info', text: 'No active premium purchases found on this account.' });
+                }
+            } catch (e: any) {
+                const msg = e?.message || 'Restore failed. Please try again.';
+                setStatusMessage({ kind: 'error', text: msg });
+                toast.error(msg, { title: 'Restore failed', action: { label: 'Retry', onClick: handleRestore } });
             } finally {
                 setIsRestoring(false);
             }
         } else {
             setTimeout(() => {
                 setIsRestoring(false);
-                alert("No previous purchases found on this Apple ID.");
-            }, 1500);
+                setStatusMessage({ kind: 'info', text: 'No previous purchases found on this Apple ID.' });
+            }, 800);
         }
     };
 
@@ -120,7 +136,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                 >
                     <ArrowLeftIcon className="w-5 h-5 text-white" />
                 </button>
-                <h1 className="text-sm font-semibold tracking-wide uppercase text-gray-500">Premium</h1>
+                <h1 className="text-sm font-semibold tracking-wide uppercase text-gray-500">{localized('Glow Lock', 'Glow Kilidi')}</h1>
                 <button 
                     onClick={handleRestore}
                     disabled={isRestoring}
@@ -135,13 +151,13 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                 {/* Hero Typograhpy */}
                 <div className="text-center mb-10">
                     <h2 className="text-4xl font-black tracking-tight leading-tight mb-3">
-                        Unlock your <br/>
+                        {localized('Your looksmaxx plan is', 'Looksmaxx planın')} <br/>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500">
-                            Full Potential.
+                            {localized('locked.', 'kilitli.')}
                         </span>
                     </h2>
                     <p className="text-[15px] font-medium text-gray-500 px-4">
-                        Join 20,000+ users maximizing their aesthetics with unparalleled AI insights.
+                        {localized('You saw today’s signal. Open the 7-day looksmaxx plan and do not waste the streak.', 'Bugünkü sinyali gördün. Şimdi 7 günlük looksmaxx planını aç ve seriyi boşa yakma.')}
                     </p>
                 </div>
 
@@ -177,7 +193,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                                 >
                                     {isSelected && pkg.packageType === PACKAGE_TYPE.ANNUAL && (
                                         <div className="absolute -top-3 right-4 px-2.5 py-0.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[10px] font-bold rounded-full shadow-sm">
-                                            BEST VALUE
+                                            {localized('BEST VALUE', 'EN AKILLI SEÇİM')}
                                         </div>
                                     )}
                                     <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center ${
@@ -189,7 +205,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                                         <h4 className={`text-base font-bold ${isSelected ? 'text-purple-400' : 'text-white'}`}>
                                             {pkg.product.title}
                                         </h4>
-                                        <p className="text-xs text-gray-500 font-medium">Auto-renews, cancel anytime</p>
+                                        <p className="text-xs text-gray-500 font-medium">{localized('Auto-renews, cancel anytime', 'Otomatik yenilenir, istediğin zaman iptal')}</p>
                                     </div>
                                     <div className="text-right">
                                         <div className="text-lg font-black text-white">{pkg.product.priceString}</div>
@@ -214,7 +230,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                                 >
                                     {isSelected && (
                                         <div className="absolute -top-3 right-4 px-2.5 py-0.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[10px] font-bold rounded-full shadow-sm">
-                                            BEST VALUE
+                                            {localized('BEST VALUE', 'EN AKILLI SEÇİM')}
                                         </div>
                                     )}
                                     <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center ${
@@ -226,7 +242,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                                         <h4 className={`text-base font-bold ${isSelected ? 'text-purple-400' : 'text-white'}`}>
                                             {plan.name}
                                         </h4>
-                                        <p className="text-xs text-gray-500 font-medium">Auto-renews, cancel anytime</p>
+                                        <p className="text-xs text-gray-500 font-medium">{localized('Auto-renews, cancel anytime', 'Otomatik yenilenir, istediğin zaman iptal')}</p>
                                     </div>
                                     <div className="text-right">
                                         <div className="text-lg font-black text-white">{plan.price}</div>
@@ -237,6 +253,29 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                         })
                     )}
                 </div>
+
+                {/* Inline status (replaces all alert()s) */}
+                {statusMessage && (
+                    <div
+                        role={statusMessage.kind === 'error' ? 'alert' : 'status'}
+                        className={`mb-6 px-4 py-3 rounded-2xl border text-sm leading-relaxed flex items-start gap-3 ${
+                            statusMessage.kind === 'error'
+                                ? 'bg-red-500/10 border-red-500/30 text-red-200'
+                                : 'bg-purple-500/10 border-purple-500/30 text-purple-100'
+                        }`}
+                    >
+                        <span className="flex-1">{statusMessage.text}</span>
+                        {statusMessage.kind === 'error' && (
+                            <button
+                                onClick={handleUpgradeClick}
+                                disabled={isPurchasing}
+                                className="text-xs font-bold underline disabled:opacity-50"
+                            >
+                                Retry
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* Secure / Terms */}
                 <div className="text-center px-1 mb-6">
@@ -261,7 +300,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                         {/* Glow effect underneath text */}
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <span className="relative z-10 flex items-center justify-center gap-2">
-                            {isPurchasing ? "Connecting to Store..." : "Glow Up Now"}
+                            {isPurchasing ? localized("Connecting to Store...", "Mağazaya bağlanıyor...") : localized("Unlock Glow Plan", "Glow Planı Aç")}
                             {!isPurchasing && <ArrowLeftIcon className="w-5 h-5 rotate-180" />}
                         </span>
                         

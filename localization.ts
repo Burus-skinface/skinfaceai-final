@@ -5,14 +5,14 @@ const translations = {
     results: 'Skin',
     details: 'Face',
     spectral: 'Spectral',
-    recommendations: 'Glowup',
+    recommendations: 'Glow Up',
     progress: 'Progress',
 
     // UploadScreen.tsx
-    uploadScreenTitle: 'Track your facial glow up journey day by day',
+    uploadScreenTitle: 'Track your glow up streak day by day',
     uploadScreenSubtitle: (day: number) => `Day ${day} Analysis`,
-    analyzing: "Let's discover your unique glow...",
-    greatJobToday: (day: number) => `Transformation Logged. Day ${day} starts now!`,
+    analyzing: "Reading today's glow up signals...",
+    greatJobToday: (day: number) => `Glow check logged. Day ${day} streak is active.`,
     viewProgress: 'View My Progress',
     uploadTodaysPhoto: "Upload Photo",
     skipForNow: 'Skip',
@@ -21,9 +21,9 @@ const translations = {
     // Results.tsx (Skin & Global)
     noAnalysisYet: 'No analysis yet.',
     startJourney: 'Upload a photo to start!',
-    dayReport: (day: number) => `glowup${day} 🔥`,
+    dayReport: (day: number) => `glowcheck${day} 🔥`,
     progressScore: 'Your Glow Score',
-    detailedResult: 'Your Skin Story',
+    detailedResult: 'Your Skin Signals',
     problemAnalysis: 'Daily Skin Check',
     basicSkinFeatures: 'Your Skin Signature',
 
@@ -99,10 +99,10 @@ const translations = {
     left_right_ratio: 'L/R Face Ratio',
 
     // Recommendations.tsx (Aesthetics)
-    noRecommendations: 'No aesthetic data.',
-    uploadForRecommendations: 'Upload to unlock aesthetic map.',
-    personalizedRecommendations: 'Your Glowup Guide',
-    actionableTips: 'Small steps for big changes.',
+    noRecommendations: 'No glow plan yet.',
+    uploadForRecommendations: 'Scan once to unlock your looksmaxx plan.',
+    personalizedRecommendations: 'Your Glow Up Plan',
+    actionableTips: 'Small steps keep the streak alive.',
 
     // Aesthetics Fields
     attractiveness_score: 'Attractiveness',
@@ -116,14 +116,14 @@ const translations = {
     weight_rec: 'Weight Recommendation',
 
     // Recommendations.tsx (Glowup Guide)
-    glowupActionPlan: 'Your Personal Glowup Plan',
-    glowupActionPlanDesc: 'A guide to your best self',
-    archetypeDiscovery: 'Discover Your Style',
-    morningProtocol: 'Morning Glow Routine',
-    morningProtocolDesc: 'Refresh and protect',
-    eveningProtocol: 'Evening Care Routine',
-    eveningProtocolDesc: 'Rest and renew',
-    strategicMemo: 'Our Tip for You',
+    glowupActionPlan: 'Your Looksmaxx Plan',
+    glowupActionPlanDesc: 'Do not leave today blank',
+    archetypeDiscovery: 'Read Your Signal',
+    morningProtocol: 'Morning Task',
+    morningProtocolDesc: 'Protect the score',
+    eveningProtocol: 'Night Task',
+    eveningProtocolDesc: 'Repair the signal',
+    strategicMemo: 'Coach Note',
 
     // FacialAnalysisResult.tsx (4-Card Architecture)
     frontArchitecture: 'Balanced Face',
@@ -146,16 +146,16 @@ const translations = {
     goldenRatio: 'Golden Ratio',
     ruleOfFifths: 'Rule of Fifths',
     facialAnalysisTitle: 'Your Facial Insights',
-    facialAnalysisDesc: 'A friendly look at your unique structure.',
+    facialAnalysisDesc: 'A direct read on your structure.',
     structuralIntegrityReport: 'Your Balanced Face Profile',
-    calculatingInsights: 'Discovering your unique traits...',
+    calculatingInsights: 'Reading your structural signals...',
     dailyNote: 'Daily Note',
     dailyAICommentary: 'Daily AI Analysis Report',
 
     // Progress.tsx
     noHistoryYet: 'No history yet.',
     progressAfterFirstAnalysis: 'Your global score chart will appear here.',
-    yourProgressJourney: 'Global Score History',
+    yourProgressJourney: 'Score Streak History',
     progressScoreLine: 'Global Score',
     analysisHistory: 'History',
     score: 'Score',
@@ -181,18 +181,18 @@ const translations = {
     backToResults: 'Back to Results',
     undertoneAccuracy: 'Undertone Accuracy',
     acneProfile: 'Acne Profile',
-    unlockPremium: 'Unlock Premium',
-    unlockPremiumDesc: 'Get detailed analysis and personalized plans.',
+    unlockPremium: 'Unlock Glow Plan',
+    unlockPremiumDesc: 'Unlock detailed signals and the 7-day looksmaxx plan.',
 
     // BeforeAfter.tsx
-    shareProgressTitle: 'My Glow Up Journey',
+    shareProgressTitle: 'My Glow Up Streak',
     shareProgressCopied: 'Copied to clipboard!',
     beforeAfterBefore: 'Before',
     beforeAfterAfter: 'After',
     beforeAfterShare: 'Share Progress',
     shareProgressText: (days: number, before: number, after: number, diff: number, improved: boolean) =>
-      `My ${days}-day glow up journey! ${improved ? 'Creating' : 'Tracking'} my best version. From ${before} to ${after} (${improved ? '+' : ''}${diff}) on SkinFace AI.`,
-    beforeAfterTitle: (days: number) => `${days}-Day Transformation`,
+      `My ${days}-day glow up streak on SkinFace AI: ${before} to ${after} (${improved ? '+' : ''}${diff}).`,
+    beforeAfterTitle: (days: number) => `${days}-Day Glow Change`,
     beforeAfterPoints: (points: number, improved: boolean) => `${improved ? '+' : ''}${points} pts`,
 
     rating: '4.9 Rating',
@@ -230,7 +230,7 @@ const translations = {
     reportReadyDesc: 'Know instantly when your analysis is done.',
     sendTestNotification: 'Send Test Notification',
     whyEnableNotifications: 'Why enable notifications?',
-    notificationBenefit1: 'Never miss a day of your journey',
+    notificationBenefit1: 'Do not leave a day blank',
     notificationBenefit2: 'Maintain your analysis streak',
     notificationBenefit3: 'Get instant analysis alerts',
     notificationBenefit4: 'Receive weekly progress reports',
@@ -240,14 +240,14 @@ const translations = {
     results: 'Skin',
     details: 'Face',
     spectral: 'Spektral',
-    recommendations: 'Glowup',
+    recommendations: 'Glow Up',
     progress: 'Gelişim',
 
     // UploadScreen.tsx
-    uploadScreenTitle: 'Glow up yolculuğunu günbegün takip et',
+    uploadScreenTitle: 'Glow up serini günbegün takip et',
     uploadScreenSubtitle: (day: number) => `${day}. Gün Analizi`,
-    analyzing: "Işığının taranmasına az kaldı...",
-    greatJobToday: (day: number) => `Değişim Kaydedildi. Kademe ${day} başlıyor!`,
+    analyzing: "Bugünkü glow up sinyalleri okunuyor...",
+    greatJobToday: (day: number) => `Glow check kaydedildi. ${day}. gün serisi aktif.`,
     viewProgress: 'Gelişimimi Görüntüle',
     uploadTodaysPhoto: "Fotoğraf Yükle",
     skipForNow: 'Atla',
@@ -256,9 +256,9 @@ const translations = {
     // Results.tsx (Skin & Global)
     noAnalysisYet: 'Henüz analiz yapılmadı.',
     startJourney: 'Başlamak için bir fotoğraf yükle!',
-    dayReport: (day: number) => `glowup${day} 🔥`,
-    progressScore: 'Glow Puanın',
-    detailedResult: 'Cilt Hikayen',
+    dayReport: (day: number) => `glowcheck${day} 🔥`,
+    progressScore: 'Glow Skorun',
+    detailedResult: 'Cilt Sinyallerin',
     problemAnalysis: 'Günlük Cilt Kontrolü',
     basicSkinFeatures: 'Cilt İmzan',
 
@@ -334,10 +334,10 @@ const translations = {
     left_right_ratio: 'Sol/Sağ Yüz Oranı',
 
     // Recommendations.tsx (Aesthetics)
-    noRecommendations: 'Estetik veri yok.',
-    uploadForRecommendations: 'Estetik haritasını açmak için yükle.',
-    personalizedRecommendations: 'Glowup Rehberin',
-    actionableTips: 'Büyük değişimler için küçük adımlar.',
+    noRecommendations: 'Glow planı yok.',
+    uploadForRecommendations: 'Looksmaxx planını açmak için bir ölçüm al.',
+    personalizedRecommendations: 'Glow Up Planın',
+    actionableTips: 'Küçük görevler seriyi yaşatır.',
 
     // Aesthetics Fields
     attractiveness_score: 'Çekicilik Endeksi',
@@ -351,14 +351,14 @@ const translations = {
     weight_rec: 'Kilo Önerisi',
 
     // Recommendations.tsx (Glowup Guide)
-    glowupActionPlan: 'Senin Glowup Planın',
-    glowupActionPlanDesc: 'Sana özel bakım rehberi',
-    archetypeDiscovery: 'Stilini Keşfet',
-    morningProtocol: 'Sabah Işıltısı Rutini',
-    morningProtocolDesc: 'Tazelen ve koru',
-    eveningProtocol: 'Akşam Bakımı Rutini',
-    eveningProtocolDesc: 'Dinlen ve yenilen',
-    strategicMemo: 'Senin İçin Bir İpucu',
+    glowupActionPlan: 'Looksmaxx Planın',
+    glowupActionPlanDesc: 'Bugünü boş bırakma',
+    archetypeDiscovery: 'Sinyalini Oku',
+    morningProtocol: 'Sabah Görevi',
+    morningProtocolDesc: 'Skoru koru',
+    eveningProtocol: 'Gece Görevi',
+    eveningProtocolDesc: 'Sinyali onar',
+    strategicMemo: 'Koç Notu',
 
     // FacialAnalysisResult.tsx (4-Card Architecture)
     frontArchitecture: 'Dengeli Yüz',
@@ -381,18 +381,18 @@ const translations = {
     goldenRatio: 'Altın Oran',
     ruleOfFifths: 'Beşli Kuralı',
     facialAnalysisTitle: 'Yüz Hattı Bilgilerin',
-    facialAnalysisDesc: 'Sana özel yüz yapına dostça bir bakış.',
+    facialAnalysisDesc: 'Yüz yapına direkt bir okuma.',
     structuralIntegrityReport: 'Senin Yüz Profilin',
-    calculatingInsights: 'Sana özel hatlar keşfediliyor...',
+    calculatingInsights: 'Yapısal sinyallerin okunuyor...',
     dailyNote: 'Günlük Not',
     dailyAICommentary: 'DAİLY Aİ ANALİZ SONUCU YORUMU',
 
     // Progress.tsx
     noHistoryYet: 'Henüz geçmiş yok.',
-    progressAfterFirstAnalysis: "Gelişim serüveninizi görmek için yüzünüzü analiz etmeyi deneyin.",
+    progressAfterFirstAnalysis: "Skor serini görmek için ilk ölçümü al.",
     googleLogin: "Google Giriş",
     signOut: "Çıkış Yap",
-    yourProgressJourney: 'Global Puan Geçmişi',
+    yourProgressJourney: 'Skor Serisi Geçmişi',
     progressScoreLine: 'Global Puan',
     analysisHistory: 'Geçmiş',
     score: 'Puan',
@@ -418,18 +418,18 @@ const translations = {
     backToResults: 'Sonuçlara Dön',
     undertoneAccuracy: 'Alt Ton Doğruluğu',
     acneProfile: 'Akne Profili',
-    unlockPremium: 'Premium Kilidini Aç',
-    unlockPremiumDesc: 'Detaylı analiz ve kişiselleştirilmiş planlar alın.',
+    unlockPremium: 'Glow Planı Aç',
+    unlockPremiumDesc: 'Detaylı sinyaller ve 7 günlük looksmaxx planını aç.',
 
     // BeforeAfter.tsx
-    shareProgressTitle: 'Glow Up Yolculuğum',
+    shareProgressTitle: 'Glow Up Serim',
     shareProgressCopied: 'Panoya kopyalandı!',
     beforeAfterBefore: 'Önce',
     beforeAfterAfter: 'Sonra',
     beforeAfterShare: 'Gelişimi Paylaş',
     shareProgressText: (days: number, before: number, after: number, diff: number, improved: boolean) =>
-      `${days} günlük glow up yolculuğum! SkinFace AI ile ${before}'den ${after}'e (${improved ? '+' : ''}${diff}) değişim.`,
-    beforeAfterTitle: (days: number) => `${days} Günlük Değişim`,
+      `SkinFace AI'da ${days} günlük glow up serim: ${before}'den ${after}'e (${improved ? '+' : ''}${diff}).`,
+    beforeAfterTitle: (days: number) => `${days} Günlük Glow Değişimi`,
     beforeAfterPoints: (points: number, improved: boolean) => `${improved ? '+' : ''}${points} p`,
 
     rating: '4.9 Puan',
@@ -463,7 +463,7 @@ const translations = {
     reportReadyDesc: 'Analiz bittiğinde anında haberdar olun.',
     sendTestNotification: 'Test Bildirimi Gönder',
     whyEnableNotifications: 'Neden bildirimleri açmalıyım?',
-    notificationBenefit1: 'Gelişim yolculuğunu aksatma',
+    notificationBenefit1: 'Bugünü boş bırakma',
     notificationBenefit2: 'Analiz serini koru',
     notificationBenefit3: 'Anında analiz sonuçlarını gör',
     notificationBenefit4: 'Haftalık gelişim raporları al',
@@ -482,10 +482,13 @@ const translations = {
   }
 };
 
-let currentLanguage: 'en' | 'tr' = 'en';
+export type SupportedLanguage = 'en' | 'tr';
+
+let currentLanguage: SupportedLanguage = 'en';
 
 if (typeof navigator !== 'undefined') {
-  const userLang = navigator.language.split('-')[0];
+  const preferredLanguage = navigator.languages?.[0] || navigator.language || 'en';
+  const userLang = preferredLanguage.toLowerCase().split('-')[0];
   if (userLang === 'tr') {
     currentLanguage = 'tr';
   }
@@ -494,4 +497,6 @@ if (typeof navigator !== 'undefined') {
 export type Translation = typeof translations.en;
 export const t: Translation = translations[currentLanguage] as Translation;
 
-export const getLocale = () => currentLanguage;
+export const getLanguage = (): SupportedLanguage => currentLanguage;
+export const getLocale = () => currentLanguage === 'tr' ? 'tr-TR' : 'en-US';
+export const localized = <T,>(en: T, tr: T): T => currentLanguage === 'tr' ? tr : en;

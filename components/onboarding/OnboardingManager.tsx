@@ -12,9 +12,10 @@ import ScanCTA from './ScanCTA';
 interface OnboardingManagerProps {
     onComplete: () => void;
     initialStep?: number;
+    onDevSkip?: () => void;
 }
 
-const OnboardingManager: React.FC<OnboardingManagerProps & { onCompleteWithData?: (data: { age: string; gender: string }) => void }> = ({ onComplete, onCompleteWithData, initialStep = 1 }) => {
+const OnboardingManager: React.FC<OnboardingManagerProps & { onCompleteWithData?: (data: { age: string; gender: string }) => void }> = ({ onComplete, onCompleteWithData, initialStep = 1, onDevSkip }) => {
     const [step, setStep] = useState(initialStep);
     const [userData, setUserData] = useState({ age: '', gender: '' });
 
@@ -78,7 +79,15 @@ const OnboardingManager: React.FC<OnboardingManagerProps & { onCompleteWithData?
                     }}
                     className="h-full w-full absolute inset-0"
                 >
-                    {step === 1 && <WelcomeScreen onNext={nextStep} />}
+                    {step === 1 && <WelcomeScreen onNext={nextStep} onDevSkip={() => {
+                        if (onDevSkip) {
+                            onDevSkip();
+                        } else {
+                            setUserData({ age: '25', gender: 'male' });
+                            if (onCompleteWithData) onCompleteWithData({ age: '25', gender: 'male' });
+                            else onComplete();
+                        }
+                    }} />}
                     {step === 2 && <AgeSelection onNext={(age) => { setUserData(prev => ({ ...prev, age })); nextStep(); }} onBack={prevStep} />}
                     {step === 3 && <GenderSelection onNext={(gender) => { setUserData(prev => ({ ...prev, gender })); nextStep(); }} onBack={prevStep} />}
                     {step === 4 && <AIShowcase onNext={nextStep} onBack={prevStep} />}

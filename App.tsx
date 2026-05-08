@@ -6,19 +6,13 @@ import Results from "./components/Results";
 import Progress from "./components/Progress";
 import FaceAnalysis from "./components/FaceAnalysis";
 import Recommendations from "./components/Recommendations";
-import { generateProgressCompliment } from "./services/geminiService";
-import { FireIcon } from "./components/icons/FireIcon";
-import { LockIcon } from "./components/icons/LockIcon";
 import { t } from "./localization";
 
 import { SkinLayerIcon } from "./components/icons/SkinIcon";
 import { LineChartIcon } from "./components/icons/LineChartIcon";
 import { ScanFaceIcon } from "./components/icons/ScanFaceIcon";
 import { Sparkles } from "./components/icons/SparklesIcon";
-import { SpectrumIcon } from "./components/icons/SpectrumIcon";
 import { CameraIcon } from "./components/icons/CameraIcon";
-import HistoryCalendar from './components/HistoryCalendar';
-import DailyCheckIn from './components/DailyCheckIn';
 import Paywall from "./components/Paywall";
 import { supabase } from "./services/supabase";
 import OnboardingManager from "./components/onboarding/OnboardingManager";
@@ -27,14 +21,16 @@ import GlobalAppHeader from "./components/GlobalAppHeader";
 import NotificationSettings from "./components/NotificationSettings";
 import AuthGate from "./components/AuthGate";
 import SplashScreen from "./components/SplashScreen";
+import { ToastProvider, useToast } from "./components/ui/Toast";
 import { scheduleAllNotifications, getNotificationPreferences } from "./utils/notifications";
+import { updateStreak } from "./utils/streak";
 import { savePendingReferral, trackReferralSignup } from "./services/referralService";
 import { Purchases } from "@revenuecat/purchases-capacitor";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 
 
-const App: React.FC = () => {
+const AppInner: React.FC = () => {
   // Load history from localStorage on mount
   const [history, setHistory] = useState<DailyReport[]>(() => {
     const saved = localStorage.getItem("face_analysis_history");
@@ -54,15 +50,13 @@ const App: React.FC = () => {
     return null;
   });
   const [contentKey, setContentKey] = useState(0);
-  const [progressCompliment, setProgressCompliment] = useState<string | null>(null);
   const [isPaywallVisible, setIsPaywallVisible] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
-  const [showDailyPrompt, setShowDailyPrompt] = useState(false);
   const [showScanCamera, setShowScanCamera] = useState(false);
   const [showReadyToScan, setShowReadyToScan] = useState(false);
-  const [pendingReport, setPendingReport] = useState<DailyReport | null>(null);
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [forceStartAnalysis, setForceStartAnalysis] = useState(false);
+  const toast = useToast();
   // Premium subscription state — the single source of truth for feature access
   const [isPremium, setIsPremium] = useState<boolean>(() => {
     return localStorage.getItem('is_premium') === 'true';
@@ -127,7 +121,6 @@ const App: React.FC = () => {
         if (isPaywallVisible) { setIsPaywallVisible(false); return; }
         if (showNotifSettings) { setShowNotifSettings(false); return; }
         if (showAuthGate) { setShowAuthGate(false); return; }
-        if (showDailyPrompt) { setShowDailyPrompt(false); return; }
         if (showScanCamera || showReadyToScan) {
           setShowScanCamera(false);
           setShowReadyToScan(false);
@@ -158,7 +151,7 @@ const App: React.FC = () => {
         backButtonListener.remove();
       }
     };
-  }, [activeTab, isPaywallVisible, showAuthGate, showScanCamera, showReadyToScan, showNotifSettings, showDailyPrompt]);
+  }, [activeTab, isPaywallVisible, showAuthGate, showScanCamera, showReadyToScan, showNotifSettings]);
 
   // Initialize RevenueCat SDK + check existing subscription on startup
   useEffect(() => {
@@ -194,6 +187,154 @@ const App: React.FC = () => {
     setSessionOnboardingComplete(true);
     // Auto-start scan after onboarding
     setShowScanCamera(true);
+  };
+
+  const handleDevSkip = () => {
+    const data = { age: "25-34", gender: "neutral" };
+    setUserData(data);
+    localStorage.setItem("user_demographics", JSON.stringify(data));
+    setSessionOnboardingComplete(true);
+    
+    // Create a mock report directly
+    const mockReport: DailyReport = {
+        id: `mock-report-${Date.now()}`,
+        date: new Date().toISOString(),
+        imageUrl: '/images/face_guide.png',
+        global_score: 7.8,
+        scoring: {
+            scanId: 'mock-scan',
+            globalScore: 7.8,
+            potentialScore: 9.2,
+            skin: {
+                statusScores: { overallSkin: 8, hydration: 7, redness: 9, pores: 6, spots: 8 },
+                overallScore: 8,
+                ageEstimate: 26,
+            },
+            face: {
+                statusScores: {
+                    faceLengthWidthBalance: 8,
+                    verticalFacialDistribution: 7,
+                    jawCheekboneRatio: 8,
+                    overallStructure: 7.5,
+                },
+            },
+            spectral: {
+                overallScore: 8,
+                statusScores: { overallSpectral: 8 }
+            },
+            faceBig6: {
+                eyes: 'Symmetrical and well-proportioned, slight dark circles.',
+                nose: 'Excellent symmetry and definition.',
+                jawline: 'Sharp contour, great structural support.',
+                chin: 'Optimal projection and proportion.',
+                midface: 'Compact midface, ideal volume.',
+                skin: 'Smooth texture, high hydration levels.',
+            },
+            advancedSkinMetrics: {
+                avgHealthScore: 0.8,
+                avgQualityScore: 0.75,
+                forehead: {
+                    health: {
+                        activeAcne: { acneScore: 0.9, severity: 'none', count: 0 },
+                        marks: { pieScore: 0.8, pihScore: 0.8 },
+                        barrier: { barrierScore: 0.7, damageLevel: 'low' },
+                        sebum: { sebumScore: 0.6, level: 'normal' },
+                        inflammation: { loadScore: 0.1, areas: [] }
+                    },
+                    quality: {
+                        smoothness: { smoothnessScore: 0.7, fineLines: 0 },
+                        poreVisibility: { visibilityScore: 0.8, count: 0 },
+                        toneEvenness: { evennessScore: 0.9 },
+                        radiance: { radianceScore: 0.8 },
+                        oilHydration: { balanceScore: 0.7 }
+                    }
+                },
+                leftCheek: {
+                    health: {
+                        activeAcne: { acneScore: 0.8, severity: 'low', count: 1 },
+                        marks: { pieScore: 0.7, pihScore: 0.7 },
+                        barrier: { barrierScore: 0.8, damageLevel: 'low' },
+                        sebum: { sebumScore: 0.7, level: 'normal' },
+                        inflammation: { loadScore: 0.2, areas: [] }
+                    },
+                    quality: {
+                        smoothness: { smoothnessScore: 0.8, fineLines: 0 },
+                        poreVisibility: { visibilityScore: 0.6, count: 0 },
+                        toneEvenness: { evennessScore: 0.8 },
+                        radiance: { radianceScore: 0.7 },
+                        oilHydration: { balanceScore: 0.8 }
+                    }
+                },
+                rightCheek: {
+                    health: {
+                        activeAcne: { acneScore: 0.9, severity: 'none', count: 0 },
+                        marks: { pieScore: 0.8, pihScore: 0.8 },
+                        barrier: { barrierScore: 0.8, damageLevel: 'low' },
+                        sebum: { sebumScore: 0.7, level: 'normal' },
+                        inflammation: { loadScore: 0.1, areas: [] }
+                    },
+                    quality: {
+                        smoothness: { smoothnessScore: 0.8, fineLines: 0 },
+                        poreVisibility: { visibilityScore: 0.6, count: 0 },
+                        toneEvenness: { evennessScore: 0.8 },
+                        radiance: { radianceScore: 0.7 },
+                        oilHydration: { balanceScore: 0.8 }
+                    }
+                },
+                chin: {
+                    health: {
+                        activeAcne: { acneScore: 0.7, severity: 'moderate', count: 2 },
+                        marks: { pieScore: 0.6, pihScore: 0.6 },
+                        barrier: { barrierScore: 0.6, damageLevel: 'moderate' },
+                        sebum: { sebumScore: 0.5, level: 'high' },
+                        inflammation: { loadScore: 0.3, areas: [] }
+                    },
+                    quality: {
+                        smoothness: { smoothnessScore: 0.6, fineLines: 0 },
+                        poreVisibility: { visibilityScore: 0.7, count: 0 },
+                        toneEvenness: { evennessScore: 0.7 },
+                        radiance: { radianceScore: 0.6 },
+                        oilHydration: { balanceScore: 0.5 }
+                    }
+                }
+            }
+        },
+        analysis: {
+            scanId: 'mock-scan',
+            timestamp: Date.now(),
+            skin: {
+                features: {},
+                zones: { forehead: { riskScore: 0.2 }, leftCheek: { riskScore: 0.5 }, rightCheek: { riskScore: 0.1 }, chin: { riskScore: 0.8 }, nose: { riskScore: 0.3 } },
+            },
+            face: { landmarks: {}, ratios: {} },
+            spectral: { uvDamage: 0.2, hyperpigmentation: 0.3, vascular: 0.1, darkCircles: 0.4 },
+        },
+        recommendations: {
+            motivationalNote: 'You have a great foundation, just a few tweaks away from your maximum potential.',
+            skincare: [
+                { category: 'Cleanser', why: 'To deeply clean pores.', name: 'Salicylic Acid Cleanser', usageTime: 'Morning' },
+                { category: 'Moisturizer', why: 'To improve hydration and barrier function.', name: 'Hyaluronic Acid Cream', usageTime: 'Evening' }
+            ],
+            lifestyle: [
+                { title: 'Drink More Water', description: 'Improves skin hydration and overall health.', impact: 8 },
+                { title: 'Sleep 8 Hours', description: 'Reduces dark circles and stress markers.', impact: 9 }
+            ],
+            big6Insights: {
+                acneClarity: "Minimal active breakouts. Focus on preventing congestion in the T-zone.",
+                texturePores: "Generally smooth, but visible pores around the cheeks and nose.",
+                barrierDefense: "Strong overall, but slight compromise detected on the chin area.",
+                sebumDynamics: "Slightly oily in the T-zone, well-balanced elsewhere.",
+                toneUniformity: "Even tone with minor post-inflammatory hyperpigmentation.",
+                visualFatigue: "Good radiance, but dark circles indicate slight visual fatigue."
+            }
+        }
+    } as any; // Cast as any because the type definitions might be slightly strict in this old codebase
+
+    setHistory([mockReport]);
+    setAnalysisData(mockReport);
+    localStorage.setItem("face_analysis_history", JSON.stringify([mockReport]));
+    setActiveTab("results");
+    setContentKey(prev => prev + 1);
   };
 
   // Sync with Supabase on Auth Change
@@ -289,56 +430,9 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Effect: When user logs in and there's a pending report, save it
-  useEffect(() => {
-    if (user && pendingReport) {
-      const saveAndShow = async () => {
-         // Save to local history WITHOUT base64 data (GDPR + QuotaExceededError guard)
-        const stripHeavyData = (report: any) => ({
-          ...report,
-          imageUrl: undefined,
-          faceState: report.faceState ? {
-              ...report.faceState,
-              primaryImageJpegBase64: undefined,
-              retainedCropJpegBase64: undefined
-          } : undefined
-        });
-
-        const updatedHistory = [...history, pendingReport];
-        setHistory(updatedHistory);
-        try {
-          localStorage.setItem("face_analysis_history", JSON.stringify(updatedHistory.map(stripHeavyData)));
-        } catch (err: any) {
-          console.error("Storage Save Failed:", err);
-        }
-
-        // Save to Supabase
-        try {
-          const { error } = await supabase.from('scans').insert({
-            id: pendingReport.id,
-            user_id: user.id,
-            image_url: pendingReport.imageUrl,
-            face_state: pendingReport.faceState,
-            analysis_results: pendingReport.analysis,
-            recommendations: pendingReport.recommendations,
-            created_at: pendingReport.date
-          });
-          if (error) console.error("Supabase Save Error:", error);
-        } catch (err) {
-          console.error("Failed to save scan to cloud:", err);
-        }
-
-        // Show results
-        setAnalysisData(pendingReport);
-        setPendingReport(null);
-        setShowAuthGate(false);
-        setShowScanCamera(false);
-        setActiveTab("results");
-        setContentKey(prev => prev + 1);
-      };
-      saveAndShow();
-    }
-  }, [user, pendingReport]);
+  // NOTE: We previously had a `pendingReport` flow here that paired with a `setPendingReport`
+  // setter that was never actually called. The post-auth save path is fully handled by
+  // UploadScreen via `forceStartAnalysis` + the in-component `pendingFaceState` queue.
 
   const handleShowPaywall = () => {
     setIsPaywallVisible(true);
@@ -392,6 +486,13 @@ const App: React.FC = () => {
     const updatedHistory = [...history, newReport];
     setHistory(updatedHistory);
 
+    // Advance daily streak (idempotent within the same day)
+    try {
+      updateStreak();
+    } catch (e) {
+      console.warn("[STREAK] update failed", e);
+    }
+
     try {
       const historyToSave = updatedHistory.map(report => ({
           ...report,
@@ -405,7 +506,7 @@ const App: React.FC = () => {
       localStorage.setItem("face_analysis_history", JSON.stringify(historyToSave));
     } catch (err: any) {
       console.error("Storage Save Failed:", err);
-      alert(`⚠️ HISTORY SAVE FAILED (Storage Full?)\nError: ${err.message}\n\nAnalysis will still be shown!`);
+      toast.error("Couldn't save history locally — device storage is full. Your analysis still loads, but old scans may not persist.");
     }
 
     // 2. Persist to Cloud (Supabase) if logged in
@@ -421,9 +522,13 @@ const App: React.FC = () => {
           created_at: newReport.date // ISO string
         });
 
-        if (error) console.error("Supabase Save Error:", error);
+        if (error) {
+          console.error("Supabase Save Error:", error);
+          toast.error("Couldn't sync this scan to the cloud. Your scan is saved on this device.");
+        }
       } catch (err) {
         console.error("Failed to save scan to cloud:", err);
+        toast.error("Couldn't sync this scan to the cloud. Your scan is saved on this device.");
       }
     }
 
@@ -477,7 +582,7 @@ const App: React.FC = () => {
   const needsOnboarding = isGuest && !sessionOnboardingComplete;
 
   if (needsOnboarding) {
-    return <OnboardingManager onComplete={handleOnboardingComplete} onCompleteWithData={handleOnboardingCompleteWithData} initialStep={1} />;
+    return <OnboardingManager onComplete={handleOnboardingComplete} onCompleteWithData={handleOnboardingCompleteWithData} onDevSkip={handleDevSkip} initialStep={1} />;
   }
 
   // CRITICAL PM FIX: User has no scan history → never show empty main app.
@@ -555,23 +660,27 @@ const App: React.FC = () => {
       case "results": return <Results
         data={analysisData}
         dayNumber={dayNumberForReport}
+        onShowPaywall={handleShowPaywall}
         user={user}
         history={history}
         onNavigateToProgress={() => changeTab("progress")}
         onLogout={handleLogout}
+        onNewScan={handleStartScan}
       />;
       case "progress": {
-        return <Progress history={history} onSelectReport={handleSelectReport} compliment={progressCompliment} />;
+        return <Progress history={history} onSelectReport={handleSelectReport} compliment={null} onNewScan={handleStartScan} />;
       }
       case "face": return <FaceAnalysis data={analysisData} dayNumber={dayNumberForReport} />;
       case "recommendations": return <Recommendations data={analysisData} gender={userData?.gender} />;
       default: return <Results
         data={analysisData}
         dayNumber={dayNumberForReport}
+        onShowPaywall={handleShowPaywall}
         user={user}
         history={history}
         onNavigateToProgress={() => changeTab("progress")}
         onLogout={handleLogout}
+        onNewScan={handleStartScan}
       />;
     }
   };
@@ -588,7 +697,7 @@ const App: React.FC = () => {
       {/* Persistent Global Header - Visible on ALL tabs */}
       {contentKey >= 0 && <GlobalAppHeader user={user} onLogout={handleLogout} onShowNotificationSettings={() => setShowNotifSettings(true)} />}
 
-      <div className={`fade-in-up visible p-4 sm:p-6 pb-28 ${activeTab === "results" ? "pt-4" : "pt-28"} max-w-3xl mx-auto`} key={contentKey}>
+      <div className={`fade-in-up visible pb-28 ${activeTab === "results" || activeTab === "progress" ? "pt-4" : "px-4 pt-28"} w-full max-w-lg mx-auto`} key={contentKey}>
         {renderContent()}
       </div>
 
@@ -640,20 +749,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Daily Check-in Overlay */}
-      {showDailyPrompt && (
-        <DailyCheckIn
-          lastScanDate={history[history.length - 1]?.date}
-          onScan={() => {
-            setShowDailyPrompt(false);
-            setShowScanCamera(true);
-          }}
-          onSkip={() => {
-            setShowDailyPrompt(false);
-          }}
-        />
-      )}
-
       {/* Notification Settings Modal */}
       {showNotifSettings && (
         <NotificationSettings onClose={() => setShowNotifSettings(false)} />
@@ -661,5 +756,11 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const App: React.FC = () => (
+  <ToastProvider>
+    <AppInner />
+  </ToastProvider>
+);
 
 export default App;

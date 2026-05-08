@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { t } from '../localization';
+import { t, localized } from '../localization';
 import LegalModal, { LegalTab } from './LegalModal';
 
 interface LoginScreenProps {
@@ -59,14 +59,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
           <h1 className="text-3xl sm:text-4xl font-bold mb-1 tracking-tight px-4 bg-gradient-to-r from-teal-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent" style={{ fontWeight: 700 }}>
             Skinface
           </h1>
-          <p className="text-sm text-gray-400 mb-2 tracking-widest uppercase font-semibold">Face Scan &amp; Glow Up</p>
+          <p className="text-sm text-gray-400 mb-2 tracking-widest uppercase font-semibold">{localized('Face Scan & Daily Streak', 'Yüz Taraması & Günlük Seri')}</p>
           
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-gray-300 font-medium tracking-wide px-4 mb-1">
-            Science-backed AI Cosmetologist
+            {localized('AI score and task coach', 'AI skor ve görev koçu')}
           </p>
           <p className="text-sm sm:text-base text-gray-400 px-4">
-            you can trust
+            {localized('do not waste your streak', 'serini boşa yakma')}
           </p>
           
           {/* Social Proof - Stats */}
@@ -90,8 +90,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
                 </svg>
               </div>
               <div className="flex-1 text-left">
-                <p className="text-white font-semibold text-xs sm:text-sm">AI-Powered Analysis</p>
-                <p className="text-gray-400 text-[10px] sm:text-xs">Advanced facial recognition</p>
+                <p className="text-white font-semibold text-xs sm:text-sm">{localized('AI Signal Analysis', 'AI Sinyal Analizi')}</p>
+                <p className="text-gray-400 text-[10px] sm:text-xs">{localized('Read your skin and face score clearly', 'Cilt ve yüz skorunu net oku')}</p>
               </div>
             </div>
             
@@ -102,8 +102,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
                 </svg>
               </div>
               <div className="flex-1 text-left">
-                <p className="text-white font-semibold text-xs sm:text-sm">Track Progress</p>
-                <p className="text-gray-400 text-[10px] sm:text-xs">See your glow up journey</p>
+                <p className="text-white font-semibold text-xs sm:text-sm">{localized('Protect the Streak', 'Seriyi Koru')}</p>
+                <p className="text-gray-400 text-[10px] sm:text-xs">{localized('Every scan makes the trend clearer', 'Her ölçüm trendi netleştirir')}</p>
               </div>
             </div>
             
@@ -114,8 +114,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginWithGoogle, onLoginWit
                 </svg>
               </div>
               <div className="flex-1 text-left">
-                <p className="text-white font-semibold text-xs sm:text-sm">Smart Recommendations</p>
-                <p className="text-gray-400 text-[10px] sm:text-xs">Personalized beauty tips</p>
+                <p className="text-white font-semibold text-xs sm:text-sm">{localized('Daily Task Plan', 'Günlük Görev Planı')}</p>
+                <p className="text-gray-400 text-[10px] sm:text-xs">{localized('See what to do today', 'Bugün ne yapacağını gör')}</p>
               </div>
             </div>
           </div>

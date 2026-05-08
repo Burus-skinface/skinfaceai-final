@@ -12,6 +12,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
     const [isSignup, setIsSignup] = useState(false);
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
+    const [info, setInfo] = useState('');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -36,26 +37,46 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        setLoading(true);
+        setInfo('');
 
+        const trimmed = email.trim();
+        if (!/^\S+@\S+\.\S+$/.test(trimmed)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
+
+        setLoading(true);
         try {
-            if (isSignup) {
-                const { error } = await supabase.auth.signUp({
-                    email,
-                    password: email, // simplified for now
-                    options: { emailRedirectTo: window.location.origin }
-                });
-                if (error) throw error;
-            } else {
-                const { error } = await supabase.auth.signInWithOtp({
-                    email,
-                    options: { emailRedirectTo: window.location.origin }
-                });
-                if (error) throw error;
+            // SECURITY: We use Supabase magic-link OTP for both sign-in and sign-up.
+            // This avoids storing or transmitting any user-chosen password from the client.
+            // Sign-up = create account if missing; Sign-in = require an existing account.
+            const { error } = await supabase.auth.signInWithOtp({
+                email: trimmed,
+                options: {
+                    shouldCreateUser: isSignup,
+                    emailRedirectTo: window.location.origin,
+                },
+            });
+
+            if (error) {
+                // Map "user not found" style error on sign-in to a friendly hint that
+                // covers any legacy email-as-password accounts created before this fix.
+                const msg = (error.message || '').toLowerCase();
+                if (!isSignup && (msg.includes('not found') || msg.includes('signups not allowed') || msg.includes('user'))) {
+                    throw new Error("We couldn't find an account for this email. Tap \u201CDon't have an account? Sign Up\u201D to create one.");
+                }
+                throw error;
             }
-            onAuthenticated();
+
+            setInfo(
+                isSignup
+                    ? 'Check your inbox — we sent a secure sign-up link to confirm your account.'
+                    : 'Check your inbox — we sent you a secure sign-in link.'
+            );
+            // We do NOT call onAuthenticated() here. The auth listener in App.tsx will
+            // fire once the user clicks the magic link and the session is established.
         } catch (err: any) {
-            setError(err.message || 'An error occurred');
+            setError(err.message || 'An error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -158,7 +179,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                     >
                         {/* Back */}
                         <button
-                            onClick={() => { setShowEmailForm(false); setError(''); }}
+                            onClick={() => { setShowEmailForm(false); setError(''); setInfo(''); }}
                             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm mb-2"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,10 +191,18 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                         <h2 className="text-xl font-bold text-white">
                             {isSignup ? 'Sign Up' : 'Sign In'}
                         </h2>
+                        <p className="text-[12px] text-gray-400 leading-relaxed -mt-2">
+                            We'll email you a secure {isSignup ? 'sign-up' : 'sign-in'} link — no password required.
+                        </p>
 
                         {error && (
                             <div className="bg-red-500/20 border border-red-500/50 rounded-xl px-4 py-3 text-red-400 text-sm">
                                 {error}
+                            </div>
+                        )}
+                        {info && !error && (
+                            <div className="bg-emerald-500/15 border border-emerald-500/40 rounded-xl px-4 py-3 text-emerald-300 text-sm">
+                                {info}
                             </div>
                         )}
 
@@ -186,8 +215,10 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                                 </div>
                                 <input
                                     type="email"
+                                    autoComplete="email"
+                                    inputMode="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => { setEmail(e.target.value); if (error) setError(''); if (info) setInfo(''); }}
                                     placeholder="Enter your email"
                                     className="w-full py-4 pl-12 pr-6 bg-white/10 backdrop-blur-sm text-white placeholder-gray-500 text-base rounded-full border border-white/15 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                                     required
@@ -198,15 +229,15 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || !!info}
                                 className="w-full h-[52px] rounded-full font-bold text-[16px] bg-gradient-to-r from-purple-500 to-cyan-500 text-white shadow-lg shadow-purple-500/30 transition-all disabled:opacity-50"
                             >
-                                {loading ? 'Loading...' : (isSignup ? 'Sign Up' : 'Sign In')}
+                                {loading ? 'Sending link…' : info ? 'Link Sent ✓' : (isSignup ? 'Send Sign-Up Link' : 'Send Sign-In Link')}
                             </motion.button>
                         </form>
 
                         <button
-                            onClick={() => { setIsSignup(!isSignup); setError(''); }}
+                            onClick={() => { setIsSignup(!isSignup); setError(''); setInfo(''); }}
                             className="w-full text-center text-sm text-gray-500 hover:text-gray-300 transition-colors"
                         >
                             {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}

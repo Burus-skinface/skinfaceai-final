@@ -25,6 +25,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   CORE LAYOUT SYSTEM — Card Grid (Mobile-First)
+   ============================================ */
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 :root {
   --elite-bg: #1C1C1E;
   --elite-radius: 2.5rem;

@@ -625,10 +625,11 @@ FINAL RULES:
 
 Generate user-facing outputs for all 7 categories + overall summary.`;
 
-  try {
-    // DEV BYPASS: Skip API call
-    console.log('[SKIN DETECTION] DEV BYPASS: Returning mock data for Gemini');
-    const aiOutput = {
+  // Dev-only opt-in mock (gated by both DEV build AND opt-in env flag).
+  // Production builds must call the real backend; throwing below makes that obvious.
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_RECOMMENDS === 'true') {
+    console.warn('[SKIN DETECTION] DEV BYPASS active — returning mock descriptions. Will NOT run in production.');
+    return {
       acne: "Minimal acne is present, primarily around the jawline.",
       pores: "Pore visibility is low across the T-zone.",
       blackheads: "A few blackheads are noticeable on the nose.",
@@ -636,19 +637,17 @@ Generate user-facing outputs for all 7 categories + overall summary.`;
       spots: "No significant dark spots detected.",
       dullness: "Your skin shows high radiance and vitality.",
       wrinkles: "No major fine lines are apparent.",
-      overallSkinSummary: "Your skin exhibits excellent overall health and balance."
+      overallSkinSummary: "Your skin exhibits excellent overall health and balance.",
+      overallSkinScore,
     };
-    const finalResult = {
-      ...aiOutput,
-      overallSkinScore, // Add calculated score
-    };
-
-    return finalResult;
-  } catch (err: any) {
-    debugLog.error('SKIN', 'Gemini API call failed', err.message);
-    console.error('[SKIN DETECTION] Gemini API call failed:', err);
-    throw err; // Ensure we throw so the pipeline knows it failed (as user demanded no fallbacks)
   }
+
+  // TODO(backend): Wire this to the secure /api/analyze proxy (same shape as recommendsEngine).
+  // Reference prompt + schema are built above; we throw loudly in prod until that wiring lands
+  // so the missing integration cannot be masked by a silent mock.
+  debugLog.error('SKIN', 'Gemini description call not wired to backend proxy');
+  void prompt; void schema;
+  throw new Error('SKIN_DESCRIPTIONS_NOT_IMPLEMENTED: backend integration required');
 }
 
 /**
@@ -842,16 +841,23 @@ CRITICAL RULES:
 
 All outputs must be in English.`;
 
-  // DEV BYPASS: Skip API call
-  console.log('[SKIN DETECTION] DEV BYPASS: Returning mock profile data for Gemini');
-  return {
-    skinType: { value: "Normal", description: "Balanced hydration and sebum." },
-    moisture: { value: "Balanced", description: "Good water retention levels." },
-    oiliness: { value: "Minimal", description: "Low sebum across regions." },
-    skinTone: { value: "Neutral", description: "Balanced undertones." },
-    elasticity: { value: "Good", description: "High resilience and bounce." },
-    dailySummary: "Your skin is in excellent shape today. Maintain your current routine."
-  };
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_RECOMMENDS === 'true') {
+    console.warn('[SKIN DETECTION] DEV BYPASS active — returning mock profile. Will NOT run in production.');
+    return {
+      skinType: { value: "Normal", description: "Balanced hydration and sebum." },
+      moisture: { value: "Balanced", description: "Good water retention levels." },
+      oiliness: { value: "Minimal", description: "Low sebum across regions." },
+      skinTone: { value: "Neutral", description: "Balanced undertones." },
+      elasticity: { value: "Good", description: "High resilience and bounce." },
+      dailySummary: "Your skin is in excellent shape today. Maintain your current routine."
+    };
+  }
+
+  // TODO(backend): Wire this to the secure /api/analyze proxy.
+  // Reference prompt + schema are built above; throwing loudly in prod prevents silent mocking.
+  debugLog.error('SKIN', 'Gemini profile call not wired to backend proxy');
+  void prompt; void schema;
+  throw new Error('SKIN_PROFILE_NOT_IMPLEMENTED: backend integration required');
 }
 /**
  * Main detection function (Hybrid CV + Gemini)

@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { localized } from '../../localization';
 
 interface WelcomeScreenProps {
     onNext: () => void;
+    onDevSkip?: () => void;
 }
 
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
+const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
     const [showTerms, setShowTerms] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [activeIndex, setActiveIndex] = useState(0);
@@ -57,7 +59,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                             transition={{ delay: 0.1, duration: 0.4 }}
                             className="text-[26px] sm:text-[30px] font-bold leading-[1.2] tracking-tight text-[#1D1D1F] max-w-[280px] mx-auto text-balance"
                         >
-                            Clinical AI Skin Analysis
+                            {localized('Your Daily Score Coach', 'Günlük Skor Koçun')}
                         </motion.h2>
                         <motion.p
                             initial={{ opacity: 0 }}
@@ -65,7 +67,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                             transition={{ delay: 0.2, duration: 0.4 }}
                             className="text-[15px] text-[#86868B] mt-5 max-w-[260px] mx-auto leading-relaxed"
                         >
-                            Upload a selfie and get an instant, medical-grade breakdown of your skin metrics.
+                            {localized('Upload one selfie. Read your skin and face signals, then start your daily streak.', 'Bir selfie yükle. Cilt ve yüz sinyalini ölç, günlük serini başlat.')}
                         </motion.p>
                     </div>
 
@@ -82,10 +84,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                             </div>
                         </div>
                         <h2 className="text-[26px] sm:text-[30px] font-bold leading-[1.2] tracking-tight text-[#1D1D1F] max-w-[280px] mx-auto text-balance">
-                            Deep 'Big 6' Mapping
+                            {localized('Big 6 Signal Map', 'Big 6 Sinyal Haritası')}
                         </h2>
                         <p className="text-[15px] text-[#86868B] mt-5 max-w-[260px] mx-auto leading-relaxed">
-                            We analyze Acne, Texture, Hydration, Glow, Pigmentation, and Barrier function instantly.
+                            {localized('We read acne, texture, hydration, tone, pigment, and barrier signals in one scan.', 'Akne, doku, nem, ton, pigment ve bariyer sinyalini tek ölçümde okuruz.')}
                         </p>
                     </div>
 
@@ -103,10 +105,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                             </div>
                         </div>
                         <h2 className="text-[26px] sm:text-[30px] font-bold leading-[1.2] tracking-tight text-[#1D1D1F] max-w-[280px] mx-auto text-balance">
-                            Personalized Protocol
+                            {localized('Daily Task Plan', 'Günlük Görev Planı')}
                         </h2>
                         <p className="text-[15px] text-[#86868B] mt-5 max-w-[260px] mx-auto leading-relaxed">
-                            Stop guessing. Get an organic, AI-synthesized daily routine based on your exact skin state.
+                            {localized('Stop guessing. See the exact task your signal needs today.', 'Tahmin etmeyi bırak. Bugünkü sinyaline göre hangi görevi yapacağını net gör.')}
                         </p>
                     </div>
                 </div>
@@ -134,8 +136,17 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext }) => {
                     onClick={onNext}
                     className="w-full h-[60px] rounded-full font-bold text-[18px] bg-[#1D1D1F] text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center"
                 >
-                    Get Started
+                    {localized('Start first task', 'İlk görevi başlat')}
                 </motion.button>
+                
+                {onDevSkip && (
+                    <button 
+                        onClick={onDevSkip}
+                        className="w-full py-2 text-xs font-bold text-purple-500 border border-purple-200 rounded-full bg-purple-50"
+                    >
+                        [DEV] Skip to Results
+                    </button>
+                )}
 
                 {/* Subtle Terms Footer */}
                 <motion.p

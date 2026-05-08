@@ -92,15 +92,15 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userId }) => {
               onClick={e => e.stopPropagation()}
             >
               <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-2xl font-bold text-white mb-2">Premium Unlocked!</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">Plan kilidi açıldı</h2>
               <p className="text-purple-200/80 text-sm mb-6">
-                You earned {PREMIUM_DAYS_REWARD} days of free Premium by inviting {REFERRALS_NEEDED} friends!
+                {REFERRALS_NEEDED} arkadaş ölçümünü tamamladı. {PREMIUM_DAYS_REWARD} günlük plan erişimi senin.
               </p>
               <button
                 onClick={() => setShowCelebration(false)}
                 className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold rounded-xl active:scale-95 transition-transform"
               >
-                Awesome! 🚀
+                Göreve devam
               </button>
             </motion.div>
           </motion.div>
@@ -118,9 +118,9 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userId }) => {
             🎁
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-white leading-tight">Invite Friends, Earn Premium</h3>
+            <h3 className="text-base font-bold text-white leading-tight">Arkadaş çağır, plan kilidini aç</h3>
             <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
-              Invite {REFERRALS_NEEDED} friends who complete a scan → get {PREMIUM_DAYS_REWARD} days free Premium
+              {REFERRALS_NEEDED} arkadaş ilk ölçümünü tamamlasın → {PREMIUM_DAYS_REWARD} gün plan erişimi açılır
             </p>
           </div>
         </div>

@@ -18,20 +18,30 @@ const AestheticsScoreCard: React.FC<{ label: string; value: number }> = ({ label
 
 
 const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> = ({ data, gender }) => {
-    if (!data?.recommendations || !data?.scoring) {
+    const [activeTab, setActiveTab] = useState<'morning' | 'evening'>('morning');
+
+    // Defensive guard: missing payload OR missing routine shapes both render the empty state
+    // rather than throwing on a bad destructure / .map() of undefined.
+    const recommendations = data?.recommendations;
+    const dailyRoutine = recommendations?.dailyRoutine;
+    const morning = Array.isArray(dailyRoutine?.morning) ? dailyRoutine.morning : null;
+    const evening = Array.isArray(dailyRoutine?.evening) ? dailyRoutine.evening : null;
+    const recommendedProducts = Array.isArray(recommendations?.recommendedProducts)
+        ? recommendations!.recommendedProducts
+        : [];
+    const motivationalNote = recommendations?.motivationalNote ?? '';
+
+    if (!recommendations || !data?.scoring || !morning || !evening) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-gray-400 text-center px-6">
-                <div className="w-20 h-20 bg-white/5 rounded-[2rem] border border-white/10 flex items-center justify-center mb-6">
-                    <Sparkles className="w-10 h-10 text-gray-600" />
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-[#48484A] text-center px-6 pt-20">
+                <div className="w-20 h-20 bg-black/[0.04] rounded-[2rem] border border-black/[0.06] flex items-center justify-center mb-6">
+                    <Sparkles className="w-10 h-10 text-[#86868B]" />
                 </div>
-                <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase">{t.noRecommendations}</h2>
-                <p className="mt-2 text-sm font-medium text-gray-500 leading-relaxed">{t.uploadForRecommendations}</p>
+                <h2 className="text-2xl font-black text-[#1D1D1F] italic tracking-tighter uppercase">{t.noRecommendations}</h2>
+                <p className="mt-2 text-sm font-medium text-[#86868B] leading-relaxed max-w-[280px]">{t.uploadForRecommendations}</p>
             </div>
         );
     }
-
-    const [activeTab, setActiveTab] = useState<'morning' | 'evening'>('morning');
-    const { recommendations, scoring } = data;
 
     return (
         <div className="w-full max-w-lg mx-auto pb-10 space-y-10 mt-6 pt-16">
@@ -56,7 +66,7 @@ const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> =
                                 : 'text-[#86868B] hover:text-[#48484A]'
                             }`}
                         >
-                            <span>Morning routine</span>
+                            <span>Sabah görevi</span>
                             <SunIcon className={`w-4 h-4 transition-colors ${activeTab === 'morning' ? 'text-amber-500' : 'text-[#86868B] hover:text-[#48484A]'}`} />
                         </button>
                         
@@ -68,7 +78,7 @@ const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> =
                                 : 'text-[#86868B] hover:text-[#48484A]'
                             }`}
                         >
-                            <span>Night routine</span>
+                            <span>Gece görevi</span>
                             <MoonIcon className={`w-4 h-4 transition-colors ${activeTab === 'evening' ? 'text-indigo-500' : 'text-[#86868B] hover:text-[#48484A]'}`} />
                         </button>
                         
@@ -104,7 +114,9 @@ const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> =
                             {/* Line connecting items */}
                             <div className="absolute left-[33px] top-6 bottom-6 w-px bg-black/5"></div>
                             
-                            {recommendations?.dailyRoutine?.morning.map((step, idx) => (
+                            {morning.length === 0 ? (
+                                <p className="text-sm text-[#86868B] italic">Bu ölçüm için sabah görevi yok.</p>
+                            ) : morning.map((step, idx) => (
                                 <div key={idx} className="flex items-center gap-6 group relative">
                                     <div className="relative z-10 flex-shrink-0 w-16 h-16 rounded-[1.25rem] bg-white border border-black/5 flex items-center justify-center group-hover:border-purple-200 group-hover:bg-purple-50 transition-all shadow-sm">
                                         <span className="text-sm font-black text-black/30 group-hover:text-amber-500 transition-colors">0{idx + 1}</span>
@@ -131,7 +143,9 @@ const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> =
                             {/* Line connecting items */}
                             <div className="absolute left-[33px] top-6 bottom-6 w-px bg-black/5"></div>
 
-                            {recommendations?.dailyRoutine?.evening.map((step, idx) => (
+                            {evening.length === 0 ? (
+                                <p className="text-sm text-[#86868B] italic">Bu ölçüm için gece görevi yok.</p>
+                            ) : evening.map((step, idx) => (
                                 <div key={idx} className="flex items-center gap-6 group relative">
                                     <div className="relative z-10 flex-shrink-0 w-16 h-16 rounded-[1.25rem] bg-white border border-black/5 flex items-center justify-center group-hover:border-purple-200 group-hover:bg-purple-50 transition-all shadow-sm">
                                         <span className="text-sm font-black text-black/30 group-hover:text-indigo-500 transition-colors">0{idx + 1}</span>
@@ -145,13 +159,13 @@ const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> =
             </div>
 
             {/* YOUR RECOMMENDATIONS (AMAZON AFFILIATE) */}
-            {recommendations?.recommendedProducts && recommendations.recommendedProducts.length > 0 && (
+            {recommendedProducts.length > 0 && (
                 <div className="space-y-4">
                     <h1 className="text-2xl font-black text-[#1D1D1F] italic tracking-tighter uppercase px-2 mb-2">
-                        Arsenal <span className="text-purple-600">/ Equipment</span>
+                        Görev Seti <span className="text-purple-600">/ Eşleşen Ürünler</span>
                     </h1>
                     <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 scrollbar-hide px-2">
-                        {recommendations.recommendedProducts.map((aiRec, idx) => {
+                        {recommendedProducts.map((aiRec, idx) => {
                             const product = PRODUCT_CATALOG.find(p => p.id === aiRec.productId);
                             if (!product) return null;
                             return (
@@ -175,7 +189,7 @@ const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> =
                                         {/* Confidence Score Float */}
                                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-black/10 shadow-sm flex items-center gap-1.5">
                                             <Sparkles className="w-3 h-3 text-purple-600" />
-                                            <span className="text-[10px] font-black text-[#1D1D1F] tracking-widest uppercase">{aiRec.confidenceScore}% Synergy</span>
+                                            <span className="text-[10px] font-black text-[#1D1D1F] tracking-widest uppercase">{aiRec.confidenceScore}% eşleşme</span>
                                         </div>
                                         <div className="absolute top-3 right-3 bg-teal-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm">
                                             {product.priceEstimation}
@@ -200,18 +214,20 @@ const Recommendations: React.FC<{ data: DailyReport | null, gender?: string }> =
             )}
 
             {/* STRATEGIC SUMMARY */}
-            <div className="bg-[#F5F5F7] p-10 rounded-[2.5rem] border border-black/5 relative overflow-hidden group shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
-                    <Sparkles className="w-24 h-24 text-black" />
+            {motivationalNote && (
+                <div className="bg-[#F5F5F7] p-10 rounded-[2.5rem] border border-black/5 relative overflow-hidden group shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+                        <Sparkles className="w-24 h-24 text-black" />
+                    </div>
+                    <h3 className="text-xs font-black text-[#86868B] uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-black/20"></div>
+                        {t.strategicMemo}
+                    </h3>
+                    <p className="text-xl font-bold text-[#1D1D1F] italic leading-relaxed text-center relative z-10">
+                        "{motivationalNote}"
+                    </p>
                 </div>
-                <h3 className="text-xs font-black text-[#86868B] uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-black/20"></div>
-                    {t.strategicMemo}
-                </h3>
-                <p className="text-xl font-bold text-[#1D1D1F] italic leading-relaxed text-center relative z-10">
-                    "{recommendations?.motivationalNote}"
-                </p>
-            </div>
+            )}
         </div>
     );
 };

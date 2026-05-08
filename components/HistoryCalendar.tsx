@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { DailyReport } from '../types';
-import { t, getLocale } from '../localization';
+import { getLocale, getLanguage, localized } from '../localization';
 import { Sparkles } from './icons/SparklesIcon';
 
 interface HistoryCalendarProps {
@@ -27,10 +27,9 @@ const HistoryCalendar: React.FC<HistoryCalendarProps> = ({ history, onSelectRepo
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
 
-    // Adjust for Monday start if locale implies (Turkish starts Monday)
-    // JS getDay(): 0=Sun, 1=Mon.
-    // Use Simple Grid for now
-    const blanks = Array(firstDay).fill(null);
+    const isTurkish = getLanguage() === 'tr';
+    const weekdayOffset = isTurkish ? (firstDay + 6) % 7 : firstDay;
+    const blanks = Array(weekdayOffset).fill(null);
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
     const monthName = currentDate.toLocaleDateString(getLocale(), { month: 'long', year: 'numeric' });
@@ -63,7 +62,7 @@ const HistoryCalendar: React.FC<HistoryCalendarProps> = ({ history, onSelectRepo
             </div>
 
             <div className="grid grid-cols-7 gap-2 mb-2 text-center">
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                {(isTurkish ? ['P', 'S', 'Ç', 'P', 'C', 'C', 'P'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S']).map((d, i) => (
                     <div key={i} className="text-xs font-semibold text-[#86868B]">{d}</div>
                 ))}
             </div>
@@ -104,7 +103,7 @@ const HistoryCalendar: React.FC<HistoryCalendarProps> = ({ history, onSelectRepo
 
             <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[#86868B]">
                 <div className="w-3 h-3 rounded bg-white border border-purple-200 shadow-sm"></div>
-                <span>Analysis Complete</span>
+                <span>{localized('Measurement complete', 'Ölçüm tamamlandı')}</span>
             </div>
         </div>
     );

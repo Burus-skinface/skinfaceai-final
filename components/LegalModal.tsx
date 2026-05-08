@@ -77,24 +77,34 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, initialTab, onClose }) 
                 {activeTab === 'privacy' && (
                     <div className="space-y-5">
                         <h1 className="text-3xl font-extrabold text-black mb-2">Privacy & Data Policy</h1>
-                        <p className="text-xs text-gray-500 uppercase tracking-widest border-b pb-4 mb-6">GDPR, CCPA & BIPA Compliant</p>
+                        <p className="text-xs text-gray-500 uppercase tracking-widest border-b pb-4 mb-6">GDPR, CCPA, KVKK & BIPA Compliant</p>
 
-                        <h2 className="text-xl font-bold text-black mt-6">1. Biometric Data Collection & Processing (BIPA/GDPR)</h2>
-                        <p>We take your facial and biometric privacy with the highest degree of seriousness. Skinface AI utilizes on-device camera feeds to map out 468 geometric facial landmarks (Face Mesh) required to calculate symmetry and aesthetic proportions.</p>
+                        <h2 className="text-xl font-bold text-black mt-6">1. What We Collect (Biometric & Scan Data — BIPA / GDPR / KVKK)</h2>
+                        <p>Skinface AI uses your device camera to capture short scans and to map 468 geometric facial landmarks (Face Mesh) required to calculate skin and structural metrics. To run analysis, generate insights, and let you compare your progress over time, the following are processed and — when you are signed in — stored on our servers (Supabase) tied to your account:</p>
                         <ul className="list-disc pl-5 mt-2 space-y-2">
-                            <li><strong>No Storage of Raw Images:</strong> Your live camera feed and facial images are processed <em>transiently</em> within your device's memory (RAM) and are instantaneously destroyed. They are never transmitted, saved, or uploaded to our cloud servers.</li>
-                            <li><strong>No Biometric Identifier Retention:</strong> The facial landmarks are converted into anonymous numerical vectors (scores). Skinface AI does not store any mathematical formulation that could be used to subsequently identify your face or identity outside of a single active login session.</li>
+                            <li><strong>Scan image (`image_url`):</strong> the still image captured during a scan, stored against your account so we can render your dashboard, before/after, and share cards.</li>
+                            <li><strong>Derived face state (`face_state`):</strong> a stabilized, multi-frame numerical representation of your scan (landmarks, region metrics, color/texture vectors). It is required to recompute scores and to power trend analysis between scans.</li>
+                            <li><strong>Analysis results & recommendations:</strong> the structured scores, insights, and routine suggestions produced from each scan.</li>
+                            <li><strong>Account profile:</strong> email, age range, gender preference (used to personalize tone and recommendations), and subscription state.</li>
+                        </ul>
+                        <p className="mt-2">If you use the app as a <strong>guest</strong>, scans stay only on your device's local storage and are never uploaded.</p>
+
+                        <h2 className="text-xl font-bold text-black mt-6">2. Retention</h2>
+                        <p>We retain your scan image, face state, analysis results, and recommendations <strong>for as long as your account exists</strong>. There is no automatic time-based deletion: your scan history is intentionally preserved so progress tracking and longitudinal insights stay accurate. When you delete your account (see Section 4), all of the above are removed from our active systems.</p>
+
+                        <h2 className="text-xl font-bold text-black mt-6">3. Third-Party Intelligence Processing</h2>
+                        <p>To generate personalized routines and insights, sanitized numerical metrics (e.g., region-level scores, no raw images and no PII) are transmitted via encrypted connection to our AI provider through our backend proxy (Google Gemini, routed via our server). This data is used strictly for one-time inference for your account and is <strong>categorically prohibited from being used to train third-party AI models.</strong></p>
+
+                        <h2 className="text-xl font-bold text-black mt-6">4. Your Rights — Access, Export, and Deletion</h2>
+                        <p>Under GDPR, CCPA, KVKK, and equivalent laws you retain full sovereignty over your data:</p>
+                        <ul className="list-disc pl-5 mt-2 space-y-2">
+                            <li><strong>Right to access / export:</strong> contact <a href="mailto:support@skinface.ai" className="underline">support@skinface.ai</a> to request a copy of your scans, derived face state, and recommendations.</li>
+                            <li><strong>Right to deletion ("Right to be Forgotten"):</strong> use the <strong>Delete Account</strong> button in the in-app menu. This irreversibly removes your scan images, derived face states, analysis results, recommendations, and your profile row.</li>
+                            <li><strong>Authentication record:</strong> for fraud and abuse prevention, the auth credentials row (your email + login metadata) may be removed asynchronously after deletion is requested. If you need an immediate auth-row purge, email <a href="mailto:support@skinface.ai" className="underline">support@skinface.ai</a> and we will action it manually.</li>
                         </ul>
 
-                        <h2 className="text-xl font-bold text-black mt-6">2. Third-Party Intelligence Processing</h2>
-                        <p>To provide you with personalized "Glow Up" routines, the sanitized, anonymous numerical scores (e.g., "Jawline: 85") are transmitted via encrypted connection to our AI provider (Google Gemini API). This data is strictly used for one-time inference and is <strong>categorically prohibited from being used to train third-party AI models.</strong></p>
-
-                        <h2 className="text-xl font-bold text-black mt-6">3. Account Deletion and Consumer Rights</h2>
-                        <p>Under the General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA), you retain full sovereignty over your data.</p>
-                        <p>If you have created an account using email or a social provider, you may erase your entire entity, authentication tokens, and scan history at any time. You can execute this immediate "Right to be Forgotten" via the <strong>Delete Account</strong> button located in the application settings. This action is irreversible.</p>
-
-                        <h2 className="text-xl font-bold text-black mt-6">4. Strict Zero-Sale Policy</h2>
-                        <p>Skinface AI operates on a subscription-based business model. Consequently, we have a total prohibition on selling, trading, or brokering your personal email, metrics, or usage behavior to any advertising networks or third-party data brokers.</p>
+                        <h2 className="text-xl font-bold text-black mt-6">5. Strict Zero-Sale Policy</h2>
+                        <p>Skinface AI operates on a subscription-based business model. We do not sell, trade, or broker your personal email, scan data, metrics, or usage behavior to any advertising networks or third-party data brokers.</p>
                     </div>
                 )}
 

@@ -4,11 +4,13 @@ import { CameraIcon } from './icons/CameraIcon';
 import { SkipForwardIcon } from './icons/SkipForwardIcon';
 import { DailyReport } from '../types';
 import { isToday } from '../utils/date';
-import { t } from '../localization';
+import { t, localized } from '../localization';
 import FaceScanCamera from './FaceScanCamera';
 import type { ComprehensiveFaceState } from '../services/faceScan/faceState';
 import { runFullPipeline } from '../services/pipeline/analysisPipeline';
 import { markReferralScanComplete, getPremiumStatus } from '../services/referralService';
+import { Capacitor } from '@capacitor/core';
+import { useToast } from './ui/Toast';
 
 
 interface UploadScreenProps {
@@ -275,6 +277,23 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
     const [currentFaceState, setCurrentFaceState] = useState<ComprehensiveFaceState | undefined>(undefined);
     const [pendingFaceState, setPendingFaceState] = useState<ComprehensiveFaceState | null>(null);
     const [cameraError, setCameraError] = useState<string | null>(null);
+    const toast = useToast();
+
+    const openAppSettings = () => {
+        if (Capacitor.isNativePlatform()) {
+            // On native we can't deep-link to OS settings without an extra plugin (@capacitor/app-settings).
+            // Surface a toast with copy-able instructions instead of an OS dialog.
+            toast.info(
+                'Open your device Settings → Apps → Skinface, then enable Camera access. Pull down to retry once enabled.',
+                { title: 'Camera permission needed', durationMs: 8000 }
+            );
+        } else {
+            toast.info(
+                "Browser camera permission is blocked. Click the camera icon in the address bar and allow access, then retry.",
+                { title: 'Camera permission needed', durationMs: 8000 }
+            );
+        }
+    };
 
     const dayNumber = history.length + 1;
     const hasUploadedToday = history.length > 0 && isToday(history[history.length - 1].date);
@@ -333,18 +352,16 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
             const pipelineResult = await runFullPipeline(faceState, userData, previousScanData, addLog);
             addLog(`✅ Pipeline done! Score: ${pipelineResult.scoring.globalScore}`);
 
-            // [SECURITY] Fetch Authorized Score from Backend
-            // We send the 'faceState' or metrics to server, server calculates Score.
-            // If Free User -> Server returns NULL for score.
+            // [SECURITY] Authorized Score
+            // In production this should come from a server-side `/api/dashboard` check that
+            // gates premium fields for free users. The dev bypass below is gated by both
+            // `import.meta.env.DEV` AND an opt-in env flag so it can NEVER reach a prod build.
+            // TODO(backend): wire this to the secure dashboard endpoint.
             let authorizedGeneralScore: number | null = pipelineResult.scoring.globalScore;
             let authorizedPotentialScore: number | null = pipelineResult.scoring.potentialScore;
 
-            try {
-                // DEV BYPASS: Skip backend dashboard check to avoid delays
-                console.log('[UPLOAD] DEV BYPASS: Skipping backend /api/dashboard call...');
-                // Fallthrough to local scores instantly
-            } catch (e) {
-                // Backend auth failed, using local score silently
+            if (import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_RECOMMENDS === 'true') {
+                console.warn('[UPLOAD] DEV BYPASS: Skipping backend /api/dashboard call. Local scores used.');
             }
 
             // Create new report with pipeline structure AND Authorized Scores
@@ -385,7 +402,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
         } catch (err: any) {
             addLog(`❌ FAILED: ${err.message}`);
             if (err.message.includes('fetch') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
-                setError("Your network connection is too weak to process Glow-up data. Please connect to Wi-Fi.");
+                setError(localized("Connection is weak. Today's scan could not be processed; switch to Wi-Fi and retry the task.", "Bağlantı zayıf. Bugünkü ölçüm işlenemedi; Wi-Fi'a geçip görevi tekrar dene."));
             } else {
                 setError(`${t.analysisFailed} (${err.message})`);
             }
@@ -470,14 +487,12 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                             Camera access is closed. To scan your face, please go to Settings &gt; Skinface and enable Camera access.
                         </p>
 
-                        {/* Open Settings button */}
+                        {/* Open Settings button — shows clear, actionable instructions via toast */}
                         <button
-                            onClick={() => {
-                                alert("Imagine this opens app settings on iOS/Android.");
-                            }}
+                            onClick={openAppSettings}
                             className="w-full max-w-xs bg-white text-black font-bold py-4 px-8 rounded-2xl shadow-lg transform active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 mb-4 hover:bg-gray-200"
                         >
-                            Open Settings
+                            How to enable
                         </button>
 
                         {/* Back button — only if there's history to go back to */}

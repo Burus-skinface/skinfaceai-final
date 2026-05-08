@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { DailyReport } from '../types';
-import { getLocale } from '../localization';
+import { getLocale, localized } from '../localization';
 
 interface TrendChartProps {
     history: DailyReport[];
@@ -17,12 +17,12 @@ const TrendChart: React.FC<TrendChartProps> = ({ history }) => {
 
     if (data.length < 2) {
         return (
-            <div className="bg-white/40 border border-purple-100 rounded-3xl p-6 mb-6 text-center shadow-sm w-full max-w-md mx-auto">
+            <div className="bg-white/40 border border-purple-100 rounded-3xl p-6 mb-6 text-center shadow-sm w-full">
                 <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-3">
                     <span className="text-xl">📈</span>
                 </div>
-                <h4 className="text-[#1D1D1F] font-bold text-sm mb-1">Building Your Trend</h4>
-                <p className="text-xs text-[#86868B] max-w-[250px] mx-auto">Complete at least 2 daily scans to unlock your personalized face score trend analysis.</p>
+                <h4 className="text-[#1D1D1F] font-bold text-sm mb-1">{localized('Glow trend locked', 'Glow trend kilitli')}</h4>
+                <p className="text-xs text-[#86868B] max-w-[250px] mx-auto">{localized('Complete 2 glow checks. Then your line stops guessing and starts talking.', '2 glow check tamamla. Sonra çizgi tahmin etmeyi bırakıp konuşmaya başlar.')}</p>
             </div>
         );
     }
@@ -70,18 +70,23 @@ const TrendChart: React.FC<TrendChartProps> = ({ history }) => {
     const pointDifference = Math.abs(endScore - startScore);
 
     return (
-        <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-[0_4px_25px_rgba(0,0,0,0.04)] w-full max-w-md mx-auto mb-6">
+        <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-[0_4px_25px_rgba(0,0,0,0.04)] w-full mb-6">
             
             {/* Header / Title */}
             <div className="flex items-center justify-between mb-6 px-1">
                 <div>
-                    <h3 className="text-xs font-semibold text-[#86868B] tracking-widest uppercase mb-1 drop-shadow-sm">Aesthetic Trend</h3>
+                    <h3 className="text-xs font-semibold text-[#86868B] tracking-widest uppercase mb-1 drop-shadow-sm">{localized('Your Glow Trend', 'Glow Trendin')}</h3>
                     <div className="flex items-end gap-2">
                         <span className="text-3xl font-black text-[#1D1D1F] leading-none tracking-tight">{endScore}</span>
                         <span className={`text-[11px] font-bold uppercase tracking-wide leading-relaxed px-2 py-0.5 rounded-md ${trendIsUp ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'}`}>
-                            {trendIsUp ? `+${pointDifference} Rising` : `-${pointDifference} Dropping`}
+                            {trendIsUp ? localized(`+${pointDifference} level up`, `+${pointDifference} level up`) : localized(`-${pointDifference} streak warning`, `-${pointDifference} seri uyarısı`)}
                         </span>
                     </div>
+                    <p className="text-[12px] text-[#86868B] mt-2">
+                        {trendIsUp
+                            ? localized('Nice. The glow line is moving. Do not break the streak now.', 'Güzel. Glow çizgisi hareket ediyor. Şimdi seriyi bozma.')
+                            : localized('Warning. The glow line pulled back. One scan today keeps the streak alive.', 'Uyarı. Glow çizgisi geri çekildi. Bugünkü tarama seriyi hayatta tutar.')}
+                    </p>
                 </div>
             </div>
 
