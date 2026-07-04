@@ -11,6 +11,7 @@ export enum SubscriptionTier {
 export interface SubscriptionState {
   tier: SubscriptionTier;
   expiresAt: string | null; // ISO date string
+  source: 'none' | 'subscription' | 'referral' | 'dev';
   features: {
     results: boolean;        // FREE - Always accessible (with daily limit)
     face: boolean;          // PRO+ only
@@ -73,6 +74,7 @@ export function getDefaultSubscription(): SubscriptionState {
   return {
     tier: SubscriptionTier.FREE,
     expiresAt: null,
+    source: 'none',
     features: {
       results: true,
       face: false,
@@ -93,6 +95,7 @@ export function getSubscriptionByTier(tier: SubscriptionTier, expiresAt?: string
       return {
         tier,
         expiresAt: expiresAt || null,
+        source: 'subscription',
         features: {
           results: true,
           face: false,
@@ -106,6 +109,7 @@ export function getSubscriptionByTier(tier: SubscriptionTier, expiresAt?: string
       return {
         tier,
         expiresAt: expiresAt || null,
+        source: 'subscription',
         features: {
           results: true,
           face: true,

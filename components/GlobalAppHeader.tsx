@@ -136,7 +136,7 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
     };
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[100] px-4 pt-3 pb-1.5 bg-[#F5F5F7]/80 backdrop-blur-xl border-b border-black/[0.06] transition-all duration-300">
+        <div className="fixed top-0 left-0 right-0 z-[100] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-1.5 bg-[#F5F5F7]/80 backdrop-blur-xl border-b border-black/[0.06] transition-all duration-300">
             <div className="w-full max-w-lg mx-auto flex items-center justify-between">
                 <div className="text-[15px] font-black tracking-tight">
                     <span className="text-[#1D1D1F]">SKINFACE</span>

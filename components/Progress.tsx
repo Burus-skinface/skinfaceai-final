@@ -6,6 +6,8 @@ import HistoryCalendar from './HistoryCalendar';
 import TrendChart from './TrendChart';
 import { getStreakData, getStreakBadge, StreakData } from '../utils/streak';
 import { localized } from '../localization';
+import ReferralCard from './ReferralCard';
+import WeeklyRecap from './WeeklyRecap';
 
 interface ProgressProps {
   history: DailyReport[];
@@ -13,6 +15,7 @@ interface ProgressProps {
   compliment: string | null;
   latestImprovement?: string;
   onNewScan?: () => void;
+  userId?: string | null;
 }
 
 // Determine whether the user already scanned today, by checking the most recent
@@ -161,7 +164,7 @@ const DailyCheckInCard: React.FC<{
   );
 };
 
-const Progress: React.FC<ProgressProps> = ({ history, onSelectReport, compliment, onNewScan }) => {
+const Progress: React.FC<ProgressProps> = ({ history, onSelectReport, compliment, onNewScan, userId }) => {
   const [streak, setStreak] = useState<StreakData>(() => getStreakData());
 
   // Re-read streak whenever history length changes (a new scan likely just landed).
@@ -212,6 +215,10 @@ const Progress: React.FC<ProgressProps> = ({ history, onSelectReport, compliment
     <div className="w-full max-w-lg mx-auto pb-20 pt-14 px-4">
       {/* 0. Daily Check-in + Streak — pinned at the top */}
       <DailyCheckInCard streak={streak} scannedToday={scannedToday} onNewScan={onNewScan} />
+
+      {userId && <ReferralCard userId={userId} />}
+
+      {history.length >= 1 && <WeeklyRecap history={history} />}
 
       {/* 1. Compliment */}
       {compliment && (

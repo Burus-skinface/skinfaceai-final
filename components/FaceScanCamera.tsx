@@ -41,7 +41,7 @@ function computeBrightness01FromRgba(rgba: Uint8ClampedArray) {
   return clamp(sum / n / 255, 0, 1);
 }
 
-type Phase = "loading" | "waiting_face" | "scanning" | "complete";
+type Phase = "loading" | "waiting_face" | "scanning" | "complete" | "error";
 
 const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
   onFaceState,
@@ -146,7 +146,7 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
 
   const stop = useCallback((reason: string = "unknown") => {
     cancelAnimationFrame(rafRef.current);
-    landmarkerRef.current?.close();
+    // Do NOT close the shared pre-warmed landmarker singleton — only clear local ref
     landmarkerRef.current = null;
     finishedRef.current = true;
 
@@ -391,6 +391,10 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
     return () => {
       cancelAnimationFrame(rafRef.current);
       finishedRef.current = true;
+      if (webcamRef.current?.video) {
+        const stream = webcamRef.current.video.srcObject as MediaStream | null;
+        stream?.getTracks().forEach((track) => track.stop());
+      }
     };
   }, []);
 
@@ -508,7 +512,7 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
             onUserMediaError={(err) => {
               console.error(err);
               setError("No camera access. Please allow camera permissions in your browser.");
-              setPhase("complete"); // Indicate a terminal state
+              setPhase("error");
               onError?.(err);
             }}
           />
@@ -666,10 +670,16 @@ const FaceScanCamera: React.FC<FaceScanCameraProps> = ({
                   </motion.svg>
                 </>
               )}
-              {phase === "complete" && (
+              {phase === "complete" && !error && (
                 <>
                   <CheckCircle2 className="w-5 h-5 text-green-400" />
                   <span className="text-green-50">Scan complete!</span>
+                </>
+              )}
+              {phase === "error" && error && (
+                <>
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <span className="text-red-200">{error}</span>
                 </>
               )}
             </motion.div>

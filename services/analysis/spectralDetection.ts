@@ -445,6 +445,61 @@ async function generateDescriptions(findings: any): Promise<any> {
 }
 
 
+export function createSpectralFallback(): SpectralDetectionResult {
+  return {
+    pigmentUniformity: {
+      uniformityIndex: 0.7,
+      regions: [],
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    rednessSignal: {
+      intensity: 'low',
+      distribution: 'localized',
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    oilReflectance: {
+      intensity: 'balanced',
+      zone: 't-zone-only',
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    opticalClarity: {
+      score: 7,
+      noiseLevel: 'moderate_texture',
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    textureFrequency: {
+      balance: 'balanced',
+      dominantFrequency: 'mid',
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    underEyeFreshness: {
+      vitalityScore: 7,
+      concerns: [],
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    chromaticStability: {
+      stabilityScore: 7,
+      variance: 'stable',
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    spectralNoise: {
+      noiseLevel: 0.2,
+      quality: 'standard',
+      technique: 'cv-fallback',
+      description: 'Spectral analysis skipped.',
+    },
+    maps: {},
+    overallScore: 70,
+  };
+}
+
 export async function detectSpectralSignals(
   faceState: ComprehensiveFaceState
 ): Promise<SpectralDetectionResult> {

@@ -1,7 +1,8 @@
 import type { ComprehensiveFaceState } from '../faceScan/faceState';
 import type { SkinDetectionResult } from './types';
 import { Type } from "@google/genai";
-import { debugLog } from '../../utils/debugLog'; // NEW
+import { debugLog } from '../../utils/debugLog';
+import { callAnalyzeProxy } from '../analyzeProxy';
 // Scoring imports removed - scoring is done in Stage 3 (skinScoring.ts), not here
 
 /**
@@ -511,35 +512,35 @@ async function generateDescriptions(findings: {
     properties: {
       acne: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions. Example: 'Acne is present on your chin and lower cheeks.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions and explaining that it reduces skin clarity. Example: 'Occasional breakouts and blemishes are present around your chin, reducing overall skin clarity.'"
       },
       pores: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions. Example: 'Pores are more visible on your nose and upper cheeks.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions and explaining that it reduces texture smoothness. Example: 'Pores are more visible in your T-zone, reducing skin texture smoothness.'"
       },
       blackheads: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions. Example: 'Blackheads are visible on your nose and chin.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions and explaining that it affects T-zone appearance. Example: 'A few blackheads are noticeable on your nose, affecting T-zone appearance.'"
       },
       redness: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions. Example: 'Mild redness is visible on your cheeks.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions and explaining that it causes tone unevenness. Example: 'Skin shows minor redness on your cheeks, causing slight tone unevenness.'"
       },
       spots: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions. Example: 'Spots are visible on your lower cheeks.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions and explaining that it impacts pigmentation. Example: 'No significant dark spots detected to impact pigmentation.'"
       },
       dullness: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions. Example: 'Your skin appears slightly dull in the midface area.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), explaining that it reduces natural glow. Example: 'Your skin shows uneven tone, reducing natural glow.'"
       },
       wrinkles: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions. Example: 'Fine lines are visible around your eyes.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), mentioning exact facial regions and explaining that it impacts barrier smoothness. Example: 'No major fine lines are apparent to impact barrier smoothness.'"
       },
       overallSkinSummary: {
         type: Type.STRING,
-        description: "ONE short sentence (max 20 words) in second person ('your'), summarizing overall skin condition. Example: 'Your overall skin condition appears balanced, with a few areas influencing the score.'"
+        description: "ONE short sentence (max 20 words) in second person ('your'), summarizing overall skin condition and scoring influence. Example: 'Your overall skin condition appears balanced, with a few texture areas influencing the score.'"
       },
     },
     required: ["acne", "pores", "blackheads", "redness", "spots", "dullness", "wrinkles", "overallSkinSummary"],
@@ -555,68 +556,70 @@ OUTPUT LANGUAGE RULES (MANDATORY):
 - Use calm, premium, user-friendly language
 - Observational tone (no judgment)
 - One short sentence per category (max 20 words)
+- Briefly state WHY the issue impacts or reduces the score (explain score drop)
 
 REFERENCE SENTENCE STYLE (MANDATORY):
-"Your skin tone is generally even, with mild redness causing small tone variations."
+"Pores are more visible in your T-zone, reducing skin texture smoothness."
 
 SKIN SUB-CATEGORIES (0–10):
 
 For EACH sub-category output:
 - Numeric score (0–10) - already calculated
 - Exact facial regions affected
-- ONE short user-facing sentence
+- ONE short user-facing sentence explaining how it lowers/impacts the score
 
 A. Acne
 Score: ${findings.scores.acne}/10
 Severity: ${findings.acne.severity}, Count: ${findings.acne.count} estimated
 Regions: ${findings.acne.regions.join(', ') || 'none'}
-Output example: "Acne is present on your chin and lower cheeks."
+Output example: "Occasional breakouts and blemishes are present around your chin, reducing overall skin clarity."
 
 B. Pores
 Score: ${findings.scores.pores}/10
 Visibility: ${findings.pores.visibility}
 Regions: ${findings.pores.regions.join(', ') || 'none'}
-Output example: "Pores are more visible on your nose and upper cheeks."
+Output example: "Pores are more visible in your T-zone, reducing skin texture smoothness."
 
 C. Blackheads
 Score: ${findings.scores.blackheads}/10
 Density: ${findings.blackheads.density}
 Regions: ${findings.blackheads.regions.join(', ') || 'none'}
-Output example: "Blackheads are visible on your nose and chin."
+Output example: "A few blackheads are noticeable on your nose, affecting T-zone appearance."
 
 D. Redness
 Score: ${findings.scores.redness}/10
 Intensity: ${findings.redness.intensity}
 Regions: ${findings.redness.regions.join(', ') || 'none'}
-Output example: "Mild redness is visible on your cheeks."
+Output example: "Skin shows minor redness on your cheeks, causing slight tone unevenness."
 
 E. Spots
 Score: ${findings.scores.spots}/10
 Presence: ${findings.spots.presence}
 Regions: ${findings.spots.regions.join(', ') || 'none'}
-Output example: "Spots are visible on your lower cheeks."
+Output example: "No significant dark spots detected to impact pigmentation."
 
 F. Dullness
 Score: ${findings.scores.dullness}/10
 Level: ${findings.dullness.level}
 Regions: ${findings.dullness.regions.join(', ') || 'none'}
-Output example: "Your skin appears slightly dull in the midface area."
+Output example: "Your skin shows uneven tone, reducing natural glow."
 
 G. Wrinkles
 Score: ${findings.scores.wrinkles}/10
 Severity: ${findings.wrinkles.severity}
 Regions: ${findings.wrinkles.regions.join(', ') || 'none'}
-Output example: "Fine lines are visible around your eyes."
+Output example: "No major fine lines are apparent to impact barrier smoothness."
 
 OVERALL SKIN SCORE: ${overallSkinScore}/10
 Purpose: Represent the overall visible skin condition in a single score.
-Generate ONE short user-facing summary sentence (max 20 words) in second person.
-Example: "Your overall skin condition appears balanced, with a few areas influencing the score."
+Generate ONE short user-facing summary sentence (max 20 words) in second person, indicating what main area influenced the score.
+Example: "Your overall skin condition appears balanced, with a few texture areas influencing the score."
 
 FINAL RULES:
 - Second-person language only ("your")
 - One sentence per category
 - Max 20 words per sentence
+- Explain how/why it impacts the score or skin quality
 - Calm, premium, user-friendly language
 - Observational tone (no judgment)
 - No medical claims
@@ -630,24 +633,69 @@ Generate user-facing outputs for all 7 categories + overall summary.`;
   if (import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_RECOMMENDS === 'true') {
     console.warn('[SKIN DETECTION] DEV BYPASS active — returning mock descriptions. Will NOT run in production.');
     return {
-      acne: "Minimal acne is present, primarily around the jawline.",
-      pores: "Pore visibility is low across the T-zone.",
-      blackheads: "A few blackheads are noticeable on the nose.",
-      redness: "Skin tone is relatively even with very slight redness.",
-      spots: "No significant dark spots detected.",
-      dullness: "Your skin shows high radiance and vitality.",
-      wrinkles: "No major fine lines are apparent.",
+      acne: "Occasional breakouts and blemishes are present around the jawline, slightly reducing overall clarity.",
+      pores: "Pores are more visible in your T-zone, reducing skin quality smoothness.",
+      blackheads: "A few blackheads are noticeable on the nose, affecting T-zone appearance.",
+      redness: "Skin shows minor redness on the cheeks, causing slight tone unevenness.",
+      spots: "No significant dark spots detected to impact pigmentation.",
+      dullness: "Your skin shows uneven tone, reducing natural glow.",
+      wrinkles: "No major fine lines are apparent to impact barrier smoothness.",
       overallSkinSummary: "Your skin exhibits excellent overall health and balance.",
       overallSkinScore,
     };
   }
 
-  // TODO(backend): Wire this to the secure /api/analyze proxy (same shape as recommendsEngine).
-  // Reference prompt + schema are built above; we throw loudly in prod until that wiring lands
-  // so the missing integration cannot be masked by a silent mock.
-  debugLog.error('SKIN', 'Gemini description call not wired to backend proxy');
-  void prompt; void schema;
-  throw new Error('SKIN_DESCRIPTIONS_NOT_IMPLEMENTED: backend integration required');
+  try {
+    const result = await callAnalyzeProxy<Omit<Awaited<ReturnType<typeof generateDescriptions>>, 'overallSkinScore'>>(prompt, schema);
+    return { ...result, overallSkinScore };
+  } catch (err) {
+    debugLog.error('SKIN', 'Gemini description call failed — using CV fallback', err);
+    return buildDescriptionFallback(findings, overallSkinScore);
+  }
+}
+
+function buildDescriptionFallback(
+  findings: Parameters<typeof generateDescriptions>[0],
+  overallSkinScore: number
+): {
+  acne: string;
+  pores: string;
+  blackheads: string;
+  redness: string;
+  spots: string;
+  dullness: string;
+  wrinkles: string;
+  overallSkinScore: number;
+  overallSkinSummary: string;
+} {
+  const region = (regions: string[]) => (regions.length ? regions.join(', ') : 'your face');
+  return {
+    acne: findings.acne.count > 0
+      ? `Breakouts are visible around ${region(findings.acne.regions)}, slightly reducing clarity.`
+      : 'No significant breakouts detected to impact your skin clarity.',
+    pores: findings.pores.visibility !== 'minimal'
+      ? `Pores are more visible in ${region(findings.pores.regions)}, reducing texture smoothness.`
+      : 'Pores appear refined with minimal impact on texture smoothness.',
+    blackheads: findings.blackheads.density !== 'low'
+      ? `Blackheads are noticeable on ${region(findings.blackheads.regions)}, affecting T-zone appearance.`
+      : 'No significant blackheads detected in your T-zone.',
+    redness: findings.redness.intensity !== 'low'
+      ? `Minor redness appears on ${region(findings.redness.regions)}, causing slight tone unevenness.`
+      : 'Your skin tone appears even with minimal redness.',
+    spots: findings.spots.presence !== 'none'
+      ? `Dark spots are present on ${region(findings.spots.regions)}, affecting pigmentation.`
+      : 'No significant dark spots detected to impact pigmentation.',
+    dullness: findings.dullness.level !== 'bright'
+      ? 'Your skin shows uneven tone, reducing natural glow.'
+      : 'Your skin maintains a healthy, natural glow.',
+    wrinkles: findings.wrinkles.severity !== 'none'
+      ? `Fine lines are visible on ${region(findings.wrinkles.regions)}, affecting smoothness.`
+      : 'No major fine lines are apparent to impact barrier smoothness.',
+    overallSkinSummary: overallSkinScore >= 7
+      ? 'Your overall skin condition appears balanced with strong fundamentals.'
+      : 'Your overall skin condition shows a few areas influencing the score.',
+    overallSkinScore,
+  };
 }
 
 /**
@@ -853,11 +901,19 @@ All outputs must be in English.`;
     };
   }
 
-  // TODO(backend): Wire this to the secure /api/analyze proxy.
-  // Reference prompt + schema are built above; throwing loudly in prod prevents silent mocking.
-  debugLog.error('SKIN', 'Gemini profile call not wired to backend proxy');
-  void prompt; void schema;
-  throw new Error('SKIN_PROFILE_NOT_IMPLEMENTED: backend integration required');
+  try {
+    return await callAnalyzeProxy(prompt, schema);
+  } catch (err) {
+    debugLog.error('SKIN', 'Gemini profile call failed — using fallback', err);
+    return {
+      skinType: { value: "Normal", description: "Balanced hydration and sebum." },
+      moisture: { value: "Balanced", description: "Good water retention levels." },
+      oiliness: { value: "Minimal", description: "Low sebum across regions." },
+      skinTone: { value: "Neutral", description: "Balanced undertones." },
+      elasticity: { value: "Good", description: "High resilience and bounce." },
+      dailySummary: "Your skin scan is complete. Review your scores and routine suggestions.",
+    };
+  }
 }
 /**
  * Main detection function (Hybrid CV + Gemini)

@@ -18,6 +18,7 @@ import { supabase } from './supabase';
 const REFERRALS_NEEDED = 5;
 const PREMIUM_DAYS_REWARD = 3;
 const PENDING_REFERRAL_KEY = 'pending_referral_code';
+const PENDING_GUEST_SCAN_KEY = 'pending_guest_scan_for_referral';
 
 // ─── Types ─────────────────────────────────────────────────
 export interface ReferralStats {
@@ -111,6 +112,17 @@ export function hasPendingReferral(): boolean {
   return !!localStorage.getItem(PENDING_REFERRAL_KEY);
 }
 
+/** Guest completed a scan before auth — credit referrer after signup. */
+export function markGuestScanPendingReferral(): void {
+  localStorage.setItem(PENDING_GUEST_SCAN_KEY, 'true');
+}
+
+export async function applyPendingGuestScanReferral(userId: string): Promise<void> {
+  if (localStorage.getItem(PENDING_GUEST_SCAN_KEY) !== 'true') return;
+  localStorage.removeItem(PENDING_GUEST_SCAN_KEY);
+  await markReferralScanComplete(userId);
+}
+
 // ─── Referral Tracking (Supabase) ──────────────────────────
 
 /**
@@ -160,6 +172,7 @@ export async function trackReferralSignup(newUserId: string): Promise<void> {
       .eq('id', newUserId);
 
     console.log('✅ Referral tracked:', referralCode, '→', newUserId);
+    await applyPendingGuestScanReferral(newUserId);
   } catch (err) {
     console.error('Referral tracking error:', err);
   }
@@ -357,7 +370,8 @@ export async function getPremiumStatus(userId: string): Promise<PremiumStatus> {
  * Generate the full referral link for sharing.
  */
 export function getReferralLink(referralCode: string): string {
-  return `${window.location.origin}?ref=${referralCode}`;
+  const base = import.meta.env.VITE_APP_URL || 'https://skinface.ai';
+  return `${base.replace(/\/$/, '')}?ref=${referralCode}`;
 }
 
 /**
@@ -366,8 +380,8 @@ export function getReferralLink(referralCode: string): string {
 export async function shareReferralLink(referralCode: string): Promise<'shared' | 'copied' | 'failed'> {
   const link = getReferralLink(referralCode);
   const shareData = {
-    title: 'SkinFace AI - Free Analysis',
-    text: `Try SkinFace AI and get a free skin & face analysis! Use my link:`,
+    title: 'Skinface AI - Free Analysis',
+    text: 'Try Skinface AI and get a free skin and face analysis.',
     url: link,
   };
 

@@ -500,3 +500,29 @@ export const t: Translation = translations[currentLanguage] as Translation;
 export const getLanguage = (): SupportedLanguage => currentLanguage;
 export const getLocale = () => currentLanguage === 'tr' ? 'tr-TR' : 'en-US';
 export const localized = <T,>(en: T, tr: T): T => currentLanguage === 'tr' ? tr : en;
+
+export const translateDynamicNote = (text: string | undefined): string => {
+  if (!text) return '';
+  if (currentLanguage !== 'tr') return text;
+  
+  const dict: Record<string, string> = {
+    'You have a great foundation, just a few tweaks away from your maximum potential.': 
+      'Harika bir temeliniz var, maksimum potansiyelinize ulaşmak için sadece birkaç küçük dokunuş yeterli.',
+    'Your structure is elite. Stay consistent with your routine to maximize your natural potential.':
+      'Yapınız oldukça gelişmiş. Doğal potansiyelinizi en üst düzeye çıkarmak için rutininizi kararlılıkla sürdürün.',
+    'Your structural foundation is solid. Focus on the refinement markers to achieve Legendary status.':
+      'Yapısal temeliniz oldukça sağlam. Efsanevi statüye ulaşmak için gelişim alanlarına odaklanın.',
+    'Your skin is in excellent condition! Maintaining this state with consistent hydration and SPF is key. You are close to your maximum potential.':
+      'Cildiniz mükemmel durumda! Bu seviyeyi korumak için düzenli nemlendirme ve SPF kullanımı anahtardır. Maksimum potansiyelinize çok yakınsınız.',
+    'Your skin is in good condition, but resolving 2-3 key focus areas can push you to the Top 10% of users. Focus on improving skin texture and barrier defense.':
+      'Cildiniz iyi durumda, ancak 2-3 kilit odak alanını çözmek sizi en iyi %10 kullanıcı dilimine yükseltebilir. Cilt dokusu ve bariyer korumasına odaklanın.',
+    'Your skin is stable, but there is noticeable room for improvement. Prioritizing sebum balance and hydration will significantly boost your overall score.':
+      'Cildiniz stabil ancak belirgin gelişim alanı var. Sebum dengesi ve nemlendirmeye öncelik vermek genel skorunuzu önemli ölçüde artıracaktır.',
+    'Your skin requires active care. Focusing on acne clarity and rebuilding your skin barrier is recommended to prevent irritation and breakouts.':
+      'Cildinizin aktif bakıma ihtiyacı var. Hassasiyet ve sivilcelenmeyi önlemek için akne berraklığına ve cilt bariyerini onarmaya odaklanmanız önerilir.'
+  };
+
+  const trimmed = text.trim();
+  return dict[trimmed] || text;
+};
+

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../services/supabase';
+import LegalModal, { LegalTab } from './LegalModal';
+import { localized } from '../localization';
 
 interface AuthGateProps {
     onAuthenticated: () => void;
@@ -15,6 +17,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
     const [info, setInfo] = useState('');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
+    const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
 
     const handleGoogleLogin = async () => {
         try {
@@ -253,8 +256,19 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                 transition={{ delay: 0.8 }}
                 className="absolute bottom-8 text-[11px] text-center text-white/30 px-8 max-w-[300px]"
             >
-                By signing in, you agree to our terms of use and privacy policy.
+                {localized('By signing in, you agree to our', 'Giriş yaparak kabul etmiş olursunuz:')}{' '}
+                <button type="button" onClick={() => setLegalTab('terms')} className="underline hover:text-white/50">
+                    {localized('Terms', 'Koşullar')}
+                </button>
+                {' '}{localized('and', 've')}{' '}
+                <button type="button" onClick={() => setLegalTab('privacy')} className="underline hover:text-white/50">
+                    {localized('Privacy Policy', 'Gizlilik Politikası')}
+                </button>
             </motion.p>
+
+            {legalTab && (
+                <LegalModal isOpen={!!legalTab} initialTab={legalTab} onClose={() => setLegalTab(null)} />
+            )}
         </div>
     );
 };

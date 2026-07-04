@@ -53,8 +53,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, initialTab, onClose }) 
                             <strong>IMPORTANT NOTICE:</strong> Please read these Terms of Service carefully. By accessing or using Skinface AI, you agree to be bound by these terms. If you do not agree, you must immediately uninstall and cease using the application.
                         </div>
 
-                        <h2 className="text-xl font-bold text-black mt-6">1. Age Restrictions and COPPA Compliance</h2>
-                        <p>Skinface AI provides advanced cosmetic, aesthetic, and facial geometric scoring. Due to the psychological intricacies associated with physical assessments, you must be <strong>at least EIGHTEEN (18) years of age</strong> to use this service. By using the app, you warrant that you are legally considered an adult in your jurisdiction. We do not knowingly collect information from children under the age of 18 in compliance with the Children's Online Privacy Protection Act (COPPA).</p>
+                        <h2 className="text-xl font-bold text-black mt-6">1. Age &amp; Eligibility</h2>
+                        <p>Skinface AI is designed for users of all ages who want cosmetic and skincare insights. If you are under 13, please use the app with a parent or guardian. We comply with applicable child privacy laws including COPPA where required.</p>
 
                         <h2 className="text-xl font-bold text-black mt-6">2. Subscriptions, Payments, and Apple/Google EULA</h2>
                         <p>Skinface AI offers premium subscription plans ("Elite Features"). Payments will be charged to your iTunes or Google Play account at confirmation of purchase. <strong>Subscriptions automatically renew</strong> unless auto-renew is turned off at least 24-hours before the end of the current period.</p>

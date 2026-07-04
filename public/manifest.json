@@ -1,0 +1,21 @@
+{
+  "short_name": "Skinface",
+  "name": "Skinface: Face Scan & Glow Up",
+  "description": "AI-powered face scan & glow up tracker. Get your Aesthetics Score, personalized skincare routine, and daily facial progress tracking.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#8b5cf6",
+  "background_color": "#0f172a"
+}

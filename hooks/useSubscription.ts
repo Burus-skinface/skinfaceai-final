@@ -11,35 +11,40 @@ import {
   isSubscriptionExpired,
   canAccessFeature
 } from '../types/subscription';
+import { getPremiumStatus } from '../services/referralService';
+import { Purchases } from '@revenuecat/purchases-capacitor';
+import { Capacitor } from '@capacitor/core';
 
 const SUBSCRIPTION_STORAGE_KEY = 'facial_analysis_subscription';
 
-export function useSubscription(isGuest: boolean = false) {
+const ENTITLEMENT_ID = import.meta.env.VITE_RC_ENTITLEMENT_ID || 'premium';
+const DEV_PREMIUM_UNLOCKED =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_UNLOCK_PREMIUM === 'true';
+
+function withSource(
+  subscription: SubscriptionState,
+  source: SubscriptionState['source']
+): SubscriptionState {
+  return { ...subscription, source };
+}
+
+export function useSubscription(userId?: string | null) {
   const [subscription, setSubscription] = useState<SubscriptionState>(getDefaultSubscription());
   const [loading, setLoading] = useState(true);
 
-  // Load subscription from localStorage on mount
+  // Load subscription from the strongest available source.
   useEffect(() => {
-    if (isGuest) {
-      // Guest users get PRO+ automatically (temporary for testing)
-      const expiresAt = new Date();
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1); // 1 year for guests
-      const guestSubscription = getSubscriptionByTier(SubscriptionTier.PRO_PLUS, expiresAt.toISOString());
-      setSubscription(guestSubscription);
-      setLoading(false);
-    } else {
-      loadSubscription();
-    }
-  }, [isGuest]);
+    refreshSubscription();
+  }, [userId]);
 
-  // Save subscription to localStorage whenever it changes (but not for guests)
+  // Save the resolved state locally for fast startup. Server/native sources still win on refresh.
   useEffect(() => {
-    if (!loading && !isGuest) {
+    if (!loading) {
       saveSubscription(subscription);
     }
-  }, [subscription, loading, isGuest]);
+  }, [subscription, loading]);
 
-  const loadSubscription = () => {
+  const loadStoredSubscription = (): SubscriptionState => {
     try {
       const stored = localStorage.getItem(SUBSCRIPTION_STORAGE_KEY);
       if (stored) {
@@ -47,13 +52,50 @@ export function useSubscription(isGuest: boolean = false) {
         
         // Check if subscription is expired
         if (isSubscriptionExpired(parsed)) {
-          setSubscription(getDefaultSubscription());
-        } else {
-          setSubscription(parsed);
+          return getDefaultSubscription();
         }
+        return parsed;
       }
     } catch (error) {
       console.error('Failed to load subscription:', error);
+    }
+    return getDefaultSubscription();
+  };
+
+  const refreshSubscription = async () => {
+    setLoading(true);
+    try {
+      if (DEV_PREMIUM_UNLOCKED) {
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, expiresAt.toISOString()), 'dev'));
+        return;
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { customerInfo } = await Purchases.getCustomerInfo();
+          if (customerInfo.entitlements.active[ENTITLEMENT_ID]) {
+            const expiresAt = customerInfo.entitlements.active[ENTITLEMENT_ID].expirationDate ?? undefined;
+            setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, expiresAt), 'subscription'));
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to refresh RevenueCat subscription:', error);
+        }
+      }
+
+      if (userId) {
+        const referralStatus = await getPremiumStatus(userId);
+        if (referralStatus.isActive) {
+          setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, referralStatus.expiresAt || undefined), 'referral'));
+          return;
+        }
+      }
+
+      const stored = loadStoredSubscription();
+      // Stored paid state is only trusted for explicit dev unlock. Otherwise fall back to free.
+      setSubscription(stored.source === 'dev' && DEV_PREMIUM_UNLOCKED ? stored : getDefaultSubscription());
     } finally {
       setLoading(false);
     }
@@ -67,13 +109,13 @@ export function useSubscription(isGuest: boolean = false) {
     }
   };
 
-  const upgradeTo = (tier: SubscriptionTier) => {
-    // Calculate expiration (7 days from now for weekly subscription)
+  const activateDevSubscription = () => {
+    if (!DEV_PREMIUM_UNLOCKED) {
+      return;
+    }
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-    
-    const newSubscription = getSubscriptionByTier(tier, expiresAt.toISOString());
-    setSubscription(newSubscription);
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, expiresAt.toISOString()), 'dev'));
   };
 
   const cancelSubscription = () => {
@@ -87,16 +129,20 @@ export function useSubscription(isGuest: boolean = false) {
   const isPro = subscription.tier === SubscriptionTier.PRO;
   const isProPlus = subscription.tier === SubscriptionTier.PRO_PLUS;
   const isFree = subscription.tier === SubscriptionTier.FREE;
+  const isPremium = isPro || isProPlus;
 
   return {
     subscription,
     loading,
-    upgradeTo,
+    refreshSubscription,
+    activateDevSubscription,
     cancelSubscription,
     hasAccess,
     isPro,
     isProPlus,
     isFree,
+    isPremium,
+    premiumSource: subscription.source,
   };
 }
 

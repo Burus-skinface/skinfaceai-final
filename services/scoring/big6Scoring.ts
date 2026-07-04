@@ -67,6 +67,20 @@ function avg(arr: number[]): number {
     return arr.reduce((s, v) => s + v, 0) / arr.length;
 }
 
+/** Read 0–1 metric safely; legacy/mock scans may omit nested fields */
+function read01(value: number | undefined, fallback = 0.5): number {
+    return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function mapRegionScores(
+    regions: RegionData[],
+    read: (r: RegionData) => number | undefined,
+    invert = false,
+    fallback = 0.5
+): number[] {
+    return regions.map((r) => toTen(read01(read(r), fallback), invert));
+}
+
 /** Determine status from 0-10 score */
 function getStatus(score: number): Big6Status {
     if (score >= 8.5) return 'elite';
@@ -94,7 +108,13 @@ function getStatusLabel(status: Big6Status): string {
 type RegionData = { health: SkinHealthMetrics; quality: SkinQualityMetrics };
 
 function getRegions(adv: AdvancedSkinMetrics): RegionData[] {
-    return [adv.forehead, adv.leftCheek, adv.rightCheek, adv.chin];
+    return [adv.forehead, adv.leftCheek, adv.rightCheek, adv.chin].filter(
+        (r): r is RegionData =>
+            r != null &&
+            typeof r === 'object' &&
+            r.health != null &&
+            r.quality != null
+    );
 }
 
 // ============================================================================
@@ -108,11 +128,17 @@ function getRegions(adv: AdvancedSkinMetrics): RegionData[] {
  * Weight: 60% active acne, 40% marks
  */
 function scoreAcneClarity(regions: RegionData[]): Big6Metric {
-    const acneScores = regions.map(r => toTen(r.health.activeAcne.acneScore, true));
-    const marksScores = regions.map(r => {
-        const marksSeverity = (r.health.marks.pieScore + r.health.marks.pihScore) / 2;
-        return toTen(marksSeverity, true);
-    });
+    const acneScores = mapRegionScores(
+        regions,
+        (r) => r.health.activeAcne?.acneScore,
+        true
+    );
+    const marksScores = mapRegionScores(regions, (r) => {
+        const pie = r.health.marks?.pieScore;
+        const pih = r.health.marks?.pihScore;
+        if (typeof pie !== 'number' || typeof pih !== 'number') return undefined;
+        return (pie + pih) / 2;
+    }, true);
 
     const acneAvg = avg(acneScores);
     const marksAvg = avg(marksScores);
@@ -139,9 +165,20 @@ function scoreAcneClarity(regions: RegionData[]): Big6Metric {
  * Weight: 40% smoothness, 30% congestion, 30% visibility
  */
 function scoreTexturePores(regions: RegionData[]): Big6Metric {
-    const smoothScores = regions.map(r => toTen(r.quality.smoothness.smoothnessScore));
-    const congestionScores = regions.map(r => toTen(r.health.poreCongestion.congestionScore, true));
-    const visibilityScores = regions.map(r => toTen(r.quality.poreVisibility.visibilityScore, true));
+    const smoothScores = mapRegionScores(
+        regions,
+        (r) => r.quality.smoothness?.smoothnessScore
+    );
+    const congestionScores = mapRegionScores(
+        regions,
+        (r) => r.health.poreCongestion?.congestionScore,
+        true
+    );
+    const visibilityScores = mapRegionScores(
+        regions,
+        (r) => r.quality.poreVisibility?.visibilityScore,
+        true
+    );
 
     const smoothAvg = avg(smoothScores);
     const congAvg = avg(congestionScores);
@@ -196,8 +233,15 @@ function scoreBarrierDefense(regions: RegionData[]): Big6Metric {
  * Weight: 50% sebum, 50% oil-hydration balance
  */
 function scoreSebumDynamics(regions: RegionData[]): Big6Metric {
-    const sebumScores = regions.map(r => toTen(r.health.sebum.sebumScore, true));
-    const balanceScores = regions.map(r => toTen(r.quality.oilHydration.balanceScore));
+    const sebumScores = mapRegionScores(
+        regions,
+        (r) => r.health.sebum?.sebumScore,
+        true
+    );
+    const balanceScores = mapRegionScores(
+        regions,
+        (r) => r.quality.oilHydration?.balanceScore
+    );
 
     const sebumAvg = avg(sebumScores);
     const balanceAvg = avg(balanceScores);
@@ -223,8 +267,14 @@ function scoreSebumDynamics(regions: RegionData[]): Big6Metric {
  * Weight: 55% tone evenness, 45% redness distribution
  */
 function scoreToneUniformity(regions: RegionData[]): Big6Metric {
-    const toneScores = regions.map(r => toTen(r.quality.toneEvenness.evennessScore));
-    const rednessScores = regions.map(r => toTen(r.quality.rednessUniformity.uniformityScore));
+    const toneScores = mapRegionScores(
+        regions,
+        (r) => r.quality.toneEvenness?.evennessScore
+    );
+    const rednessScores = mapRegionScores(
+        regions,
+        (r) => r.quality.rednessUniformity?.uniformityScore
+    );
 
     const toneAvg = avg(toneScores);
     const rednessAvg = avg(rednessScores);
@@ -250,7 +300,10 @@ function scoreToneUniformity(regions: RegionData[]): Big6Metric {
  * For now: 100% radiance score
  */
 function scoreVisualFatigue(regions: RegionData[]): Big6Metric {
-    const radianceScores = regions.map(r => toTen(r.quality.radiance.radianceScore));
+    const radianceScores = mapRegionScores(
+        regions,
+        (r) => r.quality.radiance?.radianceScore
+    );
 
     const radianceAvg = avg(radianceScores);
     const score = clamp10(radianceAvg);
@@ -278,6 +331,7 @@ export function computeBig6(advancedSkinMetrics?: AdvancedSkinMetrics): Big6Scor
     if (!advancedSkinMetrics) return null;
 
     const regions = getRegions(advancedSkinMetrics);
+    if (regions.length === 0) return null;
 
     const acneClarity = scoreAcneClarity(regions);
     const texturePores = scoreTexturePores(regions);

@@ -15,10 +15,10 @@ interface FaceBig6InsightsResultProps {
 
 // Score pill color (0-10 scale)
 const pillColor = (s: number) => {
-  if (s >= 8.5) return { bg: 'bg-emerald-500/15', text: 'text-emerald-600', ring: 'ring-emerald-500/20' };
-  if (s >= 7.0) return { bg: 'bg-green-500/10', text: 'text-green-600', ring: 'ring-green-500/15' };
-  if (s >= 5.0) return { bg: 'bg-amber-500/10', text: 'text-amber-600', ring: 'ring-amber-500/15' };
-  return { bg: 'bg-red-500/10', text: 'text-red-600', ring: 'ring-red-500/15' };
+  if (s >= 9.0) return { bg: 'bg-[#FBF1D3]', text: 'text-[#B8860B]', ring: 'ring-[#D4AF37]/25' }; // Gold
+  if (s >= 7.0) return { bg: 'bg-green-500/10', text: 'text-green-600', ring: 'ring-green-500/15' }; // Green
+  if (s >= 5.0) return { bg: 'bg-[#009EE0]/10', text: 'text-[#009EE0]', ring: 'ring-[#009EE0]/15' }; // La Roche Blue
+  return { bg: 'bg-red-500/10', text: 'text-red-600', ring: 'ring-red-500/15' }; // Red
 };
 
 // Tag badge color

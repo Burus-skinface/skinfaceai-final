@@ -89,7 +89,7 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-black/5">Step 4/4</div>
+                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-black/5">Ready to scan</div>
             </div>
 
             {/* Spacer */}
@@ -104,7 +104,7 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
             >
                 {/* Step Indicator */}
                 <div className="w-12 h-12 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 flex items-center justify-center mx-auto mb-6">
-                    <span className="text-[#007AFF] font-bold text-xl">4</span>
+                    <span className="text-[#007AFF] font-bold text-xl">✓</span>
                 </div>
 
                 <h2 className="text-[26px] leading-[34px] sm:text-3xl font-bold tracking-tight text-[#1D1D1F] mb-3 max-w-[280px] mx-auto">

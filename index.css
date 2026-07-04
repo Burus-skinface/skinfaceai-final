@@ -98,6 +98,18 @@
   .card-hover-effect {
     @apply transition-all duration-300 hover:bg-white/[0.06] hover:border-purple-500/30;
   }
+
+  .ambient-shadow {
+    box-shadow: 0 4px 20px rgba(69, 71, 139, 0.05), 0 2px 8px rgba(69, 71, 139, 0.02);
+  }
+
+  .gradient-purple-accent {
+    background: linear-gradient(135deg, rgba(192,193,255,0.2) 0%, rgba(248,109,253,0.1) 100%);
+  }
+
+  .glow-effect {
+    box-shadow: 0 0 20px rgba(192, 193, 255, 0.4);
+  }
 }
 
 /* Smooth Animations */

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraIcon } from './icons/CameraIcon';
 import { SkipForwardIcon } from './icons/SkipForwardIcon';
@@ -8,7 +8,8 @@ import { t, localized } from '../localization';
 import FaceScanCamera from './FaceScanCamera';
 import type { ComprehensiveFaceState } from '../services/faceScan/faceState';
 import { runFullPipeline } from '../services/pipeline/analysisPipeline';
-import { markReferralScanComplete, getPremiumStatus } from '../services/referralService';
+import { markReferralScanComplete, markGuestScanPendingReferral } from '../services/referralService';
+import { savePendingFaceState, loadPendingFaceState, clearPendingFaceState } from '../utils/pendingScan';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from './ui/Toast';
 
@@ -16,6 +17,7 @@ import { useToast } from './ui/Toast';
 interface UploadScreenProps {
     onAnalysisComplete: (report: DailyReport) => void;
     onNeedAuth: () => void;
+    onContinueAsGuest?: () => void;
     onSkip: () => void;
     history: DailyReport[];
     autoStartCamera?: boolean;
@@ -269,7 +271,7 @@ const ScanAnalysisVisualizer: React.FC<{ faceState?: ComprehensiveFaceState; deb
     );
 };
 
-const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedAuth, onSkip, history, autoStartCamera = false, userData, user, forceStartAnalysis }) => {
+const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedAuth, onContinueAsGuest, onSkip, history, autoStartCamera = false, userData, user, forceStartAnalysis }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [debugLogs, setDebugLogs] = useState<string[]>([]);
@@ -277,6 +279,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
     const [currentFaceState, setCurrentFaceState] = useState<ComprehensiveFaceState | undefined>(undefined);
     const [pendingFaceState, setPendingFaceState] = useState<ComprehensiveFaceState | null>(null);
     const [cameraError, setCameraError] = useState<string | null>(null);
+    const pipelineInFlightRef = useRef(false);
     const toast = useToast();
 
     const openAppSettings = () => {
@@ -305,14 +308,13 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
         }
     }, [autoStartCamera]);
 
-    // Auto-trigger pipeline when user logs in (or guest) after face capture
+    // Restore face state after OAuth redirect
     useEffect(() => {
-        if (pendingFaceState && (user || forceStartAnalysis)) {
-            const fs = pendingFaceState;
-            setPendingFaceState(null);
-            runAnalysisPipeline(fs);
+        const restored = loadPendingFaceState();
+        if (restored && !pendingFaceState && !loading) {
+            setPendingFaceState(restored);
         }
-    }, [user, forceStartAnalysis, pendingFaceState]);
+    }, [pendingFaceState, loading]);
 
     const addLog = (msg: string) => setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()} ${msg}`]);
 
@@ -325,14 +327,17 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
             // User already logged in — run pipeline immediately
             runAnalysisPipeline(faceState);
         } else {
-            // Not logged in — save face state and show auth gate
             setPendingFaceState(faceState);
+            savePendingFaceState(faceState);
             onNeedAuth();
         }
     };
 
     // Step 2: Actual analysis pipeline
-    const runAnalysisPipeline = async (faceState: ComprehensiveFaceState) => {
+    const runAnalysisPipeline = useCallback(async (faceState: ComprehensiveFaceState) => {
+        if (pipelineInFlightRef.current) return;
+        pipelineInFlightRef.current = true;
+
         setCurrentFaceState(faceState);
         setLoading(true);
         setError(null);
@@ -341,22 +346,19 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
         addLog('⏳ Pipeline starting...');
 
         try {
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                throw new Error('OFFLINE');
+            }
+
             const previewUrl = `data:image/jpeg;base64,${faceState.primaryImageJpegBase64}`;
             addLog(`✅ Image ready (${Math.round(previewUrl.length / 1024)}KB)`);
 
-            // Get previous scan data for Delta (Δ) trend analysis
             const previousScanData = history.length > 0 ? history[history.length - 1] : undefined;
             addLog(`⏳ Running full pipeline (detection + scoring + LLM)...`);
 
-            // NEW PIPELINE: Run full analysis pipeline
             const pipelineResult = await runFullPipeline(faceState, userData, previousScanData, addLog);
             addLog(`✅ Pipeline done! Score: ${pipelineResult.scoring.globalScore}`);
 
-            // [SECURITY] Authorized Score
-            // In production this should come from a server-side `/api/dashboard` check that
-            // gates premium fields for free users. The dev bypass below is gated by both
-            // `import.meta.env.DEV` AND an opt-in env flag so it can NEVER reach a prod build.
-            // TODO(backend): wire this to the secure dashboard endpoint.
             let authorizedGeneralScore: number | null = pipelineResult.scoring.globalScore;
             let authorizedPotentialScore: number | null = pipelineResult.scoring.potentialScore;
 
@@ -364,51 +366,61 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                 console.warn('[UPLOAD] DEV BYPASS: Skipping backend /api/dashboard call. Local scores used.');
             }
 
-            // Create new report with pipeline structure AND Authorized Scores
             const newReport: DailyReport = {
                 id: `report-${Date.now()}`,
                 date: new Date().toISOString(),
                 imageUrl: previewUrl,
-                global_score: authorizedGeneralScore, // HIDDEN if null
+                global_score: authorizedGeneralScore,
 
-                // New pipeline structure
                 faceState: pipelineResult.faceState,
                 analysis: pipelineResult.analysis,
                 scoring: {
                     ...pipelineResult.scoring,
-                    globalScore: authorizedGeneralScore ?? 0, // Fallback for TS, but UI handles null check
+                    globalScore: authorizedGeneralScore ?? 0,
                     potentialScore: authorizedPotentialScore ?? 0
                 },
                 recommendations: pipelineResult.recommendations,
 
-                // Legacy compatibility (can be removed later)
                 low_confidence: pipelineResult.faceState.quality.overallConfidence < 0.7,
                 daily_note: pipelineResult.recommendations.motivationalNote,
             };
 
             addLog('✅ Report created, navigating...');
             setLoading(false);
-            
-            // Mark referral as complete if this is their first scan
+
             if (user?.id) {
                 markReferralScanComplete(user.id).catch(console.error);
+            } else {
+                markGuestScanPendingReferral();
             }
 
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                navigator.vibrate([20, 50, 20]); // Tok "TIK" haptic
+                navigator.vibrate([20, 50, 20]);
             }
 
             onAnalysisComplete(newReport);
+            clearPendingFaceState();
         } catch (err: any) {
             addLog(`❌ FAILED: ${err.message}`);
-            if (err.message.includes('fetch') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+            if (err.message === 'OFFLINE' || err.message.includes('fetch') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
                 setError(localized("Connection is weak. Today's scan could not be processed; switch to Wi-Fi and retry the task.", "Bağlantı zayıf. Bugünkü ölçüm işlenemedi; Wi-Fi'a geçip görevi tekrar dene."));
             } else {
                 setError(`${t.analysisFailed} (${err.message})`);
             }
             setLoading(false);
+        } finally {
+            pipelineInFlightRef.current = false;
         }
-    };
+    }, [history, userData, user, onAnalysisComplete]);
+
+    // Auto-trigger pipeline when user logs in (or guest) after face capture
+    useEffect(() => {
+        if (pendingFaceState && (user || forceStartAnalysis)) {
+            const fs = pendingFaceState;
+            setPendingFaceState(null);
+            runAnalysisPipeline(fs);
+        }
+    }, [user, forceStartAnalysis, pendingFaceState, runAnalysisPipeline]);
 
     if (loading) {
         return <ScanAnalysisVisualizer faceState={currentFaceState} debugLogs={debugLogs} />;
@@ -459,16 +471,50 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                             <SkipForwardIcon className="w-3 h-3 mr-1.5" />
                             {t.skipForNow}
                         </button>
+
+                        {(pendingFaceState || currentFaceState) && !user && (
+                            <div className="mt-8 w-full p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-left space-y-3">
+                                <p className="text-sm text-purple-100 font-medium">
+                                    {localized('Your scan is saved. Sign in or continue as guest to analyze.', 'Taraman kaydedildi. Analiz için giriş yap veya misafir devam et.')}
+                                </p>
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={onNeedAuth}
+                                        className="w-full py-3 rounded-xl bg-white text-black font-bold text-sm"
+                                    >
+                                        {localized('Sign in to analyze', 'Analiz için giriş yap')}
+                                    </button>
+                                    {onContinueAsGuest && (
+                                        <button
+                                            type="button"
+                                            onClick={onContinueAsGuest}
+                                            className="w-full py-3 rounded-xl border border-white/20 text-white font-semibold text-sm"
+                                        >
+                                            {localized('Continue as guest', 'Misafir olarak devam et')}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {error && (
+                {error && !loading && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-6 p-4 bg-red-900/20 border border-red-500/20 rounded-xl max-w-xs"
+                        className="mt-6 p-4 bg-red-900/20 border border-red-500/20 rounded-xl max-w-xs w-full"
                     >
                         <p className="text-red-300 text-sm">{error}</p>
+                        {currentFaceState && (
+                            <button
+                                onClick={() => runAnalysisPipeline(currentFaceState)}
+                                className="mt-4 w-full bg-white text-black font-bold py-3 px-6 rounded-xl text-sm"
+                            >
+                                {localized('Retry Analysis', 'Analizi Tekrar Dene')}
+                            </button>
+                        )}
                     </motion.div>
                 )}
 
@@ -495,19 +541,17 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
                             How to enable
                         </button>
 
-                        {/* Back button — only if there's history to go back to */}
-                        {history.length > 0 && (
-                            <button
-                                onClick={() => {
-                                    setCameraError(null);
-                                    setError(null);
-                                    onSkip();
-                                }}
-                                className="text-gray-500 hover:text-white text-sm transition-colors duration-300 py-2"
-                            >
-                                Go Back
-                            </button>
-                        )}
+                        <button
+                            onClick={() => {
+                                setCameraError(null);
+                                setError(null);
+                                setUseCameraScan(false);
+                                onSkip();
+                            }}
+                            className="text-gray-500 hover:text-white text-sm transition-colors duration-300 py-2"
+                        >
+                            {localized('Go Back', 'Geri Dön')}
+                        </button>
                     </div>
                 )}
 
