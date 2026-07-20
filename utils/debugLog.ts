@@ -35,7 +35,9 @@ class DebugLogger {
             data
         };
 
-        console.log(`[${module}] ${message}`, data || '');
+        if (import.meta.env.DEV) {
+            console.log(`[${module}] ${message}`, data || '');
+        }
 
         this.logs.push(entry);
         if (this.logs.length > this.maxLogs) {

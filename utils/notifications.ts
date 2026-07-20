@@ -120,6 +120,16 @@ const NOTIFICATION_CONFIGS: Record<string, NotifConfig> = {
     title: "🌙 Evening Routine",
     body: "Wind down with your evening skincare protocol. Don't skip retinol night!",
   },
+  streak: {
+    key: "streak",
+    title: "🔥 Streak Reminder",
+    body: "Don't break your scan streak — take today's face scan!",
+  },
+  report: {
+    key: "report",
+    title: "📊 Results Ready",
+    body: "Your latest scan results are ready to review.",
+  },
 };
 
 function sendNotification(config: NotifConfig): void {
@@ -236,7 +246,7 @@ export async function scheduleAllNotifications(prefs?: NotificationPreferences):
      const check = await LocalNotifications.checkPermissions();
      if (check.display !== 'granted') return;
      // clear pending first to prevent duplication
-     await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}] });
+     await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}] });
   } else {
      if (Notification.permission !== "granted") return;
   }
@@ -247,12 +257,18 @@ export async function scheduleAllNotifications(prefs?: NotificationPreferences):
   scheduleOne("morning", p.morningRoutineTime, NOTIFICATION_CONFIGS.morning, 1);
   scheduleOne("scan", p.scanReminderTime, NOTIFICATION_CONFIGS.scan, 2);
   scheduleOne("evening", p.eveningRoutineTime, NOTIFICATION_CONFIGS.evening, 3);
+  if (p.streakReminder) {
+    scheduleOne("streak", p.scanReminderTime, NOTIFICATION_CONFIGS.streak, 4);
+  }
+  if (p.reportReady) {
+    scheduleOne("report", p.eveningRoutineTime, NOTIFICATION_CONFIGS.report, 5);
+  }
 }
 
 /** Stop all scheduled notifications */
 export async function clearAllScheduled(): Promise<void> {
   if (Capacitor.isNativePlatform()) {
-    await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}] });
+    await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}] });
   }
   Object.values(scheduledTimeouts).forEach((id) => window.clearTimeout(id));
   scheduledTimeouts = {};
@@ -265,8 +281,32 @@ export function scheduleDailyReminder(time: string): void {
   scheduleAllNotifications(prefs);
 }
 
-export function sendTestNotification(): void {
+export async function sendTestNotification(): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await LocalNotifications.schedule({
+        notifications: [{
+          id: 99,
+          title: '✅ SkinFace AI',
+          body: "Notifications are working! You'll get daily reminders.",
+          schedule: { at: new Date(Date.now() + 1000) },
+        }],
+      });
+      addToNotificationHistory({
+        key: 'test',
+        title: '✅ SkinFace AI',
+        body: "Notifications are working!",
+      });
+    } catch (e) {
+      console.error('Native test notification failed:', e);
+    }
+    return;
+  }
   if (!areNotificationsSupported()) return;
   if (Notification.permission !== "granted") return;
-  new Notification("✅ SkinFace AI", { body: "Notifications are working! You'll get 3 daily reminders." });
+  sendNotification({
+    key: 'test',
+    title: '✅ SkinFace AI',
+    body: "Notifications are working! You'll get daily reminders.",
+  });
 }

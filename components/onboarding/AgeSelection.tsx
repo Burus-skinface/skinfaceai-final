@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 
 interface AgeSelectionProps {
     onNext: (age: string) => void;
@@ -17,12 +16,12 @@ const AgeSelection: React.FC<AgeSelectionProps> = ({ onNext, onBack }) => {
     };
 
     return (
-        <div className="relative flex flex-col h-full bg-[#FFFFFF] text-[#1D1D1F] font-sans overflow-hidden">
+        <div className="relative flex flex-col h-full min-h-0 bg-[#FFFFFF] text-[#1D1D1F] font-sans overflow-hidden">
             {/* Background Ambience */}
             <div className="absolute inset-x-0 -top-20 h-[70%] bg-gradient-to-b from-[#F5F5F7] pb-[-30px] to-transparent pointer-events-none" />
 
             {/* Navbar */}
-            <div className="relative z-10 px-6 pt-12 pb-4 flex items-center justify-between">
+            <div className="relative z-10 px-6 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+1.75rem)] pb-2 sm:pb-3 flex items-center justify-between shrink-0">
                 <button
                     onClick={onBack}
                     className="w-10 h-10 rounded-full bg-[#F5F5F7] hover:bg-[#E5E5EA] transition-all flex items-center justify-center text-[#1D1D1F]"
@@ -31,64 +30,47 @@ const AgeSelection: React.FC<AgeSelectionProps> = ({ onNext, onBack }) => {
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest">Step 1/4</div>
+                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest">Profile 1/2</div>
                 <div className="w-10" />
             </div>
 
-            <div className="relative z-10 px-8 mb-8 mt-6">
-                <h2 className="text-3xl font-bold mb-3 tracking-tight text-[#1D1D1F]">Your Age</h2>
-                <p className="text-[#86868B] text-[15px] leading-relaxed max-w-xs">
+            <div className="relative z-10 px-8 mb-3 sm:mb-5 mt-1 sm:mt-3 shrink-0 pointer-events-none">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 tracking-tight text-[#1D1D1F]">Your Age</h2>
+                <p className="text-[#86868B] text-[13px] sm:text-[15px] leading-relaxed max-w-xs">
                     This helps us calibrate our analysis for your specific skin maturity phase.
                 </p>
             </div>
 
             {/* List */}
-            <motion.div
-                className="relative z-10 flex-1 px-6 pb-8 overflow-y-auto scrollbar-hide space-y-4"
-                variants={{
-                    hidden: { opacity: 0 },
-                    show: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.04 }
-                    }
-                }}
-                initial="hidden"
-                animate="show"
+            <div
+                className="relative z-30 flex-1 min-h-0 px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] overflow-y-auto overscroll-contain scrollbar-hide space-y-2 sm:space-y-4"
             >
                 {AGE_RANGES.map((age) => (
-                    <motion.button
+                    <button
                         key={age}
-                        variants={{
-                            hidden: { opacity: 0, y: 10 },
-                            show: { opacity: 1, y: 0 }
-                        }}
-                        whileTap={{ scale: 0.97 }}
                         onClick={() => handleSelect(age)}
-                        className={`w-full h-[72px] rounded-[2rem] flex items-center justify-between px-8 border transition-all duration-200 shadow-sm ${selected === age
+                        className={`relative z-50 w-full h-[48px] sm:h-[72px] rounded-[1.4rem] sm:rounded-[2rem] flex items-center justify-between px-5 sm:px-8 border transition-all duration-200 shadow-sm active:scale-[0.97] ${selected === age
                                 ? 'bg-[#1D1D1F] border-[#1D1D1F] text-white'
                                 : 'bg-white border-black/5 text-[#1D1D1F] hover:bg-[#F5F5F7]'
                             }`}
                     >
-                        <span className="text-xl font-semibold tracking-tight">{age}</span>
+                        <span className="text-base sm:text-xl font-semibold tracking-tight">{age}</span>
 
                         <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors duration-200 ${selected === age ? 'border-none bg-none' : 'border-black/10'
                             }`}>
                             {selected === age && (
-                                <motion.div
+                                <div
                                     className="w-full h-full rounded-full flex items-center justify-center bg-white"
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                 >
                                     <svg className="w-4 h-4 text-[#1D1D1F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
-                                </motion.div>
+                                </div>
                             )}
                         </div>
-                    </motion.button>
+                    </button>
                 ))}
-            </motion.div>
+            </div>
         </div>
     );
 };

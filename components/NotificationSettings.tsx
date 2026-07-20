@@ -166,7 +166,7 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
 
               {/* Test */}
               <button
-                onClick={sendTestNotification}
+                onClick={() => { void sendTestNotification(); }}
                 className="w-full py-2.5 bg-white/5 text-white text-sm font-semibold rounded-xl hover:bg-white/10 transition-colors border border-white/10"
               >
                 Send Test Notification

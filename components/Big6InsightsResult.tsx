@@ -1,4 +1,5 @@
 import React from 'react';
+import { localized } from '../localization';
 import type { Big6Insights } from '../services/recommendations/recommendsEngine';
 import type { AdvancedSkinMetrics } from '../services/scoring/types';
 import { Sparkles } from './icons/SparklesIcon';
@@ -6,6 +7,8 @@ import { Sparkles } from './icons/SparklesIcon';
 interface Big6InsightsResultProps {
   insights?: Big6Insights;
   metrics?: AdvancedSkinMetrics;
+  /** detail = full-screen Figma stack; masonry = legacy grid (unused on skin tab) */
+  variant?: 'detail' | 'masonry';
 }
 
 // Compute Big 6 scores from averaged region data (0-1 scale → display as /10).
@@ -68,10 +71,10 @@ function computeBig6Scores(m: AdvancedSkinMetrics) {
 
 // Color for score pill (0-1 scale)
 const pillColor = (s: number) => {
-  if (s >= 0.85) return { bg: 'bg-emerald-500/15', text: 'text-emerald-600', ring: 'ring-emerald-500/20' };
-  if (s >= 0.70) return { bg: 'bg-green-500/10', text: 'text-green-600', ring: 'ring-green-500/15' };
-  if (s >= 0.50) return { bg: 'bg-amber-500/10', text: 'text-amber-600', ring: 'ring-amber-500/15' };
-  return { bg: 'bg-red-500/10', text: 'text-red-600', ring: 'ring-red-500/15' };
+  if (s >= 0.90) return { bg: 'bg-[#FBF1D3]', text: 'text-[#B8860B]', ring: 'ring-[#D4AF37]/25' }; // Gold
+  if (s >= 0.70) return { bg: 'bg-green-500/10', text: 'text-green-600', ring: 'ring-green-500/15' }; // Green
+  if (s >= 0.50) return { bg: 'bg-[#009EE0]/10', text: 'text-[#009EE0]', ring: 'ring-[#009EE0]/15' }; // La Roche Blue
+  return { bg: 'bg-red-500/10', text: 'text-red-600', ring: 'ring-red-500/15' }; // Red
 };
 
 // ==========================================
@@ -175,51 +178,116 @@ const Big6Card: React.FC<{
   title: string;
   insight: string;
   icon: React.ReactNode;
-  score?: number; // 0-1
+  score?: number;
+  variant: 'detail' | 'masonry';
   gridStyle?: React.CSSProperties;
-}> = ({ title, insight, icon, score, gridStyle }) => {
+}> = ({ title, insight, icon, score, variant, gridStyle }) => {
   const displayScore = score !== undefined ? (score * 10).toFixed(1) : null;
   const colors = score !== undefined ? pillColor(score) : null;
 
-  return (
-    <div style={{
-      background: '#fff',
-      borderRadius: '24px',
-      padding: '20px',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      overflow: 'hidden',
-      ...gridStyle
-    }}>
-      {/* Subtle background glow */}
-      <div style={{ position: 'absolute', top: -20, left: -20, width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(168,85,247,0.05) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%', zIndex: 0 }} />
-
-      <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        {/* Top row: icon + title + score pill */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '14px', background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.8), 0 1px 2px rgba(0,0,0,0.05)' }}>
-              {icon}
-            </div>
+  if (variant === 'detail') {
+    return (
+      <article className="w-full bg-white rounded-2xl p-4 border border-black/[0.04] shadow-[0_2px_12px_rgba(46,47,114,0.06)]">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="w-11 h-11 rounded-xl bg-[#fbf9f9] border border-[#e1e0ff] flex items-center justify-center shrink-0">
+            {icon}
           </div>
-
           {displayScore && colors && (
-            <div className={colors.bg} style={{ padding: '4px 8px', borderRadius: '8px', border: `1px solid ${colors.ring.split('-')[2] || 'transparent'}` }}>
-              <span className={colors.text} style={{ fontSize: '13px', fontWeight: 800, fontFamily: 'monospace' }}>
+            <div className={`px-2.5 py-1 rounded-lg ${colors.bg} ring-1 ${colors.ring}`}>
+              <span className={`text-[14px] font-extrabold tabular-nums ${colors.text}`}>
+                {displayScore}
+                <span className="text-[11px] font-semibold opacity-70">/10</span>
+              </span>
+            </div>
+          )}
+        </div>
+        <h3 className="text-[12px] font-bold text-[#2e2f72] uppercase tracking-wide mb-2">
+          {title}
+        </h3>
+        <p className="text-[14px] text-[#464650] leading-relaxed font-medium m-0">
+          {insight}
+        </p>
+      </article>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        background: '#fff',
+        borderRadius: '24px',
+        padding: '20px',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden',
+        ...gridStyle,
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: -20,
+          left: -20,
+          width: '100px',
+          height: '100px',
+          background: 'radial-gradient(circle, rgba(168,85,247,0.05) 0%, rgba(255,255,255,0) 70%)',
+          borderRadius: '50%',
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '16px',
+          }}
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {icon}
+          </div>
+          {displayScore && colors && (
+            <div className={colors.bg} style={{ padding: '4px 8px', borderRadius: '8px' }}>
+              <span className={colors.text} style={{ fontSize: '13px', fontWeight: 800 }}>
                 {displayScore}
               </span>
             </div>
           )}
         </div>
-
-        <span style={{ fontSize: '11px', fontWeight: 800, color: '#1D1D1F', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 800,
+            color: '#1D1D1F',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            marginBottom: '6px',
+          }}
+        >
           {title}
         </span>
-
-        {/* AI Insight text */}
-        <p style={{ fontSize: '13px', color: '#48484A', lineHeight: 1.5, margin: 0, fontWeight: 500, flexGrow: 1 }}>
+        <p style={{ fontSize: '13px', color: '#48484A', lineHeight: 1.5, margin: 0, fontWeight: 500 }}>
           {insight}
         </p>
       </div>
@@ -227,77 +295,110 @@ const Big6Card: React.FC<{
   );
 };
 
-const Big6InsightsResult: React.FC<Big6InsightsResultProps> = ({ insights, metrics }) => {
+const Big6InsightsResult: React.FC<Big6InsightsResultProps> = ({
+  insights,
+  metrics,
+  variant = 'masonry',
+}) => {
   if (!insights) return null;
 
   const scores = metrics ? computeBig6Scores(metrics) : undefined;
 
   const cards = [
     {
-      title: 'Akne & Berraklık',
+      title: localized('Acne & Clarity', 'Akne & Berraklık'),
       insight: insights.acneClarity,
       icon: <PremiumAcneIcon />,
       score: scores?.acneClarity,
     },
     {
-      title: 'Doku & Gözenekler',
+      title: localized('Texture & Pores', 'Doku & Gözenekler'),
       insight: insights.texturePores,
       icon: <PremiumTextureIcon />,
       score: scores?.texturePores,
     },
     {
-      title: 'Bariyer Savunması',
+      title: localized('Barrier Defense', 'Bariyer Savunması'),
       insight: insights.barrierDefense,
       icon: <PremiumBarrierIcon />,
       score: scores?.barrierDefense,
     },
     {
-      title: 'Sebum Dinamikleri',
+      title: localized('Sebum Dynamics', 'Sebum Dinamikleri'),
       insight: insights.sebumDynamics,
       icon: <PremiumSebumIcon />,
       score: scores?.sebumDynamics,
     },
     {
-      title: 'Ton Eşitliği',
+      title: localized('Tone Uniformity', 'Ton Eşitliği'),
       insight: insights.toneUniformity,
       icon: <PremiumToneIcon />,
       score: scores?.toneUniformity,
     },
     {
-      title: 'Görsel Yorgunluk',
+      title: localized('Visual Fatigue', 'Görsel Yorgunluk'),
       insight: insights.visualFatigue,
       icon: <PremiumFatigueIcon />,
       score: scores?.visualFatigue,
     },
   ];
 
+  if (variant === 'detail') {
+    return (
+      <div className="w-full">
+        <div className="flex items-center gap-2 mb-4 px-0.5">
+          <Sparkles className="w-4 h-4 text-[#2e2f72]" />
+          <h2 className="text-[13px] font-bold text-[#464650] tracking-wide">
+            {localized('AI · Big 6', 'AI · Big 6')}
+          </h2>
+        </div>
+        <div className="flex flex-col gap-3">
+          {cards.map((card) => (
+            <Big6Card key={card.title} {...card} variant="detail" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', marginBottom: '24px' }}>
-      {/* Section Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingLeft: '4px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '16px',
+          paddingLeft: '4px',
+        }}
+      >
         <Sparkles className="w-5 h-5 text-purple-600" />
-        <span style={{ fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: '#1D1D1F' }}>
-          AI Sentezi · The Big 6
+        <span
+          style={{
+            fontSize: '12px',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            color: '#1D1D1F',
+          }}
+        >
+          {localized('AI · Big 6', 'AI · Big 6')}
         </span>
       </div>
-
-      {/* Premium Asymmetrical Masonry Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', gridAutoRows: 'min-content' }}>
-        
-        {/* Card 0: Full Width Featured */}
-        <Big6Card {...cards[0]} gridStyle={{ gridColumn: '1 / -1' }} />
-        
-        {/* Card 1: Tall on the left */}
-        <Big6Card {...cards[1]} gridStyle={{ gridColumn: '1 / 2', gridRow: 'span 2' }} />
-        
-        {/* Card 2 & 3: Normal on the right */}
-        <Big6Card {...cards[2]} gridStyle={{ gridColumn: '2 / 3' }} />
-        <Big6Card {...cards[3]} gridStyle={{ gridColumn: '2 / 3' }} />
-
-        {/* Card 4 & 5: Half width each */}
-        <Big6Card {...cards[4]} gridStyle={{ gridColumn: '1 / 2' }} />
-        <Big6Card {...cards[5]} gridStyle={{ gridColumn: '2 / 3' }} />
-
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '12px',
+          gridAutoRows: 'min-content',
+        }}
+      >
+        <Big6Card {...cards[0]} variant="masonry" gridStyle={{ gridColumn: '1 / -1' }} />
+        <Big6Card {...cards[1]} variant="masonry" gridStyle={{ gridColumn: '1 / 2', gridRow: 'span 2' }} />
+        <Big6Card {...cards[2]} variant="masonry" gridStyle={{ gridColumn: '2 / 3' }} />
+        <Big6Card {...cards[3]} variant="masonry" gridStyle={{ gridColumn: '2 / 3' }} />
+        <Big6Card {...cards[4]} variant="masonry" gridStyle={{ gridColumn: '1 / 2' }} />
+        <Big6Card {...cards[5]} variant="masonry" gridStyle={{ gridColumn: '2 / 3' }} />
       </div>
     </div>
   );

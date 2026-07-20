@@ -4,9 +4,7 @@ import type { ScoringResults } from '../scoring/types';
 import type { DailyReport } from '../../types';
 import { PRODUCT_CATALOG } from '../../utils/products';
 
-// SECURITY UPDATE: Gemini API Key is no longer used here.
-// All requests are routed through the secure backend proxy.
-const API_ENDPOINT = '/api/analyze'; // Relative path for proxying
+import { callAnalyzeProxy } from '../analyzeProxy';
 
 export interface UserPreferences {
   goal?: string;
@@ -417,35 +415,7 @@ export async function generateRecommendations(
   const prompt = buildPrompt(analysisResults, scoringResults, userPreferences, previousScanData);
 
   try {
-    // 60-second timeout to prevent infinite hang on slow/dead server
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-    const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt,
-        schema
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.error('[RECOMMENDATIONS] Rate limit exceeded.');
-        throw new Error('DAILY_LIMIT_REACHED');
-      }
-      throw new Error(`Server error: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result;
-
+    return await callAnalyzeProxy<RecommendationsResult>(prompt, schema);
   } catch (err) {
     console.error('[RECOMMENDS] API Failure:', err);
     throw err;

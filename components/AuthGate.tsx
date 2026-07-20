@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../services/supabase';
+import LegalModal, { LegalTab } from './LegalModal';
+import { localized } from '../localization';
 
 interface AuthGateProps {
     onAuthenticated: () => void;
@@ -15,6 +17,8 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
     const [info, setInfo] = useState('');
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
+    const [appleLoading, setAppleLoading] = useState(false);
+    const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
 
     const handleGoogleLogin = async () => {
         try {
@@ -26,11 +30,27 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                 }
             });
             if (error) throw error;
-            // OAuth redirects, so onAuthenticated will be called via App.tsx auth listener
         } catch (err: any) {
             console.error('Google login failed:', err);
-            setError('Google login failed. Please try again.');
+            setError(localized('Google login failed. Please try again.', 'Google girişi başarısız. Tekrar dene.'));
             setGoogleLoading(false);
+        }
+    };
+
+    const handleAppleLogin = async () => {
+        try {
+            setAppleLoading(true);
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'apple',
+                options: {
+                    redirectTo: window.location.origin,
+                },
+            });
+            if (error) throw error;
+        } catch (err: any) {
+            console.error('Apple login failed:', err);
+            setError(localized('Apple login failed. Please try again.', 'Apple girişi başarısız. Tekrar dene.'));
+            setAppleLoading(false);
         }
     };
 
@@ -117,10 +137,13 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
 
                 {/* Title */}
                 <h1 className="text-[26px] font-bold tracking-tight text-center mb-2">
-                    Sign in to Start Analysis
+                    {localized('Sign in to Start Analysis', 'Analize başlamak için giriş yap')}
                 </h1>
                 <p className="text-[15px] text-gray-400 text-center mb-8 leading-relaxed max-w-[260px]">
-                    Create an account to save your results and track your skin progress
+                    {localized(
+                        'Create an account to save your results and track your skin progress',
+                        'Sonuçlarını kaydetmek ve cilt ilerlemeni takip etmek için hesap oluştur'
+                    )}
                 </p>
 
                 {!showEmailForm ? (
@@ -140,7 +163,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleGoogleLogin}
-                            disabled={googleLoading}
+                            disabled={googleLoading || appleLoading}
                             className="w-full h-[52px] rounded-full bg-white/[0.04] backdrop-blur-md text-white/90 border border-white/10 flex items-center justify-center transition-all disabled:opacity-50"
                         >
                             <div className="flex items-center gap-2">
@@ -151,6 +174,24 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                                 />
                                 <span className="font-medium text-[15px]">
                                     {googleLoading ? 'Connecting...' : 'Continue with Google'}
+                                </span>
+                            </div>
+                        </motion.button>
+
+                        {/* Apple — required for App Store when other third-party logins exist */}
+                        <motion.button
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleAppleLogin}
+                            disabled={googleLoading || appleLoading}
+                            className="w-full h-[52px] rounded-full bg-white text-black flex items-center justify-center transition-all disabled:opacity-50"
+                        >
+                            <div className="flex items-center gap-2">
+                                <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                                    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                </svg>
+                                <span className="font-medium text-[15px]">
+                                    {appleLoading ? 'Connecting...' : 'Continue with Apple'}
                                 </span>
                             </div>
                         </motion.button>
@@ -253,8 +294,19 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated, onGuest }) => {
                 transition={{ delay: 0.8 }}
                 className="absolute bottom-8 text-[11px] text-center text-white/30 px-8 max-w-[300px]"
             >
-                By signing in, you agree to our terms of use and privacy policy.
+                {localized('By signing in, you agree to our', 'Giriş yaparak kabul etmiş olursunuz:')}{' '}
+                <button type="button" onClick={() => setLegalTab('terms')} className="underline hover:text-white/50">
+                    {localized('Terms', 'Koşullar')}
+                </button>
+                {' '}{localized('and', 've')}{' '}
+                <button type="button" onClick={() => setLegalTab('privacy')} className="underline hover:text-white/50">
+                    {localized('Privacy Policy', 'Gizlilik Politikası')}
+                </button>
             </motion.p>
+
+            {legalTab && (
+                <LegalModal isOpen={!!legalTab} initialTab={legalTab} onClose={() => setLegalTab(null)} />
+            )}
         </div>
     );
 };

@@ -10,25 +10,26 @@ interface WeeklyRecapProps {
 const WeeklyRecap: React.FC<WeeklyRecapProps> = ({ history }) => {
     if (history.length === 0) return null;
 
-    // DEV MODE BYPASS: If only 1 scan, simulate improvement for demo
-    const isDev = history.length === 1;
-    const latest = history[0];
-    const prev = isDev ? null : history[1]; // Simple logic for now: compare latest with previous
+    const sorted = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const latest = sorted[0];
+    const prev = sorted[1] ?? null;
 
-    const getDelta = (current: number, previous: number | null, factor: number = 1) => {
-        if (previous === null) return (Math.random() * 5 + 3).toFixed(1); // Simulated dev growth
-        const diff = current - previous;
-        return (diff * factor).toFixed(1);
+    const getDelta = (current: number, previous: number | null) => {
+        if (previous === null) {
+            if (import.meta.env.DEV) return (Math.random() * 5 + 3).toFixed(1);
+            return '0.0';
+        }
+        return (current - previous).toFixed(1);
     };
 
     const improvements = [
-        { label: "Hydration", val: getDelta(latest.scoring?.skin?.condition.score || 0, prev?.scoring?.skin?.condition.score || null), color: "text-emerald-400", bg: "bg-emerald-400/20" },
-        { label: "Skin Definition", val: getDelta(latest.scoring?.face?.statusScores.overallStructure || 0, prev?.scoring?.face?.statusScores.overallStructure || null, 0.1), color: "text-purple-400", bg: "bg-purple-400/20" },
-        { label: "Acne Control", val: getDelta(latest.scoring?.skin?.statusScores?.acne || 0, prev?.scoring?.skin?.statusScores?.acne || null), color: "text-blue-400", bg: "bg-blue-400/20" }
+        { label: "Hydration", val: getDelta(latest.scoring?.skin?.overallScore || 0, prev?.scoring?.skin?.overallScore ?? null) },
+        { label: "Skin Definition", val: getDelta(latest.scoring?.face?.statusScores.overallStructure || 0, prev?.scoring?.face?.statusScores.overallStructure ?? null) },
+        { label: "Acne Control", val: getDelta(latest.scoring?.skin?.statusScores?.acne || 0, prev?.scoring?.skin?.statusScores?.acne ?? null) },
     ];
 
-    // Consistency Logic: Count scans in the last 7 days
-    const scanCount = history.length > 7 ? 7 : history.length;
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const scanCount = sorted.filter((r) => new Date(r.date).getTime() >= weekAgo).length;
     const consistencyText = scanCount >= 7 ? "Great job staying consistent!" : "Build your streak!";
 
     return (
@@ -63,7 +64,7 @@ const WeeklyRecap: React.FC<WeeklyRecapProps> = ({ history }) => {
                                 <div className="w-4 h-4 rounded-full border border-gray-600 flex items-center justify-center">
                                     <div className="w-2 h-2 border-t border-r border-gray-400"></div>
                                 </div>
-                                <p className="text-[13px] font-medium text-gray-400">Average skin score: {Math.round(latest.scoring?.skin?.overallScore || 0 * 10)}</p>
+                                <p className="text-[13px] font-medium text-gray-400">Average skin score: {Math.round((latest.scoring?.skin?.overallScore || 0) * 10) / 10}</p>
                             </div>
                         </div>
                     </div>

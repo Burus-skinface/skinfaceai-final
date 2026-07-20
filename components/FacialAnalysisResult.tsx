@@ -5,7 +5,7 @@ import { FaceIcon } from './icons/FaceIcon';
 import { NoseIcon } from './icons/NoseIcon';
 import { JawIcon } from './icons/JawIcon';
 import { Sparkles } from './icons/SparklesIcon';
-import { t } from '../localization';
+import { t, translateDynamicNote } from '../localization';
 
 const getTierSpec = (score: number) => {
     if (score >= 9.2) return { label: 'LEGENDARY', color: '#FFD700', bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400' };
@@ -237,7 +237,7 @@ const FacialAnalysisResult: React.FC<{ report: DailyReport }> = ({ report }) => 
                     {t.dailyAICommentary}
                 </h3>
                 <p className="text-base font-bold text-gray-200 italic leading-relaxed relative z-10">
-                    "{report.daily_note || report.recommendations?.motivationalNote || "Your structural foundation is solid. Focus on the refinement markers to achieve Legendary status."}"
+                    "{translateDynamicNote(report.daily_note || report.recommendations?.motivationalNote || "Your structural foundation is solid. Focus on the refinement markers to achieve Legendary status.")}"
                 </p>
             </div>
         </div>

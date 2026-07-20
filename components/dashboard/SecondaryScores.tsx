@@ -1,211 +1,191 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { localized } from '../../localization';
 
 interface SecondaryScoresProps {
     skinScore: number | null;
-    faceScore: number | null;
-    potentialScore: number | null;
     skinAge: number | null;
     realAge: number | null;
     previousSkinScore?: number | null;
-    previousFaceScore?: number | null;
-    onShowPaywall?: () => void;
+    useDevDefaults?: boolean;
 }
 
 const SecondaryScores: React.FC<SecondaryScoresProps> = ({
-    skinScore, faceScore, potentialScore, skinAge, realAge,
-    previousSkinScore, previousFaceScore, onShowPaywall,
+    skinScore,
+    skinAge,
+    realAge,
+    previousSkinScore,
+    useDevDefaults = false,
 }) => {
-    const dSkin = skinScore ?? 7.2;
-    const dFace = faceScore ?? 8.1;
-    const dPotential = potentialScore ?? 8.9;
-    const dSkinAge = skinAge ?? 24;
-    const dRealAge = realAge ?? 21;
-    const ageDiff = dSkinAge - dRealAge;
-    const skinDelta = previousSkinScore != null ? dSkin - previousSkinScore : 0.4;
-    const faceDelta = previousFaceScore != null ? dFace - previousFaceScore : 0.1;
+    const [showSkinInfo, setShowSkinInfo] = useState(false);
+    const [showAgeInfo, setShowAgeInfo] = useState(false);
+    
+    const dSkin = skinScore ?? (useDevDefaults ? 7.2 : null);
+    const dSkinAge = skinAge ?? (useDevDefaults ? 24 : null);
+    const dRealAge = realAge ?? (useDevDefaults ? 21 : null);
+    const ageDiff =
+        dSkinAge != null && dRealAge != null ? dSkinAge - dRealAge : null;
 
-    const getSkinLabel = (s: number) => s >= 8.5 ? localized('Clean Signal', 'Temiz Sinyal') : s >= 7 ? localized('Good Line', 'İyi Çizgi') : s >= 5.5 ? localized('Stable', 'Stabil') : localized('Priority Open', 'Öncelik Var');
-    const getFaceLabel = (s: number) => s >= 8.5 ? localized('Strong Lines', 'Güçlü Hat') : s >= 7 ? localized('Good Ratio', 'İyi Oran') : s >= 5.5 ? localized('Stable', 'Stabil') : localized('Behind', 'Geride');
+    const getSkinLabel = (s: number) =>
+        s >= 8.5
+            ? localized('Clean signal', 'Temiz sinyal')
+            : s >= 7
+              ? localized('Good', 'İyi')
+              : s >= 5.5
+                ? localized('Stable', 'Stabil')
+                : localized('Needs focus', 'Odak gerek');
 
-    const cardStyle: React.CSSProperties = {
-        background: '#fff',
-        borderRadius: '24px',
-        padding: '24px',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)',
-        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-    };
-
-    const topHeaderStyle: React.CSSProperties = {
-        fontSize: '11px', fontWeight: 700, color: '#48484A',
-        letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px',
-        marginBottom: '12px'
-    };
-
-    const bigNumberStyle: React.CSSProperties = {
-        fontSize: '36px', fontWeight: 800, color: '#1C1C1E', lineHeight: 1, margin: 0,
-    };
-
-    const outOfStyle: React.CSSProperties = {
-        fontSize: '16px', fontWeight: 600, color: '#8E8E93',
-    };
+    if (dSkin == null && dSkinAge == null) return null;
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            {/* ====== SKIN CARD ====== */}
-            <div style={cardStyle}>
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-                    {/* ICON LEFT */}
-                    <div style={{ width: '48px', height: '48px', borderRadius: '24px', background: '#ECFDF5', border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" stroke="#10B981" strokeWidth="2" strokeLinejoin="round" />
-                        </svg>
-                    </div>
-                    {/* MIDDLE: SKIN SCORE */}
-                    <div style={{ flex: 1 }}>
-                        <div style={topHeaderStyle}>
-                            <span>{localized('SKIN SIGNAL', 'CİLT SİNYALİ')}</span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-                        </div>
-                        <p style={bigNumberStyle}>
-                            {dSkin.toFixed(1)}<span style={outOfStyle}>/10</span>
-                        </p>
-                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#10B981', margin: '6px 0 0' }}>{getSkinLabel(dSkin)}</p>
-                    </div>
-                    {/* RIGHT: SKIN AGE */}
-                    <div style={{ flex: 1 }}>
-                        <div style={topHeaderStyle}>
-                            <span>{localized('SKIN AGE', 'CİLT YAŞI')}</span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-                        </div>
-                        <p style={bigNumberStyle}>
-                            {dSkinAge}<span style={outOfStyle}> yaş</span>
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '6px 0 0' }}>
-                            <span style={{ fontSize: '11px', color: '#8E8E93' }}>{localized('Real age', 'Gerçek yaşın')}: {dRealAge}</span>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: ageDiff > 0 ? '#EF4444' : '#10B981', background: ageDiff > 0 ? '#FEE2E2' : '#D1FAE5', padding: '2px 6px', borderRadius: '6px' }}>
-                                {ageDiff > 0 ? `+${ageDiff} yaş` : `${ageDiff} yaş`}
+        <section className="w-full grid grid-cols-2 gap-3 mb-4">
+            {/* Skin Score Card */}
+            <div className="bg-white rounded-3xl p-4 ambient-shadow flex flex-col justify-between relative">
+                <div>
+                    <div className="flex items-center gap-1 mb-2">
+                        <h3 className="text-[14px] font-semibold text-[#1b1c1c]">
+                            {localized('Skin Score', 'Cilt Skoru')}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowSkinInfo(true)}
+                            className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors focus:outline-none"
+                            aria-label={localized('Show skin score details', 'Cilt skoru detaylarını göster')}
+                        >
+                            <span className="material-symbols-outlined text-[14px] text-[#777681] select-none" data-icon="info">
+                                info
                             </span>
-                        </div>
+                        </button>
                     </div>
-                </div>
-
-                {/* Delta row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #F2F2F7' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: skinDelta >= 0 ? '#ECFDF5' : '#FEE2E2', padding: '4px 8px', borderRadius: '8px' }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill={skinDelta >= 0 ? '#10B981' : '#EF4444'}>
-                                <path d={skinDelta >= 0 ? "M12 4l8 8h-5v8h-6v-8H4l8-8z" : "M12 20l-8-8h5V4h6v8h5l-8 8z"}/>
-                            </svg>
-                            <span style={{ color: skinDelta >= 0 ? '#10B981' : '#EF4444', fontWeight: 700, fontSize: '12px' }}>+{Math.abs(skinDelta).toFixed(1)}</span>
-                        </div>
-                        <span style={{ color: '#8E8E93', fontSize: '12px' }}>{localized('vs last scan', 'son ölçüme göre')}</span>
-                    </div>
-                    <span style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 500 }}>{localized('Trend tracking', 'Trend takibi')}</span>
-                </div>
-
-                {/* Green insight box */}
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    padding: '16px', background: '#F0FDF4',
-                    borderRadius: '16px', border: '1px solid #DCFCE7',
-                }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="#22C55E" opacity="0.2"/>
-                        <path d="M15.182 15.182a4.5 4.5 0 01-6.364 0" stroke="#16A34A" strokeWidth="2" strokeLinecap="round"/>
-                        <circle cx="9" cy="10" r="1.5" fill="#16A34A"/>
-                        <circle cx="15" cy="10" r="1.5" fill="#16A34A"/>
-                    </svg>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#16A34A', margin: 0 }}>{localized('Skin signal is stable.', 'Cilt sinyali stabil.')}</p>
-                        <p style={{ fontSize: '12px', color: '#15803D', margin: '2px 0 0' }}>{localized('Keep the streak; the line is ready to strengthen.', 'Seriyi koru; çizgi güçlenmeye hazır.')}</p>
-                    </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-                        <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                </div>
-            </div>
-
-            {/* ====== FACE CARD ====== */}
-            <div style={cardStyle}>
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-                    {/* ICON LEFT */}
-                    <div style={{ width: '48px', height: '48px', borderRadius: '24px', background: '#F3E8FF', border: '1px solid #E9D5FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="9" stroke="#7C3AED" strokeWidth="2"/>
-                            <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round"/>
-                            <circle cx="9" cy="9" r="1" fill="#7C3AED"/>
-                            <circle cx="15" cy="9" r="1" fill="#7C3AED"/>
-                        </svg>
-                    </div>
-                    {/* MIDDLE: FACE SCORE */}
-                    <div style={{ flex: 1 }}>
-                        <div style={topHeaderStyle}>
-                            <span>{localized('FACE SIGNAL', 'YÜZ SİNYALİ')}</span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-                        </div>
-                        <p style={bigNumberStyle}>
-                            {dFace.toFixed(1)}<span style={outOfStyle}>/10</span>
-                        </p>
-                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#5856D6', margin: '6px 0 0' }}>{getFaceLabel(dFace)}</p>
-                    </div>
-                    {/* RIGHT: POTENTIAL */}
-                    <div style={{ flex: 1 }}>
-                        <div style={topHeaderStyle}>
-                            <span>{localized('LOCKED TARGET', 'KİLİTLİ HEDEF')}</span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <p style={bigNumberStyle}>
-                                {dPotential.toFixed(1)}
+                    {dSkin != null ? (
+                        <>
+                            <div className="flex items-baseline gap-1 mb-1">
+                                <span className="text-[28px] font-bold text-[#1b1c1c] leading-none">
+                                    {dSkin.toFixed(1)}
+                                </span>
+                                <span className="text-[14px] font-semibold text-[#c7c5d2]">/10</span>
+                            </div>
+                            <p className={`${
+                                dSkin >= 9.0 ? 'text-[#B8860B]' :
+                                dSkin >= 7.0 ? 'text-green-600' :
+                                dSkin >= 5.0 ? 'text-[#45478b]' : 'text-red-600'
+                            } font-semibold mb-2 text-xs leading-tight`}>
+                                {getSkinLabel(dSkin)}
                             </p>
-                            <button onClick={onShowPaywall} style={{ background: '#F2EBFF', border: 'none', borderRadius: '8px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                    <rect x="4" y="11" width="16" height="10" rx="3" stroke="#8B5CF6" strokeWidth="2"/>
-                                    <path d="M7 11V7a5 5 0 0110 0v4" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round"/>
-                                    <path d="M12 15v2" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <p style={{ fontSize: '11px', color: '#8E8E93', margin: '6px 0 0' }}>{localized('Full analysis opens in Premium.', "Tam analiz Premium'da açılır.")}</p>
-                    </div>
+                        </>
+                    ) : (
+                        <p className="text-[24px] font-extrabold text-[#c7c5d2]">—</p>
+                    )}
                 </div>
+                {dSkin != null && (
+                    <div className="inline-flex items-center gap-1 bg-black/[0.04] px-2 py-0.5 rounded-full w-fit">
+                        <span className="material-symbols-outlined text-[12px] text-[#a311ae]" data-icon="trending_up">
+                            trending_up
+                        </span>
+                        <span className="text-[9px] font-bold tracking-wider uppercase text-[#1b1c1c]">
+                            {localized('Top 28% of users', 'İlk %28 kullanıcı')}
+                        </span>
+                    </div>
+                )}
 
-                {/* Delta row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #F2F2F7' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: faceDelta >= 0 ? '#F5F3FF' : '#FEE2E2', padding: '4px 8px', borderRadius: '8px' }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill={faceDelta >= 0 ? '#7C3AED' : '#EF4444'}>
-                                <path d={faceDelta >= 0 ? "M12 4l8 8h-5v8h-6v-8H4l8-8z" : "M12 20l-8-8h5V4h6v8h5l-8 8z"}/>
-                            </svg>
-                            <span style={{ color: faceDelta >= 0 ? '#7C3AED' : '#EF4444', fontWeight: 700, fontSize: '12px' }}>+{Math.abs(faceDelta).toFixed(1)}</span>
+                {/* Skin Score Info Overlay */}
+                {showSkinInfo && (
+                    <div className="absolute inset-2 z-20 bg-white/95 backdrop-blur-md border border-black/10 rounded-2xl p-3 shadow-lg flex flex-col justify-center animate-fade-in-up">
+                        <div>
+                            <div className="flex justify-between items-center mb-1 font-bold text-[#2e2f72] text-[12px]">
+                                <span>{localized('Skin Score Info', 'Cilt Skoru')}</span>
+                                <button 
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setShowSkinInfo(false); }} 
+                                    className="material-symbols-outlined text-[14px] text-[#777681] hover:text-[#1b1c1c] p-0.5"
+                                    aria-label={localized('Close', 'Kapat')}
+                                >
+                                    close
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-[#464650] leading-relaxed">
+                                {localized(
+                                    'Calculated as a weighted average of your key skin signals: Clarity, Texture, Barrier Defense, Sebum Balance, Tone Uniformity, and Radiance.',
+                                    'Cilt skorunuz; Berraklık, Doku, Yüzey Bariyeri, Sebum Seviyesi, Ton Eşitliği ve Parlaklık gibi temel cilt metriklerinizin ağırlıklı ortalamasıyla hesaplanır.'
+                                )}
+                            </p>
                         </div>
-                        <span style={{ color: '#8E8E93', fontSize: '12px' }}>{localized('vs last scan', 'son ölçüme göre')}</span>
                     </div>
-                    <span style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 500 }}>{localized('Stable', 'Stabil')}</span>
-                </div>
-
-                {/* Locked insight box */}
-                <div onClick={onShowPaywall} style={{
-                    display: 'flex', alignItems: 'center', gap: '16px',
-                    padding: '16px', background: '#F8F8FA',
-                    borderRadius: '16px', border: '1px solid #E5E5EA', cursor: 'pointer',
-                }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: '#F2EBFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <rect x="4" y="11" width="16" height="10" rx="3" stroke="#8B5CF6" strokeWidth="2"/>
-                            <path d="M7 11V7a5 5 0 0110 0v4" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
-                    </div>
-                    <p style={{ fontSize: '13px', color: '#48484A', fontWeight: 500, margin: 0, flex: 1 }}>
-                        {localized('Locked metrics show exactly where the score drops and how the target opens.', 'Kilitli metrikler açıkça söylüyor: skor nereden düşüyor, hedefe nasıl çıkıyor.')}
-                    </p>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-                        <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                </div>
+                )}
             </div>
-        </div>
+
+            {/* Skin Age Card */}
+            <div className="bg-white rounded-3xl p-4 ambient-shadow flex flex-col justify-between relative">
+                <div>
+                    <div className="flex items-center gap-1 mb-2">
+                        <h3 className="text-[14px] font-semibold text-[#1b1c1c]">
+                            {localized('Skin Age', 'Cilt Yaşı')}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowAgeInfo(true)}
+                            className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors focus:outline-none"
+                            aria-label={localized('Show skin age details', 'Cilt yaşı detaylarını göster')}
+                        >
+                            <span className="material-symbols-outlined text-[14px] text-[#777681] select-none" data-icon="info">
+                                info
+                            </span>
+                        </button>
+                    </div>
+                    {dSkinAge != null ? (
+                        <>
+                            <div className="flex items-baseline gap-1 mb-1">
+                                <span className="text-[28px] font-bold text-[#1b1c1c] leading-none">
+                                    {dSkinAge}
+                                </span>
+                            </div>
+                            <p className="text-[#464650] text-xs mb-2 leading-tight">
+                                {localized('Real age', 'Gerçek yaş')}: {dRealAge}
+                            </p>
+                        </>
+                    ) : (
+                        <p className="text-[24px] font-extrabold text-[#c7c5d2]">—</p>
+                    )}
+                </div>
+                {dSkinAge != null && ageDiff != null && ageDiff !== 0 && (
+                    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full w-fit ${
+                        ageDiff > 0 ? 'bg-black/[0.04]' : 'bg-[#e8f5e9]/50'
+                    }`}>
+                        <span className={`text-[9px] font-bold tracking-wider uppercase ${
+                            ageDiff > 0 ? 'text-[#1b1c1c]' : 'text-[#2e7d32]'
+                        }`}>
+                            {ageDiff > 0
+                                ? `+${ageDiff} ${localized('years older', 'yaş üstü')}`
+                                : `${ageDiff} ${localized('years younger', 'yaş altı')}`}
+                        </span>
+                    </div>
+                )}
+
+                {/* Skin Age Info Overlay */}
+                {showAgeInfo && (
+                    <div className="absolute inset-2 z-20 bg-white/95 backdrop-blur-md border border-black/10 rounded-2xl p-3 shadow-lg flex flex-col justify-center animate-fade-in-up">
+                        <div>
+                            <div className="flex justify-between items-center mb-1 font-bold text-[#2e2f72] text-[12px]">
+                                <span>{localized('Skin Age Info', 'Cilt Yaşı')}</span>
+                                <button 
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setShowAgeInfo(false); }} 
+                                    className="material-symbols-outlined text-[14px] text-[#777681] hover:text-[#1b1c1c] p-0.5"
+                                    aria-label={localized('Close', 'Kapat')}
+                                >
+                                    close
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-[#464650] leading-relaxed">
+                                {localized(
+                                    'Estimated based on your skin quality and health markers compared to demographics data. Helps track your skin aging speed.',
+                                    'Cilt kaliteniz ve bariyer sağlığınızın yaş grubu verileriyle karşılaştırılmasıyla tahmin edilir. Cildinizin yaşlanma hızını izlemenize yardımcı olur.'
+                                )}
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </section>
     );
 };
 

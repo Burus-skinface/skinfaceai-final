@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Face Analysis - Clinical Beauty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#5d3fe0",
+                      "secondary": "#56579c",
+                      "on-primary-container": "#fffbff",
+                      "surface-container-high": "#e9e8e8",
+                      "on-secondary-fixed": "#100f56",
+                      "surface-container-highest": "#e4e2e2",
+                      "surface-container": "#efeded",
+                      "tertiary-fixed-dim": "#ffb77d",
+                      "secondary-fixed-dim": "#c1c1ff",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed": "#e1dfff",
+                      "surface-container-low": "#f5f3f3",
+                      "error": "#ba1a1a",
+                      "tertiary": "#8d4b00",
+                      "on-secondary-container": "#404285",
+                      "inverse-primary": "#c9bfff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#441cc8",
+                      "inverse-on-surface": "#f2f0f0",
+                      "primary": "#5b3cdd",
+                      "surface": "#fbf9f9",
+                      "surface-bright": "#fbf9f9",
+                      "on-error": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "primary-container": "#7459f7",
+                      "on-secondary-fixed-variant": "#3e3f83",
+                      "tertiary-container": "#b15f00",
+                      "primary-fixed-dim": "#c9bfff",
+                      "on-secondary": "#ffffff",
+                      "on-surface": "#1b1c1c",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#303031",
+                      "surface-variant": "#e4e2e2",
+                      "on-tertiary-fixed": "#2f1500",
+                      "on-tertiary-fixed-variant": "#6e3900",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#ffdcc3",
+                      "secondary-container": "#b1b2fe",
+                      "surface-dim": "#dbdada",
+                      "on-background": "#1b1c1c",
+                      "on-tertiary-container": "#fffbff",
+                      "outline": "#797587",
+                      "on-surface-variant": "#484555",
+                      "background": "#fbf9f9",
+                      "outline-variant": "#c9c4d8",
+                      "primary-fixed": "#e5deff",
+                      "on-primary-fixed": "#1a0063"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "container-padding": "24px",
+                      "unit": "8px",
+                      "section-margin": "40px",
+                      "stack-gap": "16px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        /* Custom Shadows as per style guidance */
+        .ambient-shadow { box-shadow: 0px 4px 20px rgba(46, 47, 114, 0.04); }
+        .active-shadow { box-shadow: 0px 8px 24px rgba(123, 97, 255, 0.15); }
+        .gradient-mesh { background: linear-gradient(135deg, rgba(123, 97, 255, 0.1) 0%, rgba(46, 47, 114, 0.05) 100%); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface w-full top-0 sticky z-40">
+<div class="flex justify-between items-center px-gutter py-unit w-full max-w-7xl mx-auto h-[64px]">
+<div class="flex items-center gap-3">
+<img alt="Avatar" class="w-10 h-10 rounded-full object-cover border border-surface-container-high" data-alt="A small circular avatar portrait of a sophisticated woman with a clean, high-end minimal aesthetic, light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOhBbzQeS59cQ4CzsNuNxxw_HriuIgWiWXJCy1chlxIUDiyFPx4B5Vb8DKvQ3jrLqpPJjcc2mRCaEK7SXFqjOcF9-pbOSLxhfJKEAzuSksT8a-OWNLEKVYrLGvS_KK6UvDxNhb8L8OJnRQF8ith9lJn75S8QjCcy9i077-c26krcXM9Ero6TdmhIun3fwd9AHO3jV0t2LtQIn1aRSIcyr2__jJWs-T3bjbtZ9T5cVWWY5P94qfoGu6bpZ-U17xDwX7qeY4NSYZtPAi"/>
+<div class="flex flex-col justify-center">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Good morning,</span>
+<h1 class="text-headline-md font-headline-md text-primary tracking-tight flex items-center gap-1">Sofia <span class="material-symbols-outlined text-[16px]">wb_twilight</span></h1>
+</div>
+</div>
+<button class="relative p-2 text-on-surface hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border border-surface"></span>
+</button>
+</div>
+<!-- Horizontal Tabs -->
+<nav class="flex overflow-x-auto hide-scrollbar px-gutter border-b border-surface-variant/30 gap-6">
+<button class="text-label-md font-label-md text-on-surface-variant py-3 whitespace-nowrap">Skin</button>
+<button class="text-label-md font-label-md text-primary border-b-2 border-primary py-3 whitespace-nowrap">Face</button>
+<button class="text-label-md font-label-md text-on-surface-variant py-3 whitespace-nowrap">Scan</button>
+<button class="text-label-md font-label-md text-on-surface-variant py-3 whitespace-nowrap">Glow Up</button>
+<button class="text-label-md font-label-md text-on-surface-variant py-3 whitespace-nowrap">Progress</button>
+</nav>
+</header>
+<main class="w-full max-w-3xl mx-auto px-gutter pt-6 pb-section-margin flex flex-col gap-6">
+<!-- Hero Card -->
+<section class="bg-surface-container-lowest rounded-[24px] ambient-shadow p-container-padding flex flex-col gap-6 relative overflow-hidden">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Your Face Score</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-headline-lg font-headline-lg text-on-surface">8.1</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant">/10</span>
+</div>
+<span class="text-primary font-label-md text-label-md mt-1">Very Good</span>
+</div>
+<div class="flex flex-col items-end text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Potential</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-headline-md font-headline-md text-on-surface">8.9</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant">/10</span>
+</div>
+<span class="text-secondary font-label-md text-label-md mt-1">Excellent</span>
+</div>
+</div>
+<div class="relative w-full h-[280px] rounded-xl overflow-hidden bg-surface flex items-center justify-center">
+<div class="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent z-10 pointer-events-none"></div>
+<div class="absolute w-[200px] h-[200px] rounded-full border border-primary/30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 blur-[2px]"></div>
+<img alt="Face Analysis" class="w-full h-full object-cover z-0 object-center" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx5igoheu2unKbefnogScZ37AvSkYKluOgH4seajMt9srmkPx7GBtoDXQWTQuzGlOW0-oHdjqChZlQCJcpUAY12oyl6vYW3wa9ee96GtoETpnEbafVTLbk4pNw-RfMdoRwyKB-dQaWbXk3xnrcN1lRzNRXBkW8M4QbDnU3-nvDt7CJJHDNynzlQqxvLxCxVBlLlI-bpbT9gM3-C2PsOknUQYBLJ0486NALOa90tfLuelTmC0zjHcRe5mpsvshtgvirhmXRr5ss41p0"/>
+<!-- Overlay Arc / HUD elements -->
+<div class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
+<svg class="w-full h-full" fill="none" viewbox="0 0 300 300">
+<path d="M 50 250 A 150 150 0 0 1 250 250" stroke="#7B61FF" stroke-dasharray="4 4" stroke-linecap="round" stroke-width="2"></path>
+<line opacity="0.5" stroke="#7B61FF" stroke-width="1" x1="150" x2="150" y1="50" y2="280"></line>
+</svg>
+</div>
+</div>
+<!-- Slider -->
+<div class="flex items-center gap-3 w-full">
+<span class="text-[10px] uppercase text-on-surface-variant tracking-wider">Current</span>
+<div class="flex-1 h-1 bg-surface-container-high rounded-full relative">
+<div class="absolute top-0 left-0 h-full bg-primary rounded-full w-[40%]"></div>
+<div class="absolute top-1/2 left-[40%] -translate-y-1/2 w-3 h-3 bg-primary rounded-full border-2 border-surface-container-lowest active-shadow"></div>
+</div>
+<span class="text-[10px] uppercase text-on-surface-variant tracking-wider">Potential</span>
+</div>
+</section>
+<!-- Face Identity -->
+<section class="bg-surface-container-lowest rounded-[24px] ambient-shadow p-container-padding flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Your Face Identity</span>
+<h2 class="text-headline-md font-headline-md text-on-surface">Balanced Classic</h2>
+<span class="inline-flex px-3 py-1 bg-primary text-on-primary rounded-full text-[11px] font-semibold w-max mt-1">Top 18% of users</span>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<div class="flex justify-between items-center mt-2">
+<div class="flex gap-4">
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 0;">balance</span>
+<span class="text-[10px] text-on-surface-variant">Symmetrical</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 0;">diamond</span>
+<span class="text-[10px] text-on-surface-variant">Elegant</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 0;">tune</span>
+<span class="text-[10px] text-on-surface-variant">Balanced</span>
+</div>
+</div>
+<div class="w-20 h-24 rounded-lg bg-surface-container flex items-center justify-center overflow-hidden border border-primary/10 relative">
+<div class="absolute inset-0 gradient-mesh opacity-50 z-0"></div>
+<span class="material-symbols-outlined text-primary/40 text-[48px] z-10" style="font-variation-settings: 'FILL' 0;">face_6</span>
+</div>
+</div>
+</section>
+<!-- What shapes your face -->
+<section class="bg-surface-container-lowest rounded-[24px] ambient-shadow p-container-padding flex flex-col gap-4">
+<div class="flex justify-between items-center mb-2">
+<h3 class="text-label-md font-label-md text-on-surface uppercase tracking-widest">What Shapes Your Face</h3>
+<button class="text-primary text-label-sm font-label-sm hover:underline">See All</button>
+</div>
+<div class="flex flex-col gap-0 divide-y divide-surface-container-high/50">
+<!-- Row 1 -->
+<div class="py-3 flex items-center gap-4 cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg -mx-2 px-2">
+<div class="w-12 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up of a female eye area, clear skin, bright modern lighting, clinical beauty style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8otfCHTFESlpmaOZMwXk-0X6-nyBXu3E9ShWsRN-1GUyV5VoloZ6VHsKQMVHNNrDaG-NUwasuvSxxjuW8sYwwP3nLgjF2mO1kosEnqZb0WPSWbwR9cD0bsmI_FnMk4McykAVBXKo5x8x8r1IisFEzRYKm-kZsxQzD4RwQ4nElVwv-exkVaf2xy_OrO_9zQCkSGUQy3MGtXs7AvdYRxshivJ3wUEULdeDY6RkxrODx6owzDfCZsXB8ZElavf1xC-UYWl1DY9Symh1W"/>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<span class="text-body-sm font-label-md text-on-surface">Eye Area</span>
+<div class="h-[2px] bg-surface-container-high rounded-full w-full max-w-[120px] overflow-hidden">
+<div class="h-full bg-[#10b981] w-[84%]"></div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="text-body-lg font-body-lg text-on-surface">8.4</span>
+<span class="text-[10px] text-[#10b981] font-semibold">Great</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant shrink-0">chevron_right</span>
+</div>
+<!-- Row 2 -->
+<div class="py-3 flex items-center gap-4 cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg -mx-2 px-2">
+<div class="w-12 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up of a female jawline, clear skin, bright modern lighting, clinical beauty style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3NDphmy9rENJy3X4KdLhokMyBL9HpBYSg12R8KlRtxb6oMcl1xFudpswS0KlxMltwJVmJ5yJuagKbUanlI1TmEzy-YJPxzMK5EdlKQL66CHEDbOyXXolOELMK7iSDmMEAl3n_6PheBfuRVeBalLE5A4CZ8WLsPyAu5LmyKTgoiyKPJlGZTyUoyenmFgRFfOzAVfjqSKzz_lSVHjYUspQzxGanOHPS5_Betfa9wJ363P9G9JGBRjEo8cpUSvDXhfnEbcPrd2XteCbA"/>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<span class="text-body-sm font-label-md text-on-surface">Jawline</span>
+<div class="h-[2px] bg-surface-container-high rounded-full w-full max-w-[120px] overflow-hidden">
+<div class="h-full bg-[#10b981] w-[81%]"></div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="text-body-lg font-body-lg text-on-surface">8.1</span>
+<span class="text-[10px] text-[#10b981] font-semibold">Good</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant shrink-0">chevron_right</span>
+</div>
+<!-- Row 3 -->
+<div class="py-3 flex items-center gap-4 cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg -mx-2 px-2">
+<div class="w-12 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0 flex items-center justify-center border border-surface-container-high">
+<span class="material-symbols-outlined text-on-surface-variant/50">face</span>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<span class="text-body-sm font-label-md text-on-surface">Harmony</span>
+<div class="h-[2px] bg-surface-container-high rounded-full w-full max-w-[120px] overflow-hidden">
+<div class="h-full bg-[#84cc16] w-[78%]"></div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="text-body-lg font-body-lg text-on-surface">7.8</span>
+<span class="text-[10px] text-[#84cc16] font-semibold">Good</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant shrink-0">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Mobile Only -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe bg-surface dark:bg-surface-container h-[72px] shadow-[0px_-4px_20px_rgba(46,47,114,0.04)] rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-secondary p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">face_5</span>
+<span class="text-label-sm font-label-sm mt-1">Skin</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full p-2 scale-90 transition-all duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">face_retouching_natural</span>
+<span class="text-label-sm font-label-sm mt-1">Face</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">center_focus_strong</span>
+<span class="text-label-sm font-label-sm mt-1">Scan</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">auto_awesome</span>
+<span class="text-label-sm font-label-sm mt-1">Glow Up</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">insights</span>
+<span class="text-label-sm font-label-sm mt-1">Progress</span>
+</button>
+</nav>
+</body></html>

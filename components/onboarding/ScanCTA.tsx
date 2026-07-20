@@ -89,7 +89,7 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-black/5">Step 4/4</div>
+                <div className="text-[11px] font-bold text-[#86868B] uppercase tracking-widest bg-white/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-black/5">Ready to scan</div>
             </div>
 
             {/* Spacer */}
@@ -104,17 +104,21 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
             >
                 {/* Step Indicator */}
                 <div className="w-12 h-12 rounded-full bg-[#007AFF]/10 border border-[#007AFF]/20 flex items-center justify-center mx-auto mb-6">
-                    <span className="text-[#007AFF] font-bold text-xl">4</span>
+                    <span className="text-[#007AFF] font-bold text-xl">✓</span>
                 </div>
 
                 <h2 className="text-[26px] leading-[34px] sm:text-3xl font-bold tracking-tight text-[#1D1D1F] mb-3 max-w-[280px] mx-auto">
                     For <span className="text-[#007AFF]">Accurate Results</span>
                 </h2>
 
-                <div className="text-[#86868B] text-[15px] leading-relaxed mb-8 max-w-[280px] mx-auto text-balance">
+                <div className="text-[#86868B] text-[15px] leading-relaxed mb-6 max-w-[280px] mx-auto text-balance">
                     <p className="mb-2 font-medium text-[#48484A]">Capture your face in its natural state.</p>
                     <p className="text-[13px]">Filters, expressions, and angles reduce analysis accuracy.</p>
                 </div>
+
+                <p className="text-[11px] text-[#86868B] mb-4 max-w-[300px] mx-auto leading-snug">
+                    By tapping continue you consent to a short camera scan for cosmetic analysis. Scan photos are deleted within 24 hours; scores remain for progress.
+                </p>
 
                 <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -122,7 +126,7 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
                     onClick={handleStartClick}
                     className="w-full h-[60px] rounded-[2rem] font-bold text-[18px] bg-[#1D1D1F] text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center gap-2 mx-auto max-w-sm"
                 >
-                    {streamReady ? "Got it" : (
+                    {streamReady ? "Got it — start scan" : (
                        <>
                          <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                          Starting Camera...

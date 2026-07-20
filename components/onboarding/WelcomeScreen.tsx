@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { localized } from '../../localization';
+import LegalModal, { LegalTab } from '../LegalModal';
+import { trackEvent } from '../../utils/analytics';
 
 interface WelcomeScreenProps {
     onNext: () => void;
@@ -8,7 +10,7 @@ interface WelcomeScreenProps {
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
-    const [showTerms, setShowTerms] = useState(false);
+    const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -20,6 +22,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
         if (newIndex !== activeIndex) {
             setActiveIndex(newIndex);
         }
+    };
+
+    const handleStart = () => {
+        trackEvent('onboarding_complete');
+        onNext();
     };
 
     return (
@@ -39,40 +46,75 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
                     className="flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                    {/* Slide 1: Welcome/Logo */}
-                    <div className="w-full h-full shrink-0 flex flex-col items-center justify-center snap-center px-8 text-center pt-[5vh]">
+                    {/* Slide 1: Sample Report Hero */}
+                    <div className="w-full h-full shrink-0 flex flex-col items-center justify-start sm:justify-center snap-center px-6 text-center pt-3 sm:pt-[3vh] overflow-y-auto scrollbar-hide">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 15 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                            className="mb-10"
+                            className="mb-4 sm:mb-6 w-full max-w-[250px] sm:max-w-[280px]"
                         >
-                            <img
-                                src="/skinface-icon.png"
-                                alt="Skinface.ai"
-                                className="w-[55vw] max-w-[240px] aspect-square object-contain mx-auto drop-shadow-[0_12px_40px_rgba(0,0,0,0.08)] pointer-events-none rounded-[3rem]"
-                            />
+                            <div className="relative mx-auto rounded-[2rem] bg-white border border-black/5 shadow-[0_18px_50px_rgba(45,30,61,0.10)] p-3 overflow-hidden">
+                                <div className="absolute inset-x-0 top-0 h-24 bg-[#F5F5F7]" />
+                                <div className="relative flex items-center gap-3 text-left">
+                                    <img
+                                        src="/images/sofia_portrait.png"
+                                        alt="Sample Skinface scan"
+                                        className="w-20 h-24 sm:w-24 sm:h-28 rounded-[1.35rem] sm:rounded-[1.5rem] object-cover object-center bg-[#F5F5F7]"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#86868B] mb-1">
+                                            {localized('Sample report', 'Örnek rapor')}
+                                        </div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-[36px] sm:text-[42px] font-black tracking-[-0.06em] text-[#7E4CA8] leading-none">8.0</span>
+                                            <span className="text-sm font-bold text-[#C7C7CC]">/10</span>
+                                        </div>
+                                        <p className="text-[12px] font-semibold text-[#1D1D1F] mt-1">
+                                            {localized('Good skin signal', 'İyi cilt sinyali')}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="relative grid grid-cols-3 gap-1.5 sm:gap-2 mt-2.5 sm:mt-3">
+                                    {localized(['Texture', 'Hydration', 'Barrier'], ['Doku', 'Nem', 'Bariyer']).map((label, i) => (
+                                        <div key={label} className="rounded-2xl bg-[#F5F5F7] px-2 py-2 text-center">
+                                            <div className="text-[13px] sm:text-sm font-black text-[#1D1D1F]">{[88, 82, 76][i]}</div>
+                                            <div className="text-[9px] font-bold text-[#86868B] uppercase tracking-wide">{label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </motion.div>
                         <motion.h2
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1, duration: 0.4 }}
-                            className="text-[26px] sm:text-[30px] font-bold leading-[1.2] tracking-tight text-[#1D1D1F] max-w-[280px] mx-auto text-balance"
+                            className="text-[24px] sm:text-[30px] font-bold leading-[1.15] sm:leading-[1.2] tracking-tight text-[#1D1D1F] max-w-[310px] mx-auto text-balance"
                         >
-                            {localized('Your Daily Score Coach', 'Günlük Skor Koçun')}
+                            {localized('One selfie. Your daily glow plan.', 'Tek selfie. Günlük glow planın.')}
                         </motion.h2>
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.2, duration: 0.4 }}
-                            className="text-[15px] text-[#86868B] mt-5 max-w-[260px] mx-auto leading-relaxed"
+                            className="text-[14px] sm:text-[15px] text-[#86868B] mt-3 sm:mt-4 max-w-[290px] mx-auto leading-relaxed"
                         >
-                            {localized('Upload one selfie. Read your skin and face signals, then start your daily streak.', 'Bir selfie yükle. Cilt ve yüz sinyalini ölç, günlük serini başlat.')}
+                            {localized(
+                                'Get your skin score and daily task plan in about 60 seconds.',
+                                'Yaklaşık 60 saniyede cilt skorunu ve günlük görev planını gör.'
+                            )}
                         </motion.p>
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center mt-3 sm:mt-4 max-w-[300px] pb-2">
+                            {localized(['Acne', 'Tone', 'Pores', 'Pigment', 'Glow', 'Barrier'], ['Akne', 'Ton', 'Gözenek', 'Pigment', 'Glow', 'Bariyer']).map(label => (
+                                <span key={label} className="px-2.5 py-1 rounded-full bg-black/[0.04] border border-black/[0.04] text-[11px] font-semibold text-[#48484A]">
+                                    {label}
+                                </span>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Slide 2: The Big 6 */}
-                    <div className="w-full h-full shrink-0 flex flex-col items-center justify-center snap-center px-8 text-center pt-[5vh]">
+                    <div className="w-full h-full shrink-0 flex flex-col items-center justify-center snap-center px-8 text-center pt-[5vh] overflow-y-auto scrollbar-hide">
                         <div className="w-[50vw] max-w-[200px] aspect-square bg-[#F5F5F7] rounded-[3rem] border border-black/5 flex items-center justify-center mb-10 shadow-inner overflow-hidden relative">
                             {/* Abstract representation of metrics */}
                             <div className="absolute inset-0 bg-gradient-to-br from-[#007AFF]/5 to-transparent" />
@@ -92,7 +134,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
                     </div>
 
                     {/* Slide 3: Actionable Advice */}
-                    <div className="w-full h-full shrink-0 flex flex-col items-center justify-center snap-center px-8 text-center pt-[5vh]">
+                    <div className="w-full h-full shrink-0 flex flex-col items-center justify-center snap-center px-8 text-center pt-[5vh] overflow-y-auto scrollbar-hide">
                         <div className="w-[50vw] max-w-[200px] aspect-square bg-white rounded-[3rem] border border-black/5 shadow-[0_20px_40px_rgba(0,0,0,0.06)] flex flex-col p-6 items-start justify-center mb-10 relative overflow-hidden">
                             <div className="w-4/5 h-4 bg-[#F2F2F7] rounded-full mb-3" />
                             <div className="w-full h-4 bg-[#F2F2F7] rounded-full mb-3" />
@@ -125,7 +167,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
             </div>
 
             {/* Bottom Actions Area */}
-            <div className="relative z-10 px-6 pb-12 w-full max-w-sm mx-auto flex flex-col gap-4 shrink-0">
+            <div className="relative z-10 px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)] sm:pb-12 w-full max-w-sm mx-auto flex flex-col gap-3 sm:gap-4 shrink-0">
                 {/* Primary Button */}
                 <motion.button
                     initial={{ opacity: 0, y: 20 }}
@@ -133,7 +175,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
                     transition={{ delay: 0.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onNext}
+                    onClick={handleStart}
                     className="w-full h-[60px] rounded-full font-bold text-[18px] bg-[#1D1D1F] text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center"
                 >
                     {localized('Start first task', 'İlk görevi başlat')}
@@ -148,70 +190,33 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
                     </button>
                 )}
 
-                {/* Subtle Terms Footer */}
                 <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.9, duration: 0.6 }}
                     className="text-[12px] text-center text-[#86868B] leading-[1.6] max-w-[280px] mx-auto"
                 >
-                    By proceeding to use Skinface.ai, you agree to our{' '}
+                    {localized('By proceeding you agree to our', 'Devam ederek kabul etmiş olursunuz:')}{' '}
                     <button
-                        onClick={() => setShowTerms(true)}
-                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 hover:decoration-[#1D1D1F]/100 transition-colors font-medium"
+                        onClick={() => setLegalTab('terms')}
+                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 font-medium"
                     >
-                        terms of use
+                        {localized('terms of use', 'kullanım koşulları')}
                     </button>
-                    {' '}and acknowledge that you have read our{' '}
+                    {' '}{localized('and', 've')}{' '}
                     <button
-                        onClick={() => setShowTerms(true)}
-                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 hover:decoration-[#1D1D1F]/100 transition-colors font-medium"
+                        onClick={() => setLegalTab('privacy')}
+                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 font-medium"
                     >
-                        privacy policy
+                        {localized('privacy policy', 'gizlilik politikası')}
                     </button>
+                    . {localized('Scan images are deleted within 24 hours; scores stay for progress.', 'Tarama görselleri 24 saat içinde silinir; skorlar ilerleme için saklanır.')}
                 </motion.p>
             </div>
 
-            {/* Terms Modal */}
-            <AnimatePresence>
-                {showTerms && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-50 flex items-end justify-center bg-[#1D1D1F]/40 backdrop-blur-sm"
-                        onClick={() => setShowTerms(false)}
-                    >
-                        <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="w-full h-[85vh] bg-[#FFFFFF] rounded-t-[2.5rem] p-8 pb-12 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="w-12 h-1.5 bg-[#E5E5EA] rounded-full mx-auto mb-8" />
-                            <h3 className="text-2xl font-bold mb-6 tracking-tight text-[#1D1D1F]">Legal Terms</h3>
-                            <div className="flex-1 overflow-y-auto pr-4 space-y-6 text-[#48484A] leading-relaxed">
-                                <p>
-                                    <strong>1. Introduction</strong><br />
-                                    Welcome to Skinface.ai. By using our service, you agree to these terms...
-                                </p>
-                                <p>
-                                    <strong>2. Privacy Policy</strong><br />
-                                    Your photos are processed securely and are never shared with third parties without your explicit consent...
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setShowTerms(false)}
-                                className="mt-8 w-full py-4 rounded-full font-bold text-[#1D1D1F] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] transition-colors"
-                            >
-                                Close
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {legalTab && (
+                <LegalModal isOpen={!!legalTab} initialTab={legalTab} onClose={() => setLegalTab(null)} />
+            )}
         </div>
     );
 };

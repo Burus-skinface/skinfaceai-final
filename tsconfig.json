@@ -27,5 +27,10 @@
     "**/*.ts",
     "**/*.tsx",
     "global.d.ts"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "vitest.config.ts",
+    "supabase/functions/**"
   ]
 }

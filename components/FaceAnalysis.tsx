@@ -1,18 +1,238 @@
 import React from 'react';
 import { DailyReport } from '../types';
-import { t, localized } from '../localization';
-import FaceBig6InsightsResult from './FaceBig6InsightsResult';
+import { localized } from '../localization';
+import FaceOverview from './face/FaceOverview';
+import FaceDetailsList from './face/FaceDetailsList';
+import FaceFeatureDetail from './face/FaceFeatureDetail';
+import { FaceFeatureId, resolveFaceBig6 } from './face/faceFeatureMeta';
 
-const FaceAnalysis: React.FC<{ data: DailyReport | null, dayNumber: number }> = ({ data, dayNumber }) => {
-    // Force Re-render: UI Polish V2 applied
+interface FaceAnalysisProps {
+    data: DailyReport | null;
+    dayNumber: number;
+    history?: DailyReport[];
+    isFreeUser?: boolean;
+    onShowPaywall?: () => void;
+    onNavigateToRecommendations?: () => void;
+}
+
+const FaceAnalysis: React.FC<FaceAnalysisProps> = ({
+    data,
+    dayNumber,
+    history = [],
+    isFreeUser = true,
+    onShowPaywall,
+    onNavigateToRecommendations,
+}) => {
     const [showDebug, setShowDebug] = React.useState(false);
+    // Page 2: "See Your Details" slide-up; Page 3: single feature detail (stacked)
+    const [showDetails, setShowDetails] = React.useState(false);
+    const [selectedFeature, setSelectedFeature] = React.useState<FaceFeatureId | null>(null);
 
-    const eliteReport = data?.recommendations?.eliteReport;
+    // In dev mode, if data is missing structural results, hydrate it with complete dev mock data
+    let reportData = data;
+    if (import.meta.env.DEV && (!data || !data.faceState || !data.recommendations?.eliteReport)) {
+        reportData = {
+            ...data,
+            id: data?.id || 'mock-dev-id',
+            date: data?.date || new Date().toISOString(),
+            imageUrl: data?.imageUrl || '/images/hero-scan-default.png',
+            global_score: data?.global_score || 7.8,
+            faceState: data?.faceState || {
+                geometry: {
+                    cheekboneWidthRatio: 1.24,
+                    midfaceRatio: 1.95,
+                    upperThirdRatio: 0.33,
+                    middleThirdRatio: 0.34,
+                    lowerThirdRatio: 0.33,
+                    gonialAngle: 121,
+                    jawCheekboneRatio: 0.90,
+                    ramusRatio: 0.46,
+                    nasofrontalAngle: 125,
+                    chinProjectionRatio: 28,
+                    lipElineDistUpper: 1.5,
+                    lipElineDistLower: 1.0,
+                    cervicoMentalAngle: 105,
+                    symmetryAvg: 0.94,
+                    goldenRatioFaceIPD: 88,
+                    goldenRatioMouthNose: 1.62,
+                    faceLengthWidthRatio: 1.35,
+                    eyeTilt: 2.0,
+                }
+            },
+            analysis: data?.analysis || {
+                scanId: 'mock-scan',
+                timestamp: Date.now(),
+                skin: { features: {}, zones: {} },
+                face: {
+                    landmarks: {},
+                    ratios: {},
+                    profile: { faceShape: 'Oval' }
+                },
+                spectral: { uvDamage: 0.2, hyperpigmentation: 0.3, vascular: 0.1, darkCircles: 0.4 }
+            },
+            scoring: {
+                ...data?.scoring,
+                scanId: 'mock-scan',
+                globalScore: data?.scoring?.globalScore || 7.8,
+                potentialScore: data?.scoring?.potentialScore || 9.2,
+                skin: data?.scoring?.skin || {
+                    statusScores: { overallSkin: 8, hydration: 7, redness: 9, pores: 6, spots: 8 },
+                    overallScore: 8,
+                    ageEstimate: 26,
+                },
+                face: data?.scoring?.face || {
+                    statusScores: {
+                        faceLengthWidthBalance: 8.2,
+                        verticalFacialDistribution: 8.0,
+                        jawCheekboneRatio: 8.5,
+                        overallStructure: 8.1,
+                    },
+                    archetype: "THE WARRIOR",
+                    archetypeDebug: {
+                        traits: { fwhr: 8.5, cheekbones: 8.0, jawline: 8.5, harmony: 8.0 },
+                        candidates: [
+                            { id: "warrior", displayName: "THE WARRIOR", score: 85, passedGate: true }
+                        ]
+                    },
+                    faceBig6: {
+                        overallFaceBig6: 8.6,
+                        eyes: { score: 8.8, status: 'elite', statusLabel: 'Elite', breakdown: [
+                            { label: 'Canthal Tilt', score: 9.0, tag: 'angle' },
+                            { label: 'Intercanthal Ratio', score: 8.5, tag: 'ratio' },
+                            { label: 'Brow Projection', score: 8.8, tag: 'projection' },
+                            { label: 'Eye Spacing', score: 8.9, tag: 'ratio' },
+                        ] },
+                        nose: { score: 6.5, status: 'average', statusLabel: 'Average', breakdown: [
+                            { label: 'Alar / Intercanthal', score: 6.8, tag: 'ratio' },
+                            { label: 'Nose-Face Length', score: 7.2, tag: 'ratio' },
+                            { label: 'Alar Symmetry', score: 6.0, tag: 'symmetry' },
+                            { label: 'Nasal Tip Angle', score: 6.1, tag: 'angle' },
+                        ] },
+                        jawline: { score: 9.0, status: 'elite', statusLabel: 'Elite', breakdown: [
+                            { label: 'Gonial Angle', score: 8.5, tag: 'angle' },
+                            { label: 'Bigonial/Bizygomatic', score: 9.1, tag: 'ratio' },
+                            { label: 'Jaw Definition', score: 9.3, tag: 'morphology' },
+                            { label: 'Jaw Taper', score: 9.0, tag: 'ratio' },
+                        ] },
+                        chin: { score: 7.4, status: 'good', statusLabel: 'Good', breakdown: [
+                            { label: 'Horizontal Projection', score: 8.0, tag: 'projection' },
+                            { label: 'Cervicomental Angle', score: 7.5, tag: 'angle' },
+                            { label: 'Vertical Height', score: 6.8, tag: 'ratio' },
+                            { label: 'Chin Taper', score: 7.2, tag: 'ratio' },
+                        ] },
+                        midface: { score: 8.6, status: 'elite', statusLabel: 'Elite', breakdown: [
+                            { label: 'FWHR', score: 8.8, tag: 'ratio' },
+                            { label: 'Cheekbone Ratio', score: 8.5, tag: 'ratio' },
+                            { label: 'Malar Projection', score: 8.4, tag: 'projection' },
+                            { label: 'Mid-Lower Balance', score: 8.7, tag: 'ratio' },
+                        ] },
+                        harmony: { score: 8.9, status: 'elite', statusLabel: 'Elite', breakdown: [
+                            { label: 'Facial Thirds', score: 8.9, tag: 'ratio' },
+                            { label: 'Overall Symmetry', score: 9.0, tag: 'symmetry' },
+                            { label: 'Golden Ratio', score: 8.8, tag: 'ratio' },
+                            { label: 'Phi Concordance', score: 8.9, tag: 'ratio' },
+                        ] }
+                    },
+                    measurements: {
+                        facialThirds: {
+                            upper: 0.33, mid: 0.34, lower: 0.33,
+                            score: 8.0, verdict: "Balanced", deviation: 0.01,
+                            debugLog: "Avg Dev: 1.0%",
+                            impacts: [
+                                { metric: "Cheekbones", state: "Strong", val: "1.24", reasoning: "Ideal cheekbone prominence", rawScore: 8.5, measurementLabel: "Width Ratio" },
+                                { metric: "FWHR", state: "Balanced", val: "1.95", reasoning: "Ideal compact midface", rawScore: 8.8, measurementLabel: "Ratio" },
+                                { metric: "Facial Thirds", state: "Balanced", val: "33/34/33", reasoning: "Equal vertical thirds", rawScore: 8.0, measurementLabel: "U/M/L %" }
+                            ]
+                        },
+                        jawAngularity: {
+                            gonialAngle: 121, gonialScore: 8.5, overallScore: 8.5,
+                            gonialVerdict: "Ideal", definitionVerdict: "Sharp", ramusVerdict: "Strong",
+                            definitionScore: 8.5, ramusScore: 8.5,
+                            impacts: [
+                                { metric: "Gonial Angle", state: "Ideal", val: "121.0°", reasoning: "Optimal gonial angle", rawScore: 8.5, measurementLabel: "Angle" },
+                                { metric: "Jaw Width", state: "Strong", val: "0.90", reasoning: "Strong lower jaw definition", rawScore: 8.2, measurementLabel: "Ratio" },
+                                { metric: "Ramus Length", state: "Strong", val: "0.46", reasoning: "Excellent ramus height", rawScore: 8.8, measurementLabel: "Ratio" }
+                            ],
+                            debugLog: "Gonial: 8.5"
+                        },
+                        sideProfile: {
+                            overallScore: 7.9,
+                            nasofrontalAngle: { angle: 125, score: 8.0, verdict: "Balanced" },
+                            rickettsELine: { upperDist: 1.5, lowerDist: 1.0, score: 8.0, verdict: "Balanced" },
+                            ramus: { ratio: 0.46, score: 8.5, verdict: "Strong" },
+                            impacts: [
+                                { metric: "Nasofrontal", state: "Balanced", val: "125.0°", reasoning: "Balanced nose bridge angle", rawScore: 8.0, measurementLabel: "Angle" },
+                                { metric: "Chin Projection", state: "Strong", val: "28.0%", reasoning: "Strong chin definition", rawScore: 8.5, measurementLabel: "Projection" },
+                                { metric: "E-Line", state: "Balanced", val: "1.2%", reasoning: "Balanced lip positioning", rawScore: 8.0, measurementLabel: "Lip Position" }
+                            ],
+                            debugLog: "Naso: 8.0 | Chin: 8.5",
+                            _scoring_formula: "Score = (Nasofrontal * 30%) + (Chin Proj * 40%) + (E-Line * 30%)"
+                        },
+                        harmony: {
+                            overallScore: 8.0,
+                            symmetry: 0.94, symmetryVerdict: "High",
+                            goldenRatioScore: 8.5, goldenRatioVerdict: "Elite",
+                            impacts: [
+                                { metric: "Symmetry", state: "High", val: "94.0%", reasoning: "Minimal symmetry deviation", rawScore: 8.5, measurementLabel: "Variance" },
+                                { metric: "Golden Ratio", state: "Elite", val: "%88", reasoning: "Near-perfect facial proportion mapping", rawScore: 8.8, measurementLabel: "Match" },
+                                { metric: "Lip-Nose Ratio", state: "Balanced", val: "1.62", reasoning: "Balanced mouth width to nose width", rawScore: 8.0, measurementLabel: "Ratio" }
+                            ],
+                            debugLog: "Sym: 8.5 | Golden: 8.8"
+                        }
+                    }
+                }
+            },
+            recommendations: data?.recommendations || {
+                motivationalNote: 'You have a great foundation, just a few tweaks away from your maximum potential.',
+                skincare: [],
+                lifestyle: [],
+                big6Insights: {
+                    acneClarity: "Minimal active breakouts. Focus on preventing congestion in the T-zone.",
+                    texturePores: "Generally smooth, but visible pores around the cheeks and nose.",
+                    barrierDefense: "Strong overall, but slight compromise detected on the chin area.",
+                    sebumDynamics: "Slightly oily in the T-zone, well-balanced elsewhere.",
+                    toneUniformity: "Even tone with minor post-inflammatory hyperpigmentation.",
+                    visualFatigue: "Good radiance, but dark circles indicate slight visual fatigue."
+                }
+            }
+        } as any;
+
+        if (!reportData.recommendations.eliteReport) {
+            reportData.recommendations.eliteReport = {
+                featureBreakdown: [
+                    { featureName: "Front Profile", score: 8.2, analysis: "Excellent facial proportions with strong zygomatic width." },
+                    { featureName: "Side Profile", score: 7.9, analysis: "Balanced chin projection and ideal nasofrontal angle." },
+                    { featureName: "Jawline", score: 8.5, analysis: "Sharp gonial angle with defined jaw-to-neck separation." },
+                    { featureName: "Facial Harmony", score: 8.0, analysis: "High symmetry across facial thirds and golden ratio mapping." }
+                ],
+                structuralVerdict: "Your structural foundation is solid. Focus on the refinement markers to achieve Legendary status.",
+                technicalAssets: [
+                    { term: "Zygomatic Width", explanation: "Prominent cheekbones providing structural framing." },
+                    { term: "Gonial Angle", explanation: "Ideal 121-degree angle defining the lower face." }
+                ],
+                technicalDeficits: [
+                    { term: "Slight Under-eye Hollowness", explanation: "Can be addressed with hydration and rest." }
+                ]
+            };
+        }
+        if (!reportData.recommendations.faceBig6Insights) {
+            reportData.recommendations.faceBig6Insights = {
+                eyes: "Your eye shape has positive canthal tilt, giving a sharp, alert look. No signs of hooding or fatigue.",
+                nose: "Your nose profile is straight and proportional to your midface. It anchors your facial symmetry well.",
+                jawline: "Strong gonial angle. Your jawline is well-defined and separates cleanly from your neck.",
+                chin: "Chin projection is balanced with your lower lip. No signs of recession.",
+                midface: "Compact midface ratio gives you a highly youthful and aesthetic framing.",
+                harmony: "All facial thirds are exceptionally balanced. Your facial architecture scores very highly."
+            };
+        }
+    }
+
+    const eliteReport = reportData?.recommendations?.eliteReport;
 
     // Empty / partial data states. We guard each independent shape so a missing
     // recommendations payload (e.g. LLM stage failed) doesn't blow up the whole tab.
-    if (!data?.analysis?.face || !data?.faceState || !data?.recommendations || !eliteReport) {
-        const isMissingRecs = !!data?.analysis?.face && !!data?.faceState && (!data?.recommendations || !eliteReport);
+    if (!reportData?.analysis?.face || !reportData?.faceState || !reportData?.recommendations || !eliteReport) {
+        const isMissingRecs = !!reportData?.analysis?.face && !!reportData?.faceState && (!reportData?.recommendations || !eliteReport);
         return (
             <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6 pt-16">
                 <div className="relative mb-8">
@@ -50,81 +270,44 @@ const FaceAnalysis: React.FC<{ data: DailyReport | null, dayNumber: number }> = 
         );
     }
 
-    const debug = data.scoring?.face?.archetypeDebug;
-    const technicalAssets = Array.isArray(eliteReport.technicalAssets) ? eliteReport.technicalAssets : [];
-    const technicalDeficits = Array.isArray(eliteReport.technicalDeficits) ? eliteReport.technicalDeficits : [];
+    const debug = reportData.scoring?.face?.archetypeDebug;
+    const faceBig6Scores = resolveFaceBig6(reportData);
+    const faceBig6Insights = reportData.recommendations?.faceBig6Insights;
+
+    const openFeature = (id: FaceFeatureId) => setSelectedFeature(id);
 
     return (
-        <div className="w-full max-w-lg mx-auto pb-6 pt-16">
-            {/* Local Header Elements Removed - Now in Global Header */}
+        <div className="w-full">
+            {/* PAGE 1 — Face Dashboard */}
+            <FaceOverview
+                data={reportData}
+                history={history}
+                onSeeAll={() => setShowDetails(true)}
+                onSelectFeature={openFeature}
+                onArchetypeClick={debug ? () => setShowDebug(true) : undefined}
+            />
 
-            {/* Archetype & Face Shape Modules */}
-            <div className="mb-6 grid grid-cols-2 gap-4">
-                {data.scoring?.face?.archetype && (
-                    <div
-                        onClick={() => setShowDebug(true)}
-                        className="text-center animate-fade-in bg-[#F5F5F7] p-5 rounded-3xl border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] cursor-pointer active:scale-95 transition-transform group relative overflow-hidden"
-                    >
-                        <p className="text-[10px] font-mono text-purple-600 mb-1 uppercase tracking-widest">{localized('Archetype', 'Arketip')}</p>
-                        <h2 className="text-sm font-black text-[#1D1D1F] uppercase tracking-wider">
-                            {data.scoring.face.archetype}
-                        </h2>
-                        <div className="absolute inset-0 bg-black/[0.03] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <span className="text-[8px] font-black text-purple-600 uppercase tracking-widest">{localized('View details', 'Detayı gör')}</span>
-                        </div>
-                    </div>
-                )}
-
-                {data.analysis?.face?.profile?.faceShape && (
-                    <div
-                        className="text-center animate-fade-in bg-[#F5F5F7] p-5 rounded-3xl border border-black/5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-transform overflow-hidden"
-                    >
-                        <p className="text-[10px] font-mono text-indigo-600 mb-1 uppercase tracking-widest">{localized('Face shape', 'Yüz formu')}</p>
-                        <h2 className="text-sm font-black text-[#1D1D1F] uppercase tracking-wider">
-                            {data.analysis.face.profile.faceShape}
-                        </h2>
-                    </div>
-                )}
-            </div>
-
-            {/* Elite Structural Verdict */}
-            {eliteReport.structuralVerdict && (
-                <div className="mb-8 text-center animate-fade-in bg-white p-6 rounded-3xl border border-black/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-                    <p className="text-xs font-mono text-purple-600 mb-3 uppercase tracking-widest">{localized('Structural verdict', 'Yapısal verdict')}</p>
-                    <h2 className="text-xl font-bold text-[#1D1D1F] leading-relaxed italic">
-                        "{eliteReport.structuralVerdict}"
-                    </h2>
-                </div>
+            {/* PAGE 2 — See Your Details (slide-up) */}
+            {showDetails && (
+                <FaceDetailsList
+                    scores={faceBig6Scores}
+                    onClose={() => setShowDetails(false)}
+                    onSelectFeature={openFeature}
+                />
             )}
 
-            {/* FACE BIG 6 — AI Synthesis (replaces old 4-card system) */}
-            <div className="mb-6">
-                <FaceBig6InsightsResult
-                    insights={data.recommendations?.faceBig6Insights}
-                    scores={data.scoring?.faceBig6}
+            {/* PAGE 3 — Feature Detail (slide-up, stacks above page 2) */}
+            {selectedFeature && (
+                <FaceFeatureDetail
+                    featureId={selectedFeature}
+                    scores={faceBig6Scores}
+                    aiExplanation={faceBig6Insights?.[selectedFeature]}
+                    isFreeUser={isFreeUser}
+                    onClose={() => setSelectedFeature(null)}
+                    onShowPaywall={onShowPaywall}
+                    onNavigateToRecommendations={onNavigateToRecommendations}
                 />
-            </div>
-
-            {/* Qualitative Assets (Secondary) */}
-            <div className="grid grid-cols-1 gap-4 mt-8">
-                <div className="bg-white p-5 rounded-2xl border border-black/5 shadow-[0_8px_30px_rgba(0,0,0,0.03)] relative overflow-hidden">
-                    <h3 className="text-sm font-bold text-[#86868B] uppercase tracking-widest mb-4">{localized('Structural Notes', 'Yapısal Notlar')}</h3>
-                    <div className="space-y-4">
-                        <div>
-                            <span className="text-xs font-bold text-emerald-600 uppercase">{localized('Strong signals:', 'Güçlü sinyaller:')}</span>
-                            <p className="text-xs text-[#48484A] mt-1">
-                                {technicalAssets.length > 0 ? technicalAssets.map(a => a.term).join(', ') : localized('No data', 'Veri yok')}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-xs font-bold text-amber-600 uppercase">{localized('Priority areas:', 'Öncelik alanları:')}</span>
-                            <p className="text-xs text-[#48484A] mt-1">
-                                {technicalDeficits.length > 0 ? technicalDeficits.map(a => a.term).join(', ') : 'No data yet'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            )}
 
             {/* DEV LOG MODAL */}
             {showDebug && debug && (

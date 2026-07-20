@@ -21,33 +21,74 @@ import GlobalAppHeader from "./components/GlobalAppHeader";
 import NotificationSettings from "./components/NotificationSettings";
 import AuthGate from "./components/AuthGate";
 import SplashScreen from "./components/SplashScreen";
+import { NotifAskOnce } from "./components/NotifAskOnce";
 import { ToastProvider, useToast } from "./components/ui/Toast";
 import { scheduleAllNotifications, getNotificationPreferences } from "./utils/notifications";
-import { updateStreak } from "./utils/streak";
+import { updateStreak, syncStreakToCloud, hydrateStreakFromCloud } from "./utils/streak";
 import { savePendingReferral, trackReferralSignup } from "./services/referralService";
+import {
+  saveScanThumbnail,
+  purgeExpiredThumbnails,
+  clearAllScanThumbnails,
+  clearPendingFaceState,
+} from "./utils/pendingScan";
+import {
+  purgeExpiredBiometrics,
+  isBiometricExpired,
+  cloudBiometricPurgePayload,
+  stripFaceStateImages,
+} from "./utils/biometricRetention";
+import { canStartScan, markFreeScanUsedToday } from "./utils/dailyScanLimit";
+import { mergeGuestHistoryOnLogin } from "./utils/guestHistoryMerge";
+import { trackEvent } from "./utils/analytics";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { useSubscription } from "./hooks/useSubscription";
 import { Purchases } from "@revenuecat/purchases-capacitor";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
+import { localized } from "./localization";
+
+function loadPurgedHistory(): DailyReport[] {
+  try {
+    const saved = localStorage.getItem("face_analysis_history");
+    if (!saved) return [];
+    const purged = purgeExpiredBiometrics(JSON.parse(saved) as DailyReport[]);
+    localStorage.setItem(
+      "face_analysis_history",
+      JSON.stringify(
+        purged.map((report) => ({
+          ...report,
+          imageUrl: isBiometricExpired(report.date) ? undefined : report.imageUrl,
+          faceState: isBiometricExpired(report.date)
+            ? stripFaceStateImages(report.faceState)
+            : report.faceState
+              ? {
+                  ...report.faceState,
+                  primaryImageJpegBase64: undefined,
+                  retainedCropJpegBase64: undefined,
+                }
+              : undefined,
+        }))
+      )
+    );
+    purgeExpiredThumbnails();
+    return purged;
+  } catch {
+    return [];
+  }
+}
 
 
 const AppInner: React.FC = () => {
-  // Load history from localStorage on mount
-  const [history, setHistory] = useState<DailyReport[]>(() => {
-    const saved = localStorage.getItem("face_analysis_history");
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Load history from localStorage on mount (strip biometrics older than 24h; scores stay)
+  const [history, setHistory] = useState<DailyReport[]>(() => loadPurgedHistory());
   const [user, setUser] = useState<any>(null);
 
   // State variables
   const [activeTab, setActiveTab] = useState("results");
   const [analysisData, setAnalysisData] = useState<DailyReport | null>(() => {
-    // On mount, load the last report if exists
-    const saved = localStorage.getItem("face_analysis_history");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length > 0) return parsed[parsed.length - 1];
-    }
-    return null;
+    const purged = loadPurgedHistory();
+    return purged.length > 0 ? purged[purged.length - 1] : null;
   });
   const [contentKey, setContentKey] = useState(0);
   const [isPaywallVisible, setIsPaywallVisible] = useState(false);
@@ -57,10 +98,6 @@ const AppInner: React.FC = () => {
   const [showAuthGate, setShowAuthGate] = useState(false);
   const [forceStartAnalysis, setForceStartAnalysis] = useState(false);
   const toast = useToast();
-  // Premium subscription state — the single source of truth for feature access
-  const [isPremium, setIsPremium] = useState<boolean>(() => {
-    return localStorage.getItem('is_premium') === 'true';
-  });
 
   // Splash + Auth loading screen
   const [showSplash, setShowSplash] = useState(true);
@@ -77,22 +114,54 @@ const AppInner: React.FC = () => {
     const saved = localStorage.getItem("user_demographics");
     return saved ? JSON.parse(saved) : null;
   });
+  const {
+    isPremium,
+    hasAccess,
+    refreshSubscription,
+    activateDevSubscription,
+  } = useSubscription(user?.id);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab]);
 
-  // Detect referral code from URL on mount
+  // Detect referral code from URL on mount + native deep links
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const refCode = params.get('ref');
-    if (refCode) {
+    const captureRef = (refCode: string | null) => {
+      if (!refCode) return;
       savePendingReferral(refCode);
-      // Clean URL without reload
+      trackEvent('referral_captured', { code: refCode });
+      console.log('📎 Referral code detected:', refCode);
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    captureRef(params.get('ref'));
+    if (params.get('ref')) {
       const url = new URL(window.location.href);
       url.searchParams.delete('ref');
       window.history.replaceState({}, '', url.pathname);
-      console.log('📎 Referral code detected:', refCode);
+    }
+
+    if (Capacitor.isNativePlatform()) {
+      CapacitorApp.getLaunchUrl().then((result) => {
+        if (result?.url) {
+          try {
+            const launchParams = new URL(result.url);
+            captureRef(launchParams.searchParams.get('ref'));
+          } catch { /* ignore malformed launch URLs */ }
+        }
+      }).catch(() => {});
+
+      const listener = CapacitorApp.addListener('appUrlOpen', (event) => {
+        try {
+          const openParams = new URL(event.url);
+          captureRef(openParams.searchParams.get('ref'));
+        } catch { /* ignore */ }
+      });
+
+      return () => {
+        listener.then((l) => l.remove());
+      };
     }
   }, []);
 
@@ -164,12 +233,7 @@ const AppInner: React.FC = () => {
         } else if (platform === "android") {
           await Purchases.configure({ apiKey: import.meta.env.VITE_REVENUECAT_ANDROID_KEY || "" });
         }
-        // P0 FIX: Always check if the user already has an active subscription on startup
-        const ENTITLEMENT_ID = import.meta.env.VITE_RC_ENTITLEMENT_ID || 'premium';
-        const { customerInfo } = await Purchases.getCustomerInfo();
-        const hasActiveEntitlement = typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
-        setIsPremium(hasActiveEntitlement);
-        localStorage.setItem('is_premium', hasActiveEntitlement ? 'true' : 'false');
+        await refreshSubscription();
       } catch (e) {
         console.error("RevenueCat setup error:", e);
       }
@@ -190,6 +254,7 @@ const AppInner: React.FC = () => {
   };
 
   const handleDevSkip = () => {
+    activateDevSubscription();
     const data = { age: "25-34", gender: "neutral" };
     setUserData(data);
     localStorage.setItem("user_demographics", JSON.stringify(data));
@@ -199,8 +264,30 @@ const AppInner: React.FC = () => {
     const mockReport: DailyReport = {
         id: `mock-report-${Date.now()}`,
         date: new Date().toISOString(),
-        imageUrl: '/images/face_guide.png',
+        imageUrl: '/images/hero-scan-default.png',
         global_score: 7.8,
+        faceState: {
+            geometry: {
+                cheekboneWidthRatio: 1.24,
+                midfaceRatio: 1.95,
+                upperThirdRatio: 0.33,
+                middleThirdRatio: 0.34,
+                lowerThirdRatio: 0.33,
+                gonialAngle: 121,
+                jawCheekboneRatio: 0.90,
+                ramusRatio: 0.46,
+                nasofrontalAngle: 125,
+                chinProjectionRatio: 28,
+                lipElineDistUpper: 1.5,
+                lipElineDistLower: 1.0,
+                cervicoMentalAngle: 105,
+                symmetryAvg: 0.94,
+                goldenRatioFaceIPD: 88,
+                goldenRatioMouthNose: 1.62,
+                faceLengthWidthRatio: 1.35,
+                eyeTilt: 2.0,
+            }
+        },
         scoring: {
             scanId: 'mock-scan',
             globalScore: 7.8,
@@ -212,91 +299,78 @@ const AppInner: React.FC = () => {
             },
             face: {
                 statusScores: {
-                    faceLengthWidthBalance: 8,
-                    verticalFacialDistribution: 7,
-                    jawCheekboneRatio: 8,
-                    overallStructure: 7.5,
+                    faceLengthWidthBalance: 8.2,
+                    verticalFacialDistribution: 8.0,
+                    jawCheekboneRatio: 8.5,
+                    overallStructure: 8.1,
                 },
+                archetype: "THE WARRIOR",
+                archetypeDebug: {
+                    traits: { fwhr: 8.5, cheekbones: 8.0, jawline: 8.5, harmony: 8.0 },
+                    candidates: [
+                        { id: "warrior", displayName: "THE WARRIOR", score: 85, passedGate: true }
+                    ]
+                },
+                faceBig6: {
+                    overallFaceBig6: 8.6,
+                    eyes: { score: 8.8, breakdown: "Symmetrical, positive canthal tilt" },
+                    nose: { score: 8.5, breakdown: "Straight profile, proportional" },
+                    jawline: { score: 9.0, breakdown: "Defined angle, sharp demarcation" },
+                    chin: { score: 8.2, breakdown: "Balanced projection" },
+                    midface: { score: 8.6, breakdown: "Compact ratios" },
+                    harmony: { score: 8.9, breakdown: "Highly balanced thirds" }
+                },
+                measurements: {
+                    facialThirds: {
+                        upper: 0.33, mid: 0.34, lower: 0.33,
+                        score: 8.0, verdict: "Balanced", deviation: 0.01,
+                        debugLog: "Avg Dev: 1.0%",
+                        impacts: [
+                            { metric: "Cheekbones", state: "Strong", val: "1.24", reasoning: "Ideal cheekbone prominence", rawScore: 8.5, measurementLabel: "Width Ratio" },
+                            { metric: "FWHR", state: "Balanced", val: "1.95", reasoning: "Ideal compact midface", rawScore: 8.8, measurementLabel: "Ratio" },
+                            { metric: "Facial Thirds", state: "Balanced", val: "33/34/33", reasoning: "Equal vertical thirds", rawScore: 8.0, measurementLabel: "U/M/L %" }
+                        ]
+                    },
+                    jawAngularity: {
+                        gonialAngle: 121, gonialScore: 8.5, overallScore: 8.5,
+                        gonialVerdict: "Ideal", definitionVerdict: "Sharp", ramusVerdict: "Strong",
+                        definitionScore: 8.5, ramusScore: 8.5,
+                        impacts: [
+                            { metric: "Gonial Angle", state: "Ideal", val: "121.0°", reasoning: "Optimal gonial angle", rawScore: 8.5, measurementLabel: "Angle" },
+                            { metric: "Jaw Width", state: "Strong", val: "0.90", reasoning: "Strong lower jaw definition", rawScore: 8.2, measurementLabel: "Ratio" },
+                            { metric: "Ramus Length", state: "Strong", val: "0.46", reasoning: "Excellent ramus height", rawScore: 8.8, measurementLabel: "Ratio" }
+                        ],
+                        debugLog: "Gonial: 8.5"
+                    },
+                    sideProfile: {
+                        overallScore: 7.9,
+                        nasofrontalAngle: { angle: 125, score: 8.0, verdict: "Balanced" },
+                        rickettsELine: { upperDist: 1.5, lowerDist: 1.0, score: 8.0, verdict: "Balanced" },
+                        ramus: { ratio: 0.46, score: 8.5, verdict: "Strong" },
+                        impacts: [
+                            { metric: "Nasofrontal", state: "Balanced", val: "125.0°", reasoning: "Balanced nose bridge angle", rawScore: 8.0, measurementLabel: "Angle" },
+                            { metric: "Chin Projection", state: "Strong", val: "28.0%", reasoning: "Strong chin definition", rawScore: 8.5, measurementLabel: "Projection" },
+                            { metric: "E-Line", state: "Balanced", val: "1.2%", reasoning: "Balanced lip positioning", rawScore: 8.0, measurementLabel: "Lip Position" }
+                        ],
+                        debugLog: "Naso: 8.0 | Chin: 8.5",
+                        _scoring_formula: "Score = (Nasofrontal * 30%) + (Chin Proj * 40%) + (E-Line * 30%)"
+                    },
+                    harmony: {
+                        overallScore: 8.0,
+                        symmetry: 0.94, symmetryVerdict: "High",
+                        goldenRatioScore: 8.5, goldenRatioVerdict: "Elite",
+                        impacts: [
+                            { metric: "Symmetry", state: "High", val: "94.0%", reasoning: "Minimal symmetry deviation", rawScore: 8.5, measurementLabel: "Variance" },
+                            { metric: "Golden Ratio", state: "Elite", val: "%88", reasoning: "Near-perfect facial proportion mapping", rawScore: 8.8, measurementLabel: "Match" },
+                            { metric: "Lip-Nose Ratio", state: "Balanced", val: "1.62", reasoning: "Balanced mouth width to nose width", rawScore: 8.0, measurementLabel: "Ratio" }
+                        ],
+                        debugLog: "Sym: 8.5 | Golden: 8.8"
+                    }
+                }
             },
             spectral: {
                 overallScore: 8,
                 statusScores: { overallSpectral: 8 }
-            },
-            faceBig6: {
-                eyes: 'Symmetrical and well-proportioned, slight dark circles.',
-                nose: 'Excellent symmetry and definition.',
-                jawline: 'Sharp contour, great structural support.',
-                chin: 'Optimal projection and proportion.',
-                midface: 'Compact midface, ideal volume.',
-                skin: 'Smooth texture, high hydration levels.',
-            },
-            advancedSkinMetrics: {
-                avgHealthScore: 0.8,
-                avgQualityScore: 0.75,
-                forehead: {
-                    health: {
-                        activeAcne: { acneScore: 0.9, severity: 'none', count: 0 },
-                        marks: { pieScore: 0.8, pihScore: 0.8 },
-                        barrier: { barrierScore: 0.7, damageLevel: 'low' },
-                        sebum: { sebumScore: 0.6, level: 'normal' },
-                        inflammation: { loadScore: 0.1, areas: [] }
-                    },
-                    quality: {
-                        smoothness: { smoothnessScore: 0.7, fineLines: 0 },
-                        poreVisibility: { visibilityScore: 0.8, count: 0 },
-                        toneEvenness: { evennessScore: 0.9 },
-                        radiance: { radianceScore: 0.8 },
-                        oilHydration: { balanceScore: 0.7 }
-                    }
-                },
-                leftCheek: {
-                    health: {
-                        activeAcne: { acneScore: 0.8, severity: 'low', count: 1 },
-                        marks: { pieScore: 0.7, pihScore: 0.7 },
-                        barrier: { barrierScore: 0.8, damageLevel: 'low' },
-                        sebum: { sebumScore: 0.7, level: 'normal' },
-                        inflammation: { loadScore: 0.2, areas: [] }
-                    },
-                    quality: {
-                        smoothness: { smoothnessScore: 0.8, fineLines: 0 },
-                        poreVisibility: { visibilityScore: 0.6, count: 0 },
-                        toneEvenness: { evennessScore: 0.8 },
-                        radiance: { radianceScore: 0.7 },
-                        oilHydration: { balanceScore: 0.8 }
-                    }
-                },
-                rightCheek: {
-                    health: {
-                        activeAcne: { acneScore: 0.9, severity: 'none', count: 0 },
-                        marks: { pieScore: 0.8, pihScore: 0.8 },
-                        barrier: { barrierScore: 0.8, damageLevel: 'low' },
-                        sebum: { sebumScore: 0.7, level: 'normal' },
-                        inflammation: { loadScore: 0.1, areas: [] }
-                    },
-                    quality: {
-                        smoothness: { smoothnessScore: 0.8, fineLines: 0 },
-                        poreVisibility: { visibilityScore: 0.6, count: 0 },
-                        toneEvenness: { evennessScore: 0.8 },
-                        radiance: { radianceScore: 0.7 },
-                        oilHydration: { balanceScore: 0.8 }
-                    }
-                },
-                chin: {
-                    health: {
-                        activeAcne: { acneScore: 0.7, severity: 'moderate', count: 2 },
-                        marks: { pieScore: 0.6, pihScore: 0.6 },
-                        barrier: { barrierScore: 0.6, damageLevel: 'moderate' },
-                        sebum: { sebumScore: 0.5, level: 'high' },
-                        inflammation: { loadScore: 0.3, areas: [] }
-                    },
-                    quality: {
-                        smoothness: { smoothnessScore: 0.6, fineLines: 0 },
-                        poreVisibility: { visibilityScore: 0.7, count: 0 },
-                        toneEvenness: { evennessScore: 0.7 },
-                        radiance: { radianceScore: 0.6 },
-                        oilHydration: { balanceScore: 0.5 }
-                    }
-                }
             }
         },
         analysis: {
@@ -306,7 +380,11 @@ const AppInner: React.FC = () => {
                 features: {},
                 zones: { forehead: { riskScore: 0.2 }, leftCheek: { riskScore: 0.5 }, rightCheek: { riskScore: 0.1 }, chin: { riskScore: 0.8 }, nose: { riskScore: 0.3 } },
             },
-            face: { landmarks: {}, ratios: {} },
+            face: {
+                landmarks: {},
+                ratios: {},
+                profile: { faceShape: 'Oval' }
+            },
             spectral: { uvDamage: 0.2, hyperpigmentation: 0.3, vascular: 0.1, darkCircles: 0.4 },
         },
         recommendations: {
@@ -326,6 +404,30 @@ const AppInner: React.FC = () => {
                 sebumDynamics: "Slightly oily in the T-zone, well-balanced elsewhere.",
                 toneUniformity: "Even tone with minor post-inflammatory hyperpigmentation.",
                 visualFatigue: "Good radiance, but dark circles indicate slight visual fatigue."
+            },
+            eliteReport: {
+                featureBreakdown: [
+                    { featureName: "Front Profile", score: 8.2, analysis: "Excellent facial proportions with strong zygomatic width." },
+                    { featureName: "Side Profile", score: 7.9, analysis: "Balanced chin projection and ideal nasofrontal angle." },
+                    { featureName: "Jawline", score: 8.5, analysis: "Sharp gonial angle with defined jaw-to-neck separation." },
+                    { featureName: "Facial Harmony", score: 8.0, analysis: "High symmetry across facial thirds and golden ratio mapping." }
+                ],
+                structuralVerdict: "Your structural foundation is solid. Focus on the refinement markers to achieve Legendary status.",
+                technicalAssets: [
+                    { term: "Zygomatic Width", explanation: "Prominent cheekbones providing structural framing." },
+                    { term: "Gonial Angle", explanation: "Ideal 121-degree angle defining the lower face." }
+                ],
+                technicalDeficits: [
+                    { term: "Slight Under-eye Hollowness", explanation: "Can be addressed with hydration and rest." }
+                ]
+            },
+            faceBig6Insights: {
+                eyes: "Your eye shape has positive canthal tilt, giving a sharp, alert look. No signs of hooding or fatigue.",
+                nose: "Your nose profile is straight and proportional to your midface. It anchors your facial symmetry well.",
+                jawline: "Strong gonial angle. Your jawline is well-defined and separates cleanly from your neck.",
+                chin: "Chin projection is balanced with your lower lip. No signs of recession.",
+                midface: "Compact midface ratio gives you a highly youthful and aesthetic framing.",
+                harmony: "All facial thirds are exceptionally balanced. Your facial architecture scores very highly."
             }
         }
     } as any; // Cast as any because the type definitions might be slightly strict in this old codebase
@@ -344,7 +446,10 @@ const AppInner: React.FC = () => {
 
       // Track referral signup when user authenticates
       if (session?.user && event === 'SIGNED_IN') {
+        trackEvent('auth_success', { provider: session.user.app_metadata?.provider });
         trackReferralSignup(session.user.id).catch(console.error);
+        hydrateStreakFromCloud(session.user.id).catch(console.warn);
+        mergeGuestHistoryOnLogin(session.user.id, loadPurgedHistory()).catch(console.warn);
         if (Capacitor.isNativePlatform()) {
           try { await Purchases.logIn({ appUserID: session.user.id }); } catch(e){}
         }
@@ -376,16 +481,39 @@ const AppInner: React.FC = () => {
             .order('created_at', { ascending: true });
 
           if (cloudHistory && cloudHistory.length > 0) {
-            const validHistory = (cloudHistory as any[]).map(h => ({
-              id: h.id,
-              date: h.created_at,
-              imageUrl: h.image_url || 'placeholder.jpg',
-              faceState: h.face_state,
-              analysis: h.analysis_results,
-              recommendations: h.recommendations,
-              timestamp: new Date(h.created_at).getTime(),
-              global_score: h.analysis_results?.scoring?.totalScore || 0
-            })) as DailyReport[];
+            // Strip cloud biometrics older than 24h (scores / analysis remain)
+            for (const row of cloudHistory as any[]) {
+              if (!isBiometricExpired(row.created_at)) continue;
+              if (!row.image_url && !row.face_state?.primaryImageJpegBase64) continue;
+              const payload = cloudBiometricPurgePayload(row.face_state);
+              supabase
+                .from('scans')
+                .update(payload)
+                .eq('id', row.id)
+                .eq('user_id', session.user.id)
+                .then(({ error }) => {
+                  if (error) console.warn('[BIOMETRIC] cloud purge failed', row.id, error.message);
+                });
+            }
+
+            const validHistory = purgeExpiredBiometrics(
+              (cloudHistory as any[]).map(h => {
+                const scoring = h.scoring ?? h.analysis_results?.scoring;
+                const analysis = h.analysis_results ?? h.analysis;
+                const expired = isBiometricExpired(h.created_at);
+                return {
+                  id: h.id,
+                  date: h.created_at,
+                  imageUrl: expired ? undefined : (h.image_url || undefined),
+                  faceState: expired ? stripFaceStateImages(h.face_state) : h.face_state,
+                  analysis,
+                  scoring,
+                  recommendations: h.recommendations,
+                  timestamp: new Date(h.created_at).getTime(),
+                  global_score: scoring?.globalScore ?? analysis?.scoring?.globalScore ?? 0,
+                };
+              }) as DailyReport[]
+            );
 
             // 3. SAFE MERGE: Combine Cloud + Local
             setHistory(prevLocal => {
@@ -398,7 +526,10 @@ const AppInner: React.FC = () => {
                 }
               });
 
-              const sorted = combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              const sorted = purgeExpiredBiometrics(
+                combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              );
+              purgeExpiredThumbnails();
 
               // Save to localStorage WITHOUT base64 data to prevent QuotaExceededError
               const historyToSave = sorted.map(report => ({
@@ -407,7 +538,9 @@ const AppInner: React.FC = () => {
                   faceState: report.faceState ? {
                       ...report.faceState,
                       primaryImageJpegBase64: undefined,
-                      retainedCropJpegBase64: undefined
+                      retainedCropJpegBase64: undefined,
+                      leftAngleImageJpegBase64: undefined,
+                      rightAngleImageJpegBase64: undefined,
                   } : undefined
               }));
               localStorage.setItem("face_analysis_history", JSON.stringify(historyToSave));
@@ -435,6 +568,7 @@ const AppInner: React.FC = () => {
   // UploadScreen via `forceStartAnalysis` + the in-component `pendingFaceState` queue.
 
   const handleShowPaywall = () => {
+    trackEvent('paywall_viewed', { from: 'explicit' });
     setIsPaywallVisible(true);
   };
 
@@ -442,29 +576,16 @@ const AppInner: React.FC = () => {
     setIsPaywallVisible(false);
   };
 
-  // P0 FIX: Called when RevenueCat confirms a successful purchase
+  // Called when RevenueCat confirms a successful purchase
   const handleUpgrade = async () => {
-    setIsPremium(true);
-    localStorage.setItem('is_premium', 'true');
+    await refreshSubscription();
     setIsPaywallVisible(false);
-    // Persist premium status to Supabase so other devices also know
-    if (user) {
-      try {
-        await supabase.from('profiles').upsert({
-          id: user.id,
-          is_premium: true,
-          premium_since: new Date().toISOString(),
-        });
-      } catch (e) {
-        console.error('Failed to sync premium status to cloud:', e);
-      }
-    }
+    // Entitlement is RevenueCat (+ referral premium_rewards). Do not write is_premium from client.
   };
 
   const changeTab = (tab: string) => {
-    // Lock premium tabs for free users
-    const premiumTabs = ['face', 'recommendations'];
-    if (premiumTabs.includes(tab) && !isPremium) {
+    if ((tab === 'face' && !hasAccess('face')) || (tab === 'recommendations' && !hasAccess('recommendations'))) {
+      trackEvent('paywall_viewed', { from: tab });
       setIsPaywallVisible(true);
       return;
     }
@@ -472,15 +593,38 @@ const AppInner: React.FC = () => {
   };
 
   const handleStartScan = () => {
+    if (!canStartScan(hasAccess('unlimitedScans'))) {
+      toast.error(
+        localized(
+          "You've used today's free scan. Upgrade to PRO for unlimited scans, or come back tomorrow.",
+          "Bugünkü ücretsiz taramayı kullandın. Sınırsız tarama için PRO'ya geç veya yarın tekrar gel."
+        )
+      );
+      trackEvent('paywall_viewed', { from: 'daily_scan_limit' });
+      setIsPaywallVisible(true);
+      return;
+    }
     setShowReadyToScan(true);
   };
 
   const handleConfirmScan = () => {
+    if (!canStartScan(hasAccess('unlimitedScans'))) {
+      setShowReadyToScan(false);
+      trackEvent('paywall_viewed', { from: 'daily_scan_limit' });
+      setIsPaywallVisible(true);
+      return;
+    }
+    trackEvent('scan_started');
     setShowReadyToScan(false);
     setShowScanCamera(true);
   };
 
   const handleAnalysisComplete = async (newReport: DailyReport) => {
+    saveScanThumbnail(newReport.id, newReport.imageUrl);
+    if (!hasAccess('unlimitedScans')) {
+      markFreeScanUsedToday();
+    }
+
     // Pipeline only runs after auth (user or guest), so always save
     // 1. Add to history (Optimistic UI Update)
     const updatedHistory = [...history, newReport];
@@ -489,6 +633,9 @@ const AppInner: React.FC = () => {
     // Advance daily streak (idempotent within the same day)
     try {
       updateStreak();
+      if (user?.id) {
+        syncStreakToCloud(user.id).catch(console.warn);
+      }
     } catch (e) {
       console.warn("[STREAK] update failed", e);
     }
@@ -500,10 +647,13 @@ const AppInner: React.FC = () => {
           faceState: report.faceState ? {
               ...report.faceState,
               primaryImageJpegBase64: undefined,
-              retainedCropJpegBase64: undefined
+              retainedCropJpegBase64: undefined,
+              leftAngleImageJpegBase64: undefined,
+              rightAngleImageJpegBase64: undefined,
           } : undefined
       }));
       localStorage.setItem("face_analysis_history", JSON.stringify(historyToSave));
+      purgeExpiredThumbnails();
     } catch (err: any) {
       console.error("Storage Save Failed:", err);
       toast.error("Couldn't save history locally — device storage is full. Your analysis still loads, but old scans may not persist.");
@@ -518,8 +668,9 @@ const AppInner: React.FC = () => {
           image_url: newReport.imageUrl,
           face_state: newReport.faceState,
           analysis_results: newReport.analysis,
+          scoring: newReport.scoring,
           recommendations: newReport.recommendations,
-          created_at: newReport.date // ISO string
+          created_at: newReport.date
         });
 
         if (error) {
@@ -537,6 +688,10 @@ const AppInner: React.FC = () => {
     setShowScanCamera(false);
     setForceStartAnalysis(false);
     setActiveTab("results");
+    trackEvent('scan_completed', {
+      score: newReport.scoring?.globalScore,
+      hasRecommendations: Boolean(newReport.recommendations?.dailyRoutine?.morning?.length),
+    });
 
     // 4. Increment content key to force re-render/animation
     setContentKey(prev => prev + 1);
@@ -593,7 +748,7 @@ const AppInner: React.FC = () => {
         if (isGuest) {
             setSessionOnboardingComplete(false);
         } else {
-            handleLogout();
+            setShowReadyToScan(true);
         }
     }} />;
   }
@@ -610,6 +765,7 @@ const AppInner: React.FC = () => {
       <UploadScreen
         onAnalysisComplete={handleAnalysisComplete}
         onNeedAuth={handleNeedAuth}
+        onContinueAsGuest={handleAuthGateGuest}
         onSkip={() => setShowScanCamera(false)}
         history={history}
         autoStartCamera={true}
@@ -647,6 +803,8 @@ const AppInner: React.FC = () => {
     setSessionOnboardingComplete(false);
     localStorage.removeItem('user_demographics');
     localStorage.removeItem('face_analysis_history');
+    clearAllScanThumbnails();
+    clearPendingFaceState();
     setHistory([]);
     setAnalysisData(null);
     if (Capacitor.isNativePlatform()) {
@@ -657,7 +815,8 @@ const AppInner: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "results": return <Results
+      case "results": return <>
+        <Results
         data={analysisData}
         dayNumber={dayNumberForReport}
         onShowPaywall={handleShowPaywall}
@@ -666,12 +825,30 @@ const AppInner: React.FC = () => {
         onNavigateToProgress={() => changeTab("progress")}
         onLogout={handleLogout}
         onNewScan={handleStartScan}
-      />;
+        onShowNotificationSettings={() => setShowNotifSettings(true)}
+        isFreeUser={!isPremium}
+        onNavigateToRecommendations={() => changeTab("recommendations")}
+      />
+      <NotifAskOnce />
+      </>;
       case "progress": {
-        return <Progress history={history} onSelectReport={handleSelectReport} compliment={null} onNewScan={handleStartScan} />;
+        return <Progress history={history} onSelectReport={handleSelectReport} compliment={null} onNewScan={handleStartScan} userId={user?.id ?? null} />;
       }
-      case "face": return <FaceAnalysis data={analysisData} dayNumber={dayNumberForReport} />;
-      case "recommendations": return <Recommendations data={analysisData} gender={userData?.gender} />;
+      case "face": return <FaceAnalysis
+        data={analysisData}
+        dayNumber={dayNumberForReport}
+        history={history}
+        isFreeUser={!isPremium}
+        onShowPaywall={handleShowPaywall}
+        onNavigateToRecommendations={() => changeTab("recommendations")}
+      />;
+      case "recommendations": return <Recommendations
+        data={analysisData}
+        gender={userData?.gender}
+        user={user}
+        isFreeUser={!isPremium}
+        onShowPaywall={handleShowPaywall}
+      />;
       default: return <Results
         data={analysisData}
         dayNumber={dayNumberForReport}
@@ -681,12 +858,15 @@ const AppInner: React.FC = () => {
         onNavigateToProgress={() => changeTab("progress")}
         onLogout={handleLogout}
         onNewScan={handleStartScan}
+        onShowNotificationSettings={() => setShowNotifSettings(true)}
+        isFreeUser={!isPremium}
+        onNavigateToRecommendations={() => changeTab("recommendations")}
       />;
     }
   };
 
   return (
-    <div className="relative min-h-screen bg-[#F5F5F7] text-[#1D1D1F] overflow-x-hidden font-sans w-full h-full pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]">
+    <div className={`relative min-h-screen text-[#1D1D1F] overflow-x-hidden font-sans w-full h-full pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] ${activeTab === "results" ? "bg-[#fbf9f9]" : "bg-[#F5F5F7]"}`}>
       {isOffline && (
         <div className="fixed top-0 left-0 right-0 bg-red-500/90 text-white text-[11px] sm:text-xs font-bold text-center py-2 z-[200] backdrop-blur-md pt-[calc(env(safe-area-inset-top)+8px)]">
           You are offline. Features may be limited.
@@ -695,10 +875,14 @@ const AppInner: React.FC = () => {
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(168,85,247,0.05),rgba(255,255,255,0))]" />
 
       {/* Persistent Global Header - Visible on ALL tabs */}
-      {contentKey >= 0 && <GlobalAppHeader user={user} onLogout={handleLogout} onShowNotificationSettings={() => setShowNotifSettings(true)} />}
+      {contentKey >= 0 && !["results", "face", "recommendations"].includes(activeTab) && (
+        <GlobalAppHeader user={user} onLogout={handleLogout} onShowNotificationSettings={() => setShowNotifSettings(true)} />
+      )}
 
-      <div className={`fade-in-up visible pb-28 ${activeTab === "results" || activeTab === "progress" ? "pt-4" : "px-4 pt-28"} w-full max-w-lg mx-auto`} key={contentKey}>
-        {renderContent()}
+      <div className={`fade-in-up visible pb-28 ${["results", "face", "recommendations"].includes(activeTab) ? "pt-0" : activeTab === "progress" ? "pt-4" : "px-4 pt-28"} w-full max-w-lg mx-auto`} key={contentKey}>
+        <ErrorBoundary key={contentKey}>
+          {renderContent()}
+        </ErrorBoundary>
       </div>
 
       {/* Bottom Navigation — Slim Floating Island */}

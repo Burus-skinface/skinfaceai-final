@@ -43,12 +43,9 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	
-	<!-- Privacy Descriptions (App Store Rejection Blockers) -->
+	<!-- Privacy Descriptions (App Store) -->
 	<key>NSCameraUsageDescription</key>
 	<string>Skinface requires access to your camera to scan your facial structure and provide real-time AI routines.</string>
-	<!-- Needed if microphone is implicitly checked by HTML5 getusermedia -->
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Skinface needs access to the microphone for recording video assessments.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Skinface requires library access to save your glowing skin progress photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

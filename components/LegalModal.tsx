@@ -53,8 +53,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, initialTab, onClose }) 
                             <strong>IMPORTANT NOTICE:</strong> Please read these Terms of Service carefully. By accessing or using Skinface AI, you agree to be bound by these terms. If you do not agree, you must immediately uninstall and cease using the application.
                         </div>
 
-                        <h2 className="text-xl font-bold text-black mt-6">1. Age Restrictions and COPPA Compliance</h2>
-                        <p>Skinface AI provides advanced cosmetic, aesthetic, and facial geometric scoring. Due to the psychological intricacies associated with physical assessments, you must be <strong>at least EIGHTEEN (18) years of age</strong> to use this service. By using the app, you warrant that you are legally considered an adult in your jurisdiction. We do not knowingly collect information from children under the age of 18 in compliance with the Children's Online Privacy Protection Act (COPPA).</p>
+                        <h2 className="text-xl font-bold text-black mt-6">1. Age &amp; Eligibility</h2>
+                        <p>Skinface AI is designed for users of all ages who want cosmetic and skincare insights. If you are under 13, please use the app with a parent or guardian. We comply with applicable child privacy laws including COPPA where required.</p>
 
                         <h2 className="text-xl font-bold text-black mt-6">2. Subscriptions, Payments, and Apple/Google EULA</h2>
                         <p>Skinface AI offers premium subscription plans ("Elite Features"). Payments will be charged to your iTunes or Google Play account at confirmation of purchase. <strong>Subscriptions automatically renew</strong> unless auto-renew is turned off at least 24-hours before the end of the current period.</p>
@@ -90,7 +90,9 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, initialTab, onClose }) 
                         <p className="mt-2">If you use the app as a <strong>guest</strong>, scans stay only on your device's local storage and are never uploaded.</p>
 
                         <h2 className="text-xl font-bold text-black mt-6">2. Retention</h2>
-                        <p>We retain your scan image, face state, analysis results, and recommendations <strong>for as long as your account exists</strong>. There is no automatic time-based deletion: your scan history is intentionally preserved so progress tracking and longitudinal insights stay accurate. When you delete your account (see Section 4), all of the above are removed from our active systems.</p>
+                        <p>We retain your <strong>scores, analysis results, recommendations, and account profile for as long as your account exists</strong> so you can track progress across days.</p>
+                        <p className="mt-2"><strong>Scan images and raw biometric face photos</strong> (including JPEG crops stored with a scan) are kept for up to <strong>24 hours</strong>, then automatically removed from our systems and your device storage. After that, historical days still show numeric scores and insights, with a placeholder portrait instead of your photo.</p>
+                        <p className="mt-2">When you delete your account (see Section 4), all remaining data above is removed from our active systems.</p>
 
                         <h2 className="text-xl font-bold text-black mt-6">3. Third-Party Intelligence Processing</h2>
                         <p>To generate personalized routines and insights, sanitized numerical metrics (e.g., region-level scores, no raw images and no PII) are transmitted via encrypted connection to our AI provider through our backend proxy (Google Gemini, routed via our server). This data is used strictly for one-time inference for your account and is <strong>categorically prohibited from being used to train third-party AI models.</strong></p>
@@ -99,8 +101,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ isOpen, initialTab, onClose }) 
                         <p>Under GDPR, CCPA, KVKK, and equivalent laws you retain full sovereignty over your data:</p>
                         <ul className="list-disc pl-5 mt-2 space-y-2">
                             <li><strong>Right to access / export:</strong> contact <a href="mailto:support@skinface.ai" className="underline">support@skinface.ai</a> to request a copy of your scans, derived face state, and recommendations.</li>
-                            <li><strong>Right to deletion ("Right to be Forgotten"):</strong> use the <strong>Delete Account</strong> button in the in-app menu. This irreversibly removes your scan images, derived face states, analysis results, recommendations, and your profile row.</li>
-                            <li><strong>Authentication record:</strong> for fraud and abuse prevention, the auth credentials row (your email + login metadata) may be removed asynchronously after deletion is requested. If you need an immediate auth-row purge, email <a href="mailto:support@skinface.ai" className="underline">support@skinface.ai</a> and we will action it manually.</li>
+                            <li><strong>Right to deletion ("Right to be Forgotten"):</strong> use the <strong>Delete Account</strong> button in the in-app menu. This irreversibly removes your scans, derived face states, analysis results, recommendations, profile, and your authentication account.</li>
                         </ul>
 
                         <h2 className="text-xl font-bold text-black mt-6">5. Strict Zero-Sale Policy</h2>

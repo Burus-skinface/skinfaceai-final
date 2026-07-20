@@ -8,6 +8,10 @@ import { createSkinROI } from "./skinROI";
 import { analyzeComprehensiveSkinHealth } from "./skinMetricsHealth";
 import { analyzeComprehensiveSkinQuality } from "./skinMetricsQuality";
 
+const devLog = (...args: unknown[]) => {
+  if (import.meta.env.DEV) console.log(...args);
+};
+
 // Helper to extract unique indices from edge list
 function uniqueVerticesFromEdges(edges: any[]): number[] {
   const set = new Set<number>();
@@ -1551,7 +1555,7 @@ export class FaceScanEngine {
 
       if (this.outlierConsecutiveCount > 5) {
         // SNAP: Break deadlock, accept new position
-        // console.log(`[STABLE] Deadlock broken (move > ${threshold.toFixed(4)})`);
+        // devLog(`[STABLE] Deadlock broken (move > ${threshold.toFixed(4)})`);
         this.stableLandmarks = rawLms;
         this.outlierConsecutiveCount = 0;
         return rawLms;
@@ -1559,7 +1563,7 @@ export class FaceScanEngine {
 
       // REJECT: Too far, likely tracking glitch or fast motion blur
       this.lastRejectionReason = `Temp Outlier ${maxDist.toFixed(3)}>${threshold.toFixed(3)}`;
-      // console.log(`[STABLE] Outlier Rejected: Dist ${maxDist.toFixed(4)} > ${threshold.toFixed(4)}`);
+      // devLog(`[STABLE] Outlier Rejected: Dist ${maxDist.toFixed(4)} > ${threshold.toFixed(4)}`);
       return null;
     }
 
@@ -1847,7 +1851,7 @@ export class FaceScanEngine {
     );
     if (strictFront.length >= 3) {
       geometrySourceFrames = strictFront;
-      console.log(`[ENGINE] Using ${strictFront.length} HYPER-FRONTAL frames for geometry.`);
+      devLog(`[ENGINE] Using ${strictFront.length} HYPER-FRONTAL frames for geometry.`);
     } else {
       console.warn(`[ENGINE] Not enough hyper-frontal frames (${strictFront.length}), using all ${geometrySourceFrames.length} front frames.`);
     }
@@ -1863,27 +1867,27 @@ export class FaceScanEngine {
     const stabilizedPose = stabilizePoseMean(allFrames);
 
     // Compute comprehensive metrics (Using View-Dependent Data)
-    console.log('[ENGINE] Computing geometry metrics (Multi-View Data)...');
+    devLog('[ENGINE] Computing geometry metrics (Multi-View Data)...');
     const geometry = computeGeometryMetrics(stabilizedFrontLandmarks, stabilizedLeftLandmarks, stabilizedRightLandmarks, this.lastAspectRatio);
 
-    console.log('[ENGINE] Segmenting regions (Full-Scan Data)...');
+    devLog('[ENGINE] Segmenting regions (Full-Scan Data)...');
     // Regions use the full set to ensure coverage of side cheeks/jaw
     const regions = segmentRegions(stabilizedLandmarks, size);
 
-    console.log('[ENGINE] Analyzing texture...');
+    devLog('[ENGINE] Analyzing texture...');
     const texture = analyzeTexture(rgba, regions, size);
 
-    console.log('[ENGINE] Analyzing tone...');
+    devLog('[ENGINE] Analyzing tone...');
     const tone = analyzeTone(rgba, regions, size);
 
-    console.log('[ENGINE] Analyzing spectral properties...');
+    devLog('[ENGINE] Analyzing spectral properties...');
     const spectral = analyzeSpectral(rgba, regions, size);
 
     // 12 Advanced Skin Metrics Analysis
-    console.log('[ENGINE] Converting to LAB color space...');
+    devLog('[ENGINE] Converting to LAB color space...');
     const { L, A, B } = rgbaToLab(rgba, size, size);
 
-    console.log('[ENGINE] Analyzing comprehensive skin health and quality...');
+    devLog('[ENGINE] Analyzing comprehensive skin health and quality...');
 
     // Analyze each region with 12 metrics
     const foreheadROI = createSkinROI('forehead', stabilizedLandmarks, size, size);
@@ -1910,94 +1914,94 @@ export class FaceScanEngine {
     // ═══════════════════════════════════════════════════════════════
     // 🔬 12 METRICS DETAILED ANALYSIS LOG
     // ═══════════════════════════════════════════════════════════════
-    console.log('\n');
-    console.log('╔═══════════════════════════════════════════════════════════════╗');
-    console.log('║           🔬 12 ADVANCED SKIN METRICS - DETAILED LOG         ║');
-    console.log('╚═══════════════════════════════════════════════════════════════╝');
+    devLog('\n');
+    devLog('╔═══════════════════════════════════════════════════════════════╗');
+    devLog('║           🔬 12 ADVANCED SKIN METRICS - DETAILED LOG         ║');
+    devLog('╚═══════════════════════════════════════════════════════════════╝');
 
-    console.log('\n📊 OVERALL SCORES:');
-    console.log(`   Health Score: ${(avgHealthScore * 10).toFixed(1)}/10 (${(avgHealthScore * 100).toFixed(1)}%)`);
-    console.log(`   Quality Score: ${(avgQualityScore * 10).toFixed(1)}/10 (${(avgQualityScore * 100).toFixed(1)}%)`);
+    devLog('\n📊 OVERALL SCORES:');
+    devLog(`   Health Score: ${(avgHealthScore * 10).toFixed(1)}/10 (${(avgHealthScore * 100).toFixed(1)}%)`);
+    devLog(`   Quality Score: ${(avgQualityScore * 10).toFixed(1)}/10 (${(avgQualityScore * 100).toFixed(1)}%)`);
 
-    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🏥 HEALTH METRICS (6 Categories)');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    devLog('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    devLog('🏥 HEALTH METRICS (6 Categories)');
+    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    console.log('\n1️⃣  SEBUM ACTIVITY');
-    console.log(`   Forehead: ${(foreheadHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${foreheadHealth.sebum.region} | ${foreheadHealth.sebum.hotspotCount} hotspots`);
-    console.log(`   Left Cheek: ${(leftCheekHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${leftCheekHealth.sebum.region} | ${leftCheekHealth.sebum.hotspotCount} hotspots`);
-    console.log(`   Right Cheek: ${(rightCheekHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${rightCheekHealth.sebum.region} | ${rightCheekHealth.sebum.hotspotCount} hotspots`);
-    console.log(`   Chin: ${(chinHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${chinHealth.sebum.region} | ${chinHealth.sebum.hotspotCount} hotspots`);
+    devLog('\n1️⃣  SEBUM ACTIVITY');
+    devLog(`   Forehead: ${(foreheadHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${foreheadHealth.sebum.region} | ${foreheadHealth.sebum.hotspotCount} hotspots`);
+    devLog(`   Left Cheek: ${(leftCheekHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${leftCheekHealth.sebum.region} | ${leftCheekHealth.sebum.hotspotCount} hotspots`);
+    devLog(`   Right Cheek: ${(rightCheekHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${rightCheekHealth.sebum.region} | ${rightCheekHealth.sebum.hotspotCount} hotspots`);
+    devLog(`   Chin: ${(chinHealth.sebum.sebumScore * 10).toFixed(1)}/10 | ${chinHealth.sebum.region} | ${chinHealth.sebum.hotspotCount} hotspots`);
 
-    console.log('\n2️⃣  PORE CONGESTION');
-    console.log(`   Forehead: ${(foreheadHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${foreheadHealth.poreCongestion.severity} | ${foreheadHealth.poreCongestion.bumpCount} bumps`);
-    console.log(`   Left Cheek: ${(leftCheekHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${leftCheekHealth.poreCongestion.severity} | ${leftCheekHealth.poreCongestion.bumpCount} bumps`);
-    console.log(`   Right Cheek: ${(rightCheekHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${rightCheekHealth.poreCongestion.severity} | ${rightCheekHealth.poreCongestion.bumpCount} bumps`);
-    console.log(`   Chin: ${(chinHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${chinHealth.poreCongestion.severity} | ${chinHealth.poreCongestion.bumpCount} bumps`);
+    devLog('\n2️⃣  PORE CONGESTION');
+    devLog(`   Forehead: ${(foreheadHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${foreheadHealth.poreCongestion.severity} | ${foreheadHealth.poreCongestion.bumpCount} bumps`);
+    devLog(`   Left Cheek: ${(leftCheekHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${leftCheekHealth.poreCongestion.severity} | ${leftCheekHealth.poreCongestion.bumpCount} bumps`);
+    devLog(`   Right Cheek: ${(rightCheekHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${rightCheekHealth.poreCongestion.severity} | ${rightCheekHealth.poreCongestion.bumpCount} bumps`);
+    devLog(`   Chin: ${(chinHealth.poreCongestion.congestionScore * 10).toFixed(1)}/10 | ${chinHealth.poreCongestion.severity} | ${chinHealth.poreCongestion.bumpCount} bumps`);
 
-    console.log('\n3️⃣  INFLAMMATORY LOAD');
-    console.log(`   Forehead: ${(foreheadHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${foreheadHealth.inflammation.distribution} | StdDev: ${foreheadHealth.inflammation.stdDev.toFixed(2)}`);
-    console.log(`   Left Cheek: ${(leftCheekHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${leftCheekHealth.inflammation.distribution} | StdDev: ${leftCheekHealth.inflammation.stdDev.toFixed(2)}`);
-    console.log(`   Right Cheek: ${(rightCheekHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${rightCheekHealth.inflammation.distribution} | StdDev: ${rightCheekHealth.inflammation.stdDev.toFixed(2)}`);
-    console.log(`   Chin: ${(chinHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${chinHealth.inflammation.distribution} | StdDev: ${chinHealth.inflammation.stdDev.toFixed(2)}`);
+    devLog('\n3️⃣  INFLAMMATORY LOAD');
+    devLog(`   Forehead: ${(foreheadHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${foreheadHealth.inflammation.distribution} | StdDev: ${foreheadHealth.inflammation.stdDev.toFixed(2)}`);
+    devLog(`   Left Cheek: ${(leftCheekHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${leftCheekHealth.inflammation.distribution} | StdDev: ${leftCheekHealth.inflammation.stdDev.toFixed(2)}`);
+    devLog(`   Right Cheek: ${(rightCheekHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${rightCheekHealth.inflammation.distribution} | StdDev: ${rightCheekHealth.inflammation.stdDev.toFixed(2)}`);
+    devLog(`   Chin: ${(chinHealth.inflammation.loadScore * 10).toFixed(1)}/10 | ${chinHealth.inflammation.distribution} | StdDev: ${chinHealth.inflammation.stdDev.toFixed(2)}`);
 
-    console.log('\n4️⃣  ACTIVE ACNE');
-    console.log(`   Forehead: ${(foreheadHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${foreheadHealth.activeAcne.severity} | ${foreheadHealth.activeAcne.totalLesions} lesions (${foreheadHealth.activeAcne.papuleCount}P + ${foreheadHealth.activeAcne.pustuleCount}Pu)`);
-    console.log(`   Left Cheek: ${(leftCheekHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${leftCheekHealth.activeAcne.severity} | ${leftCheekHealth.activeAcne.totalLesions} lesions (${leftCheekHealth.activeAcne.papuleCount}P + ${leftCheekHealth.activeAcne.pustuleCount}Pu)`);
-    console.log(`   Right Cheek: ${(rightCheekHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${rightCheekHealth.activeAcne.severity} | ${rightCheekHealth.activeAcne.totalLesions} lesions (${rightCheekHealth.activeAcne.papuleCount}P + ${rightCheekHealth.activeAcne.pustuleCount}Pu)`);
-    console.log(`   Chin: ${(chinHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${chinHealth.activeAcne.severity} | ${chinHealth.activeAcne.totalLesions} lesions (${chinHealth.activeAcne.papuleCount}P + ${chinHealth.activeAcne.pustuleCount}Pu)`);
+    devLog('\n4️⃣  ACTIVE ACNE');
+    devLog(`   Forehead: ${(foreheadHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${foreheadHealth.activeAcne.severity} | ${foreheadHealth.activeAcne.totalLesions} lesions (${foreheadHealth.activeAcne.papuleCount}P + ${foreheadHealth.activeAcne.pustuleCount}Pu)`);
+    devLog(`   Left Cheek: ${(leftCheekHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${leftCheekHealth.activeAcne.severity} | ${leftCheekHealth.activeAcne.totalLesions} lesions (${leftCheekHealth.activeAcne.papuleCount}P + ${leftCheekHealth.activeAcne.pustuleCount}Pu)`);
+    devLog(`   Right Cheek: ${(rightCheekHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${rightCheekHealth.activeAcne.severity} | ${rightCheekHealth.activeAcne.totalLesions} lesions (${rightCheekHealth.activeAcne.papuleCount}P + ${rightCheekHealth.activeAcne.pustuleCount}Pu)`);
+    devLog(`   Chin: ${(chinHealth.activeAcne.acneScore * 10).toFixed(1)}/10 | ${chinHealth.activeAcne.severity} | ${chinHealth.activeAcne.totalLesions} lesions (${chinHealth.activeAcne.papuleCount}P + ${chinHealth.activeAcne.pustuleCount}Pu)`);
 
-    console.log('\n5️⃣  MARKS (PIE/PIH)');
-    console.log(`   Forehead: PIE=${(foreheadHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(foreheadHealth.marks.pihScore * 10).toFixed(1)}/10 | ${foreheadHealth.marks.severity} | ${foreheadHealth.marks.totalMarks} marks (${foreheadHealth.marks.pieCount} red + ${foreheadHealth.marks.pihCount} brown)`);
-    console.log(`   Left Cheek: PIE=${(leftCheekHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(leftCheekHealth.marks.pihScore * 10).toFixed(1)}/10 | ${leftCheekHealth.marks.severity} | ${leftCheekHealth.marks.totalMarks} marks (${leftCheekHealth.marks.pieCount} red + ${leftCheekHealth.marks.pihCount} brown)`);
-    console.log(`   Right Cheek: PIE=${(rightCheekHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(rightCheekHealth.marks.pihScore * 10).toFixed(1)}/10 | ${rightCheekHealth.marks.severity} | ${rightCheekHealth.marks.totalMarks} marks (${rightCheekHealth.marks.pieCount} red + ${rightCheekHealth.marks.pihCount} brown)`);
-    console.log(`   Chin: PIE=${(chinHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(chinHealth.marks.pihScore * 10).toFixed(1)}/10 | ${chinHealth.marks.severity} | ${chinHealth.marks.totalMarks} marks (${chinHealth.marks.pieCount} red + ${chinHealth.marks.pihCount} brown)`);
+    devLog('\n5️⃣  MARKS (PIE/PIH)');
+    devLog(`   Forehead: PIE=${(foreheadHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(foreheadHealth.marks.pihScore * 10).toFixed(1)}/10 | ${foreheadHealth.marks.severity} | ${foreheadHealth.marks.totalMarks} marks (${foreheadHealth.marks.pieCount} red + ${foreheadHealth.marks.pihCount} brown)`);
+    devLog(`   Left Cheek: PIE=${(leftCheekHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(leftCheekHealth.marks.pihScore * 10).toFixed(1)}/10 | ${leftCheekHealth.marks.severity} | ${leftCheekHealth.marks.totalMarks} marks (${leftCheekHealth.marks.pieCount} red + ${leftCheekHealth.marks.pihCount} brown)`);
+    devLog(`   Right Cheek: PIE=${(rightCheekHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(rightCheekHealth.marks.pihScore * 10).toFixed(1)}/10 | ${rightCheekHealth.marks.severity} | ${rightCheekHealth.marks.totalMarks} marks (${rightCheekHealth.marks.pieCount} red + ${rightCheekHealth.marks.pihCount} brown)`);
+    devLog(`   Chin: PIE=${(chinHealth.marks.pieScore * 10).toFixed(1)}/10 PIH=${(chinHealth.marks.pihScore * 10).toFixed(1)}/10 | ${chinHealth.marks.severity} | ${chinHealth.marks.totalMarks} marks (${chinHealth.marks.pieCount} red + ${chinHealth.marks.pihCount} brown)`);
 
-    console.log('\n6️⃣  BARRIER INTEGRITY');
-    console.log(`   Forehead: ${(foreheadHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${foreheadHealth.barrier.status} | Damaged: ${foreheadHealth.barrier.isDamaged}`);
-    console.log(`   Left Cheek: ${(leftCheekHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${leftCheekHealth.barrier.status} | Damaged: ${leftCheekHealth.barrier.isDamaged}`);
-    console.log(`   Right Cheek: ${(rightCheekHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${rightCheekHealth.barrier.status} | Damaged: ${rightCheekHealth.barrier.isDamaged}`);
-    console.log(`   Chin: ${(chinHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${chinHealth.barrier.status} | Damaged: ${chinHealth.barrier.isDamaged}`);
+    devLog('\n6️⃣  BARRIER INTEGRITY');
+    devLog(`   Forehead: ${(foreheadHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${foreheadHealth.barrier.status} | Damaged: ${foreheadHealth.barrier.isDamaged}`);
+    devLog(`   Left Cheek: ${(leftCheekHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${leftCheekHealth.barrier.status} | Damaged: ${leftCheekHealth.barrier.isDamaged}`);
+    devLog(`   Right Cheek: ${(rightCheekHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${rightCheekHealth.barrier.status} | Damaged: ${rightCheekHealth.barrier.isDamaged}`);
+    devLog(`   Chin: ${(chinHealth.barrier.barrierScore * 10).toFixed(1)}/10 | ${chinHealth.barrier.status} | Damaged: ${chinHealth.barrier.isDamaged}`);
 
-    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('✨ QUALITY METRICS (6 Categories)');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    devLog('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    devLog('✨ QUALITY METRICS (6 Categories)');
+    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    console.log('\n1️⃣  TEXTURE SMOOTHNESS');
-    console.log(`   Forehead: ${(foreheadQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${foreheadQuality.smoothness.quality} | Rough: ${(foreheadQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
-    console.log(`   Left Cheek: ${(leftCheekQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${leftCheekQuality.smoothness.quality} | Rough: ${(leftCheekQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
-    console.log(`   Right Cheek: ${(rightCheekQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${rightCheekQuality.smoothness.quality} | Rough: ${(rightCheekQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
-    console.log(`   Chin: ${(chinQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${chinQuality.smoothness.quality} | Rough: ${(chinQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
+    devLog('\n1️⃣  TEXTURE SMOOTHNESS');
+    devLog(`   Forehead: ${(foreheadQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${foreheadQuality.smoothness.quality} | Rough: ${(foreheadQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
+    devLog(`   Left Cheek: ${(leftCheekQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${leftCheekQuality.smoothness.quality} | Rough: ${(leftCheekQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
+    devLog(`   Right Cheek: ${(rightCheekQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${rightCheekQuality.smoothness.quality} | Rough: ${(rightCheekQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
+    devLog(`   Chin: ${(chinQuality.smoothness.smoothnessScore * 10).toFixed(1)}/10 | ${chinQuality.smoothness.quality} | Rough: ${(chinQuality.smoothness.highFreqRatio * 100).toFixed(1)}%`);
 
-    console.log('\n2️⃣  PORE VISIBILITY');
-    console.log(`   Forehead: ${(foreheadQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${foreheadQuality.poreVisibility.visibility} | ${foreheadQuality.poreVisibility.poreCount} visible pores`);
-    console.log(`   Left Cheek: ${(leftCheekQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${leftCheekQuality.poreVisibility.visibility} | ${leftCheekQuality.poreVisibility.poreCount} visible pores`);
-    console.log(`   Right Cheek: ${(rightCheekQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${rightCheekQuality.poreVisibility.visibility} | ${rightCheekQuality.poreVisibility.poreCount} visible pores`);
-    console.log(`   Chin: ${(chinQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${chinQuality.poreVisibility.visibility} | ${chinQuality.poreVisibility.poreCount} visible pores`);
+    devLog('\n2️⃣  PORE VISIBILITY');
+    devLog(`   Forehead: ${(foreheadQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${foreheadQuality.poreVisibility.visibility} | ${foreheadQuality.poreVisibility.poreCount} visible pores`);
+    devLog(`   Left Cheek: ${(leftCheekQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${leftCheekQuality.poreVisibility.visibility} | ${leftCheekQuality.poreVisibility.poreCount} visible pores`);
+    devLog(`   Right Cheek: ${(rightCheekQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${rightCheekQuality.poreVisibility.visibility} | ${rightCheekQuality.poreVisibility.poreCount} visible pores`);
+    devLog(`   Chin: ${(chinQuality.poreVisibility.visibilityScore * 10).toFixed(1)}/10 | ${chinQuality.poreVisibility.visibility} | ${chinQuality.poreVisibility.poreCount} visible pores`);
 
-    console.log('\n3️⃣  TONE EVENNESS');
-    console.log(`   Forehead: ${(foreheadQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${foreheadQuality.toneEvenness.evenness} | Variance: ${foreheadQuality.toneEvenness.combinedVariance.toFixed(2)}`);
-    console.log(`   Left Cheek: ${(leftCheekQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${leftCheekQuality.toneEvenness.evenness} | Variance: ${leftCheekQuality.toneEvenness.combinedVariance.toFixed(2)}`);
-    console.log(`   Right Cheek: ${(rightCheekQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${rightCheekQuality.toneEvenness.evenness} | Variance: ${rightCheekQuality.toneEvenness.combinedVariance.toFixed(2)}`);
-    console.log(`   Chin: ${(chinQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${chinQuality.toneEvenness.evenness} | Variance: ${chinQuality.toneEvenness.combinedVariance.toFixed(2)}`);
+    devLog('\n3️⃣  TONE EVENNESS');
+    devLog(`   Forehead: ${(foreheadQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${foreheadQuality.toneEvenness.evenness} | Variance: ${foreheadQuality.toneEvenness.combinedVariance.toFixed(2)}`);
+    devLog(`   Left Cheek: ${(leftCheekQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${leftCheekQuality.toneEvenness.evenness} | Variance: ${leftCheekQuality.toneEvenness.combinedVariance.toFixed(2)}`);
+    devLog(`   Right Cheek: ${(rightCheekQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${rightCheekQuality.toneEvenness.evenness} | Variance: ${rightCheekQuality.toneEvenness.combinedVariance.toFixed(2)}`);
+    devLog(`   Chin: ${(chinQuality.toneEvenness.evennessScore * 10).toFixed(1)}/10 | ${chinQuality.toneEvenness.evenness} | Variance: ${chinQuality.toneEvenness.combinedVariance.toFixed(2)}`);
 
-    console.log('\n4️⃣  RADIANCE');
-    console.log(`   Forehead: ${(foreheadQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${foreheadQuality.radiance.glow} | Luminance: ${foreheadQuality.radiance.avgLuminance.toFixed(1)}`);
-    console.log(`   Left Cheek: ${(leftCheekQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${leftCheekQuality.radiance.glow} | Luminance: ${leftCheekQuality.radiance.avgLuminance.toFixed(1)}`);
-    console.log(`   Right Cheek: ${(rightCheekQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${rightCheekQuality.radiance.glow} | Luminance: ${rightCheekQuality.radiance.avgLuminance.toFixed(1)}`);
-    console.log(`   Chin: ${(chinQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${chinQuality.radiance.glow} | Luminance: ${chinQuality.radiance.avgLuminance.toFixed(1)}`);
+    devLog('\n4️⃣  RADIANCE');
+    devLog(`   Forehead: ${(foreheadQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${foreheadQuality.radiance.glow} | Luminance: ${foreheadQuality.radiance.avgLuminance.toFixed(1)}`);
+    devLog(`   Left Cheek: ${(leftCheekQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${leftCheekQuality.radiance.glow} | Luminance: ${leftCheekQuality.radiance.avgLuminance.toFixed(1)}`);
+    devLog(`   Right Cheek: ${(rightCheekQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${rightCheekQuality.radiance.glow} | Luminance: ${rightCheekQuality.radiance.avgLuminance.toFixed(1)}`);
+    devLog(`   Chin: ${(chinQuality.radiance.radianceScore * 10).toFixed(1)}/10 | ${chinQuality.radiance.glow} | Luminance: ${chinQuality.radiance.avgLuminance.toFixed(1)}`);
 
-    console.log('\n5️⃣  REDNESS UNIFORMITY');
-    console.log(`   Forehead: ${(foreheadQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${foreheadQuality.rednessUniformity.distribution} | ${foreheadQuality.rednessUniformity.redPixelCount} red pixels`);
-    console.log(`   Left Cheek: ${(leftCheekQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${leftCheekQuality.rednessUniformity.distribution} | ${leftCheekQuality.rednessUniformity.redPixelCount} red pixels`);
-    console.log(`   Right Cheek: ${(rightCheekQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${rightCheekQuality.rednessUniformity.distribution} | ${rightCheekQuality.rednessUniformity.redPixelCount} red pixels`);
-    console.log(`   Chin: ${(chinQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${chinQuality.rednessUniformity.distribution} | ${chinQuality.rednessUniformity.redPixelCount} red pixels`);
+    devLog('\n5️⃣  REDNESS UNIFORMITY');
+    devLog(`   Forehead: ${(foreheadQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${foreheadQuality.rednessUniformity.distribution} | ${foreheadQuality.rednessUniformity.redPixelCount} red pixels`);
+    devLog(`   Left Cheek: ${(leftCheekQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${leftCheekQuality.rednessUniformity.distribution} | ${leftCheekQuality.rednessUniformity.redPixelCount} red pixels`);
+    devLog(`   Right Cheek: ${(rightCheekQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${rightCheekQuality.rednessUniformity.distribution} | ${rightCheekQuality.rednessUniformity.redPixelCount} red pixels`);
+    devLog(`   Chin: ${(chinQuality.rednessUniformity.uniformityScore * 10).toFixed(1)}/10 | ${chinQuality.rednessUniformity.distribution} | ${chinQuality.rednessUniformity.redPixelCount} red pixels`);
 
-    console.log('\n6️⃣  OIL-HYDRATION BALANCE');
-    console.log(`   Forehead: ${(foreheadQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${foreheadQuality.oilHydration.status} | Oil: ${foreheadQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${foreheadQuality.oilHydration.hydrationLevel.toFixed(2)}`);
-    console.log(`   Left Cheek: ${(leftCheekQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${leftCheekQuality.oilHydration.status} | Oil: ${leftCheekQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${leftCheekQuality.oilHydration.hydrationLevel.toFixed(2)}`);
-    console.log(`   Right Cheek: ${(rightCheekQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${rightCheekQuality.oilHydration.status} | Oil: ${rightCheekQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${rightCheekQuality.oilHydration.hydrationLevel.toFixed(2)}`);
-    console.log(`   Chin: ${(chinQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${chinQuality.oilHydration.status} | Oil: ${chinQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${chinQuality.oilHydration.hydrationLevel.toFixed(2)}`);
+    devLog('\n6️⃣  OIL-HYDRATION BALANCE');
+    devLog(`   Forehead: ${(foreheadQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${foreheadQuality.oilHydration.status} | Oil: ${foreheadQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${foreheadQuality.oilHydration.hydrationLevel.toFixed(2)}`);
+    devLog(`   Left Cheek: ${(leftCheekQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${leftCheekQuality.oilHydration.status} | Oil: ${leftCheekQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${leftCheekQuality.oilHydration.hydrationLevel.toFixed(2)}`);
+    devLog(`   Right Cheek: ${(rightCheekQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${rightCheekQuality.oilHydration.status} | Oil: ${rightCheekQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${rightCheekQuality.oilHydration.hydrationLevel.toFixed(2)}`);
+    devLog(`   Chin: ${(chinQuality.oilHydration.balanceScore * 10).toFixed(1)}/10 | ${chinQuality.oilHydration.status} | Oil: ${chinQuality.oilHydration.oilLevel.toFixed(2)} Hydration: ${chinQuality.oilHydration.hydrationLevel.toFixed(2)}`);
 
     const warnings = [
       foreheadQuality.oilHydration.warning,
@@ -2007,14 +2011,14 @@ export class FaceScanEngine {
     ].filter(w => w !== '');
 
     if (warnings.length > 0) {
-      console.log('\n⚠️  WARNINGS:');
-      warnings.forEach((w, i) => console.log(`   ${i + 1}. ${w}`));
+      devLog('\n⚠️  WARNINGS:');
+      warnings.forEach((w, i) => devLog(`   ${i + 1}. ${w}`));
     }
 
-    console.log('\n╔═══════════════════════════════════════════════════════════════╗');
-    console.log('║                    ✅ ANALYSIS COMPLETE                       ║');
-    console.log('╚═══════════════════════════════════════════════════════════════╝');
-    console.log('\n');
+    devLog('\n╔═══════════════════════════════════════════════════════════════╗');
+    devLog('║                    ✅ ANALYSIS COMPLETE                       ║');
+    devLog('╚═══════════════════════════════════════════════════════════════╝');
+    devLog('\n');
 
     // Compute quality indicators
     const overallConfidence = allFrames.reduce((sum, f) => sum + f.metrics.qualityScore, 0) / allFrames.length;
@@ -2065,7 +2069,7 @@ export class FaceScanEngine {
     }, 0) / allFrames.length;
     const motionBlur = Math.min(1, Math.sqrt(qualityVariance) * 5);
 
-    console.log('[ENGINE] Comprehensive FACE_STATE created');
+    devLog('[ENGINE] Comprehensive FACE_STATE created');
 
     // CONSTITUTION VALIDATION: Ensure immutability
     const faceState: ComprehensiveFaceState = {

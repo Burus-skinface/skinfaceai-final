@@ -1,0 +1,340 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Polished Skincare Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e9e8e7",
+                    "on-tertiary-fixed": "#1f1c00",
+                    "background": "#fbf9f9",
+                    "surface-dim": "#dbdad9",
+                    "on-primary-container": "#b9baff",
+                    "surface-variant": "#e3e2e2",
+                    "tertiary-fixed-dim": "#d2c966",
+                    "on-secondary-fixed-variant": "#7f0087",
+                    "tertiary-fixed": "#efe67f",
+                    "tertiary-container": "#b6ae4e",
+                    "on-primary-fixed-variant": "#3d3f83",
+                    "error": "#ba1a1a",
+                    "primary-container": "#45478b",
+                    "inverse-primary": "#c0c1ff",
+                    "on-primary-fixed": "#100f56",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#666000",
+                    "outline-variant": "#c7c5d2",
+                    "secondary": "#a311ae",
+                    "primary": "#2e2f72",
+                    "on-error-container": "#93000a",
+                    "inverse-surface": "#303031",
+                    "on-surface-variant": "#464650",
+                    "on-secondary-container": "#6c0073",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#fbf9f9",
+                    "secondary-fixed": "#ffd6f9",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "surface-container-low": "#f5f3f3",
+                    "error-container": "#ffdad6",
+                    "on-surface": "#1b1c1c",
+                    "surface-container-highest": "#e3e2e2",
+                    "surface": "#fbf9f9",
+                    "on-background": "#1b1c1c",
+                    "surface-container": "#efeded",
+                    "on-tertiary-container": "#454100",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#e1e0ff",
+                    "secondary-container": "#f86dfd",
+                    "surface-tint": "#55579d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed-variant": "#4d4800",
+                    "outline": "#777681",
+                    "inverse-on-surface": "#f2f0f0",
+                    "on-secondary-fixed": "#37003b",
+                    "secondary-fixed-dim": "#ffa9fb"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-tight": "8px",
+                    "element-inner": "16px",
+                    "card-gap": "12px",
+                    "section-gap": "24px",
+                    "page-padding": "16px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "title-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-sm": ["15px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "title-sm": ["17px", {"lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400"}],
+                    "display-lg": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .ambient-shadow { box-shadow: 0 4px 20px rgba(69, 71, 139, 0.05), 0 2px 8px rgba(69, 71, 139, 0.02); }
+        .gradient-purple-accent { background: linear-gradient(135deg, rgba(192,193,255,0.2) 0%, rgba(248,109,253,0.1) 100%); }
+        .glow-effect { box-shadow: 0 0 20px rgba(192, 193, 255, 0.4); }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased pb-28" data-mode="connect">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-page-padding pt-8 pb-4 bg-background docked full-width top-0 z-40">
+<div>
+<p class="text-body-md font-body-md text-on-surface-variant">Good morning,</p>
+<h1 class="text-display-lg font-display-lg text-primary">Sofia</h1>
+</div>
+<div class="flex gap-4">
+<button class="relative hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2.5 h-2.5 bg-primary-container rounded-full border-2 border-background"></span>
+</button>
+<button class="hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary" data-icon="tune">tune</span>
+</button>
+</div>
+</header>
+<main class="px-page-padding space-y-section-gap">
+<!-- Overall Score Card -->
+<section class="bg-surface rounded-3xl p-6 ambient-shadow relative overflow-hidden flex justify-between items-center">
+<div class="z-10">
+<div class="flex items-center gap-1 mb-2">
+<span class="text-title-sm font-title-sm text-on-surface">Overall Score</span>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="info">info</span>
+</div>
+<div class="flex items-baseline gap-1 mb-1">
+<span class="text-display-lg font-display-lg text-primary">7.8</span>
+<span class="text-body-md font-body-md text-outline-variant">/10</span>
+</div>
+<p class="text-[#2e7d32] font-medium mb-4" style="opacity: 0;">Good</p>
+<div class="inline-flex items-center gap-1 bg-primary-fixed/50 px-3 py-1.5 rounded-full">
+<span class="material-symbols-outlined text-[16px] text-primary-container" data-icon="trending_up">trending_up</span>
+<span class="text-label-caps font-label-caps text-primary-container">Top 28% of users</span>
+</div>
+</div>
+<div class="absolute right-0 top-0 bottom-0 w-1/2 flex justify-end items-end">
+<div class="absolute inset-0 gradient-purple-accent rounded-l-full blur-xl transform translate-x-8 scale-150"></div>
+<img alt="Professional portrait of a young woman with clear skin" class="h-[120%] object-cover object-center relative z-10 translate-y-4 right-[-10%]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4sCIYQH2jcBhRUg4P3SXkQcT5GOcugOG0iuyOB_cWTGwbkGXukNaxIaa9kqQMAtwRZujhsfDdjkoxaYIfv9y-5ue3GrVSx_EIhlghtYcQifY_BfPNmdn0ATv5zQVdbNQyRnjfqS2hngsT5ACN5Zm2A878eb_h-1XwgHAkB1WBtpFqLW_nE5nkIy7azNXwlyMUrlejv-Rm1400JLtOHLs_rmjk2XsvjvPv120eg9dVveSQoy0x9R2gmyZ96i3xKQ_b_2epX9jyOU8">
+</div>
+</section>
+<!-- Secondary Scores -->
+<section class="grid grid-cols-2 gap-card-gap">
+<!-- Skin Score -->
+<div class="bg-surface rounded-3xl p-5 ambient-shadow">
+<h3 class="text-title-sm font-title-sm text-on-surface mb-2">Skin Score</h3>
+<div class="flex items-baseline gap-1 mb-1">
+<span class="text-display-lg font-display-lg text-primary">7.2</span>
+<span class="text-body-md font-body-md text-outline-variant">/10</span>
+</div>
+<p class="text-[#2e7d32] font-medium mb-4 text-sm">Good</p>
+<div class="inline-flex items-center gap-1 bg-primary-fixed/50 px-2 py-1 rounded-full w-fit">
+<span class="material-symbols-outlined text-[14px] text-primary-container" data-icon="trending_up">trending_up</span>
+<span class="text-[10px] font-semibold tracking-wider uppercase text-primary-container">Top 28% of users</span>
+</div>
+</div>
+<!-- Skin Age -->
+<div class="bg-surface rounded-3xl p-5 ambient-shadow">
+<h3 class="text-title-sm font-title-sm text-on-surface mb-2">Skin Age</h3>
+<div class="flex items-baseline gap-1 mb-1">
+<span class="text-display-lg font-display-lg text-primary">24</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-4">Real age: 21</p>
+<div class="inline-flex items-center gap-1 bg-secondary-fixed/50 px-2 py-1 rounded-full w-fit">
+<span class="text-[10px] font-semibold tracking-wider uppercase text-secondary">+3 years older</span>
+</div>
+</div>
+</section>
+<!-- Skin Overview -->
+<section>
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-title-sm font-title-sm text-on-surface">Skin Overview</h2>
+<a class="text-body-sm font-body-sm text-outline hover:text-primary transition-colors" href="#">See details</a>
+</div>
+<div class="flex overflow-x-auto gap-3 pb-2 -mx-page-padding px-page-padding hide-scrollbar snap-x">
+<!-- Hydration -->
+<div class="bg-surface rounded-2xl p-4 min-w-[110px] ambient-shadow shrink-0 snap-center">
+<div class="flex items-center gap-1.5 mb-3">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant" data-icon="water_drop">water_drop</span>
+<span class="text-xs text-on-surface-variant font-medium">Hydration</span>
+</div>
+<div class="text-2xl font-bold text-primary mb-1">72</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-on-surface-variant">Good</span>
+<span class="text-[#2e7d32] flex items-center"><span class="material-symbols-outlined text-[12px]" data-icon="arrow_upward">arrow_upward</span>4%</span>
+</div>
+</div>
+<!-- Texture -->
+<div class="bg-surface rounded-2xl p-4 min-w-[110px] ambient-shadow shrink-0 snap-center">
+<div class="flex items-center gap-1.5 mb-3">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant" data-icon="blur_on">blur_on</span>
+<span class="text-xs text-on-surface-variant font-medium">Texture</span>
+</div>
+<div class="text-2xl font-bold text-primary mb-1">65</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-on-surface-variant">Average</span>
+<span class="text-error flex items-center"><span class="material-symbols-outlined text-[12px]" data-icon="arrow_downward">arrow_downward</span>3%</span>
+</div>
+</div>
+<!-- Tone (Active/Selected) -->
+<div class="bg-primary-fixed border border-inverse-primary rounded-2xl p-4 min-w-[110px] shadow-sm shrink-0 snap-center">
+<div class="flex items-center gap-1.5 mb-3">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="light_mode">light_mode</span>
+<span class="text-xs text-primary font-medium">Tone</span>
+</div>
+<div class="text-2xl font-bold text-primary mb-1">78</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-[#2e7d32]">Good</span>
+<span class="text-[#2e7d32] flex items-center"><span class="material-symbols-outlined text-[12px]" data-icon="arrow_upward">arrow_upward</span>6%</span>
+</div>
+</div>
+<!-- Pores -->
+<div class="bg-surface rounded-2xl p-4 min-w-[110px] ambient-shadow shrink-0 snap-center">
+<div class="flex items-center gap-1.5 mb-3">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant" data-icon="grain">grain</span>
+<span class="text-xs text-on-surface-variant font-medium">Pores</span>
+</div>
+<div class="text-2xl font-bold text-primary mb-1">45</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-error font-medium">Needs care</span>
+<span class="text-error flex items-center"><span class="material-symbols-outlined text-[12px]" data-icon="arrow_downward">arrow_downward</span>2%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Focus Areas -->
+<section class="bg-surface rounded-3xl p-5 ambient-shadow mb-8">
+<div class="flex justify-between items-center mb-5">
+<h2 class="text-title-sm font-title-sm text-on-surface">Focus Areas</h2>
+<a class="text-body-sm font-body-sm text-outline hover:text-primary transition-colors flex items-center gap-1" href="#">See all <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span></a>
+</div>
+<div class="space-y-6">
+<!-- Item 1 -->
+<div class="flex gap-4 items-center">
+<img alt="A close up image showing skin texture, highlighting slightly uneven areas on the cheek." class="w-24 h-24 rounded-2xl object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmu9FFpPyogtACPL0Hl8HTBvdP3N6IK-sYXIOSQNnkEIDeUJ2lgoCLZ4adu1S5Bz4BPch-vcBYJ755Gad3E4Lwop_472AYaamsrlnTUVlzVbnI3NQuzL8LZXXF2v9N_L1uHFjBHimU7LYM5O8gUHiR-r71aHpi9zc80eGmG9bNB5PcbDN020VS3_jqFrd0ON0Q5uUFQ19w66M4m8BAiWFSbV36MaXV-38oeu4Yod6CSI9w3sUfnTNK0lybvs-67BPF0cWQ3dEh4nc">
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-on-surface mb-0.5">Uneven Texture</h4>
+<p class="text-xs text-on-surface-variant leading-tight mb-2">Makes skin look rough and dull.</p>
+<div class="flex items-center gap-2">
+<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[60%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<span class="text-[10px] font-semibold bg-error-container text-on-error-container px-2 py-0.5 rounded-full">Impact -0.6</span>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right"><br></span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex gap-4 items-center">
+<img alt="A close up image of a person's eye, focusing on the dark circles underneath." class="w-24 h-24 rounded-2xl object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8zi39xttAL4oDShXyxSfwtAkmPBqPBmkmcSHN31OfIy_oXhpuH3KQlc1dmuFxkYvm_cA_ISQyzZauS04Mg6b-K9NPaiOuR8BpP8gWqYjaVYJ92Mc_S6H2JVz4jE3fTVy-ezFnnY6SImEKAv1e1ZKcCoPesoORfRoqWWOQTWiCM3_GsY_AdQ3UgxjZY1ym106BrNEgHqKuTKpqPNZciu66AlnIzQ33hx7LvvZN3Zamdcb2hcTERMLkyzuo8Ui366TkEJRd0lpwOGI">
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-on-surface mb-0.5">Dark Circles</h4>
+<p class="text-xs text-on-surface-variant leading-tight mb-2">Under-eye darkness affects overall brightness.</p>
+<div class="flex items-center gap-2">
+<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[40%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<span class="text-[10px] font-semibold bg-error-container/60 text-on-error-container px-2 py-0.5 rounded-full">Impact -0.4</span>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right"><br></span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex gap-4 items-center">
+<img alt="A close up image showing enlarged pores on the skin, typically around the T-zone." class="w-24 h-24 rounded-2xl object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9h-Cf9j6XA1N0QWi09bQNjBJrInfP300vk8npnDTyO7Ukmxrp7th7gLhxKizPXZXUO3zNj3t21vS20Y8WN_v4itnF0Pw9ltpHm1i5Txwl3VzS3bBTJfRZEIrfQNwkj4g9lU_x-_6DNwnt5l976Glk6jRHU9nLWIiQ0F-3x9Q-JFFVEVI_cunFWKWXklwN9OIQIIYQUuqaguxzgi38urixvZN78w42Lxo7bjSzo4jekBCe2S5jtVRdR_l_sWnBRR_g4soC9-JiOTc">
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-on-surface mb-0.5">Enlarged Pores</h4>
+<p class="text-xs text-on-surface-variant leading-tight mb-2">Pores are more visible in T-zone.</p>
+<div class="flex items-center gap-2">
+<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[30%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<span class="text-[10px] font-semibold bg-error-container/40 text-on-error-container px-2 py-0.5 rounded-full">Impact -0.3</span>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right"><br></span>
+</div>
+</div>
+</div>
+<div class="mt-6 bg-primary-fixed/40 rounded-xl p-3 flex items-center gap-3">
+<div class="bg-background rounded-lg p-1.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-semibold text-primary">Focus on improving these areas</p>
+<p class="text-xs text-primary-container">Small changes. Big impact.</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="chevron_right">chevron_right</span>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-end px-4 pb-6 pt-2 h-24 bg-surface/90 backdrop-blur-xl shadow-[0_-4px_20px_0_rgba(69,71,139,0.05)] rounded-t-xl">
+<!-- Skin (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold scale-90 duration-150 ease-out w-16 group" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="water_drop">water_drop</span>
+<span class="text-label-caps font-label-caps">Skin</span>
+</a>
+<!-- Face -->
+<a class="flex flex-col items-center justify-center text-outline hover:text-secondary transition-colors w-16 group" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="face">face</span>
+<span class="text-label-caps font-label-caps font-normal">Face</span>
+</a>
+<!-- Scan (FAB-like Center Action) -->
+<div class="relative w-20 flex justify-center -translate-y-4">
+<button class="w-16 h-16 bg-primary-container text-on-primary rounded-full flex flex-col items-center justify-center glow-effect shadow-lg hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-3xl mb-0.5" data-icon="center_focus_strong">center_focus_strong</span>
+<span class="text-[10px] font-semibold tracking-wider">Scan</span>
+</button>
+</div>
+<!-- AI Insights -->
+<a class="flex flex-col items-center justify-center text-outline hover:text-secondary transition-colors w-16 group" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-label-caps font-label-caps font-normal">AI Insights</span>
+</a>
+<!-- Progress -->
+<a class="flex flex-col items-center justify-center text-outline hover:text-secondary transition-colors w-16 group" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="bar_chart">bar_chart</span>
+<span class="text-label-caps font-label-caps font-normal">Progress</span>
+</a>
+</nav>
+<style>
+        /* Custom scrollbar hiding utility */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
+
+</body></html>

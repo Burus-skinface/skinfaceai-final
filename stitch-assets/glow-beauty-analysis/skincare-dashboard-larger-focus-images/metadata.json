@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "project": {
+    "id": "6091286712815826104",
+    "title": "Glow Beauty Analysis"
+  },
+  "screen": {
+    "id": "57278e46064d4b49abc892af0aa5f95e",
+    "title": "Skincare Dashboard - Larger Focus Images"
+  },
+  "sources": {
+    "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MmI4NWYyMzY2ZWYwMDMwM2U5ZDdhMDVjN2M3EgsSBxCTgurs9B0YAZIBIwoKcHJvamVjdF9pZBIVQhM2MDkxMjg2NzEyODE1ODI2MTA0&filename=&opi=89354086",
+    "imageUrl": "https://lh3.googleusercontent.com/aida/ADBb0uiur1X7JHtHxY9g9Im9RO2SJtgCFd6gVry2dp-mkCgSvDxaBZARu3O9BKhgUsejlXvR92t0pz1vPYq7UX__PlfW_fu6JaelaMWsqWaYKcnBLZVOzeBurmd4zSa2os53ROXynQub6BI2dyKU5xHK2FsPm46xxd7l6jFGWTPi9wzBHminBpO0XJmTmqvm8Yg8mqOfY0kWDGQws06umxQ676x8TV9lWMvhArBy2OSu6xNbkT0BaTGQb-k1pm8"
+  },
+  "files": {
+    "html": "stitch-assets/glow-beauty-analysis/skincare-dashboard-larger-focus-images/screen.html",
+    "screenshot": "stitch-assets/glow-beauty-analysis/skincare-dashboard-larger-focus-images/screenshot.png",
+    "metadata": "stitch-assets/glow-beauty-analysis/skincare-dashboard-larger-focus-images/metadata.json"
+  },
+  "downloadedAt": "2026-05-26T18:22:00.000Z"
+}

@@ -1,6 +1,7 @@
 import type { ComprehensiveFaceState } from '../faceScan/faceState';
 import type { FaceStructureDetectionResult } from '../analysis/types';
 import type { FaceScores, ArchetypeDebug, ImpactFactor } from './types';
+import { computeArchetype } from './archetypeEngine';
 
 /**
  * SKINFACE AI MASTER BLUEPRINT - SCORING & ARCHETYPE ENGINE (V5.0 RECOVERY)
@@ -262,7 +263,7 @@ export function scoreFace(
       primaryFocus: jawScore < 80 ? 'Jawline Definition' : 'Facial Harmony',
       potentialImpact: (100 - harmonyScore) * 0.1
     },
-    archetype: "THE WARRIOR",
+    archetype: computeArchetype(harmonyScore, jawScore, frontScore),
     measurements: {
       facialThirds: {
         upper: geo.upperThirdRatio, mid: geo.middleThirdRatio, lower: geo.lowerThirdRatio,

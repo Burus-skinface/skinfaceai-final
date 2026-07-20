@@ -1,23 +1,26 @@
 /**
- * Subscription Types and Management
+ * Subscription Types — single PRO tier (RevenueCat entitlement: premium)
+ *
+ * Free: Skin (results) + Progress only, 1 scan/day
+ * PRO:  + Face + Glow Up + unlimited scans
  */
 
 export enum SubscriptionTier {
   FREE = 'free',
   PRO = 'pro',
-  PRO_PLUS = 'pro_plus'
 }
 
 export interface SubscriptionState {
   tier: SubscriptionTier;
-  expiresAt: string | null; // ISO date string
+  expiresAt: string | null;
+  source: 'none' | 'subscription' | 'referral' | 'dev';
   features: {
-    results: boolean;        // FREE - Always accessible (with daily limit)
-    face: boolean;          // PRO+ only
-    spectral: boolean;      // PRO+ only
-    recommendations: boolean; // PRO+ only
-    progress: boolean;      // PRO+ only
-    unlimitedScans: boolean; // PRO+ only
+    results: boolean;
+    face: boolean;
+    spectral: boolean;
+    recommendations: boolean;
+    progress: boolean;
+    unlimitedScans: boolean;
   };
 }
 
@@ -35,113 +38,89 @@ export interface PricingPlan {
 export const PRICING_PLANS: PricingPlan[] = [
   {
     id: 'monthly',
-    tier: SubscriptionTier.PRO_PLUS,
-    name: 'Monthly Access',
+    tier: SubscriptionTier.PRO,
+    name: 'PRO Monthly',
     price: '$16.00',
     period: '/month',
     popular: true,
     badge: 'RECOMMENDED',
     features: [
-      'Save 20% vs Weekly',
-      'Reveal General & Potential Scores',
-      'Detailed Aesthetic Analysis',
-      'Access Deep Forensics (Module 2)',
-      'Access Maxxing Guide (Module 3)',
-      'Full Progress Tracking'
+      'Face structure analysis',
+      'Glow Up routines & recommendations',
+      'Unlimited daily scans',
+      'Skin + Progress (included)',
     ],
   },
   {
     id: 'weekly',
-    tier: SubscriptionTier.PRO_PLUS,
-    name: 'Weekly Access',
+    tier: SubscriptionTier.PRO,
+    name: 'PRO Weekly',
     price: '$4.99',
     period: '/week',
     popular: false,
     features: [
-      'Reveal General & Potential Scores',
-      'Detailed Aesthetic Analysis',
-      'Access Deep Forensics',
-      'Access Maxxing Guide'
+      'Face structure analysis',
+      'Glow Up routines & recommendations',
+      'Unlimited daily scans',
     ],
   },
 ];
 
-/**
- * Get default free subscription state
- */
 export function getDefaultSubscription(): SubscriptionState {
   return {
     tier: SubscriptionTier.FREE,
     expiresAt: null,
+    source: 'none',
     features: {
       results: true,
+      progress: true,
       face: false,
       spectral: false,
       recommendations: false,
-      progress: true, // Progress now FREE for all users!
       unlimitedScans: false,
     },
   };
 }
 
-/**
- * Get subscription state based on tier
- */
-export function getSubscriptionByTier(tier: SubscriptionTier, expiresAt?: string): SubscriptionState {
-  switch (tier) {
-    case SubscriptionTier.PRO:
-      return {
-        tier,
-        expiresAt: expiresAt || null,
-        features: {
-          results: true,
-          face: false,
-          spectral: false,
-          recommendations: false,
-          progress: true, // PRO gets progress (FREE also gets it)
-          unlimitedScans: false,
-        },
-      };
-    case SubscriptionTier.PRO_PLUS:
-      return {
-        tier,
-        expiresAt: expiresAt || null,
-        features: {
-          results: true,
-          face: true,
-          spectral: true,
-          recommendations: true,
-          progress: true,
-          unlimitedScans: true,
-        },
-      };
-    case SubscriptionTier.FREE:
-    default:
-      return getDefaultSubscription();
-  }
+/** Paid PRO feature set (also used for referral / DEV unlock). */
+export function getProSubscription(expiresAt?: string, source: SubscriptionState['source'] = 'subscription'): SubscriptionState {
+  return {
+    tier: SubscriptionTier.PRO,
+    expiresAt: expiresAt || null,
+    source,
+    features: {
+      results: true,
+      progress: true,
+      face: true,
+      spectral: true,
+      recommendations: true,
+      unlimitedScans: true,
+    },
+  };
 }
 
-/**
- * Check if subscription is expired
- */
+export function getSubscriptionByTier(tier: SubscriptionTier, expiresAt?: string): SubscriptionState {
+  if (tier === SubscriptionTier.PRO) {
+    return getProSubscription(expiresAt, 'subscription');
+  }
+  return getDefaultSubscription();
+}
+
 export function isSubscriptionExpired(subscription: SubscriptionState): boolean {
   if (!subscription.expiresAt) return false;
   return new Date(subscription.expiresAt) < new Date();
 }
 
-/**
- * Check if feature is accessible
- */
-export function canAccessFeature(subscription: SubscriptionState, feature: keyof SubscriptionState['features']): boolean {
+export function canAccessFeature(
+  subscription: SubscriptionState,
+  feature: keyof SubscriptionState['features']
+): boolean {
   if (isSubscriptionExpired(subscription)) {
     return getDefaultSubscription().features[feature];
   }
   return subscription.features[feature];
 }
 
-/**
- * Get required tier for a feature
- */
 export function getRequiredTier(feature: keyof SubscriptionState['features']): SubscriptionTier {
   switch (feature) {
     case 'results':
@@ -151,10 +130,8 @@ export function getRequiredTier(feature: keyof SubscriptionState['features']): S
     case 'spectral':
     case 'recommendations':
     case 'unlimitedScans':
-      return SubscriptionTier.PRO_PLUS;
+      return SubscriptionTier.PRO;
     default:
       return SubscriptionTier.FREE;
   }
 }
-
-
