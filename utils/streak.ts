@@ -79,6 +79,50 @@ function saveStreak(streak: StreakData) {
   }
 }
 
+/** Push local streak to profiles (best-effort). */
+export async function syncStreakToCloud(userId: string): Promise<void> {
+  try {
+    const { supabase } = await import('../services/supabase');
+    const streak = getStreakData();
+    await supabase
+      .from('profiles')
+      .update({
+        streak_current: streak.currentStreak,
+        streak_longest: streak.longestStreak,
+        streak_last_scan: streak.lastScanDate,
+        streak_total_scans: streak.totalScans,
+      })
+      .eq('id', userId);
+  } catch (e) {
+    console.warn('[STREAK] cloud sync failed', e);
+  }
+}
+
+/** Hydrate from cloud if local is empty or behind. */
+export async function hydrateStreakFromCloud(userId: string): Promise<void> {
+  try {
+    const { supabase } = await import('../services/supabase');
+    const { data } = await supabase
+      .from('profiles')
+      .select('streak_current, streak_longest, streak_last_scan, streak_total_scans')
+      .eq('id', userId)
+      .maybeSingle();
+    if (!data) return;
+    const local = getStreakData();
+    const cloudTotal = data.streak_total_scans ?? 0;
+    if (cloudTotal > local.totalScans) {
+      saveStreak({
+        currentStreak: data.streak_current ?? 0,
+        longestStreak: data.streak_longest ?? 0,
+        lastScanDate: data.streak_last_scan ?? null,
+        totalScans: cloudTotal,
+      });
+    }
+  } catch (e) {
+    console.warn('[STREAK] hydrate failed', e);
+  }
+}
+
 /**
  * Get streak badge info
  */

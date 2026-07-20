@@ -268,7 +268,7 @@ export async function scheduleAllNotifications(prefs?: NotificationPreferences):
 /** Stop all scheduled notifications */
 export async function clearAllScheduled(): Promise<void> {
   if (Capacitor.isNativePlatform()) {
-    await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}] });
+    await LocalNotifications.cancel({ notifications: [{id: 1}, {id: 2}, {id: 3}, {id: 4}, {id: 5}] });
   }
   Object.values(scheduledTimeouts).forEach((id) => window.clearTimeout(id));
   scheduledTimeouts = {};

@@ -10,6 +10,9 @@ import {
     getNotificationPreferences,
 } from '../utils/notifications';
 import { supabase } from '../services/supabase';
+import { deleteCurrentAccount } from '../services/accountDeletion';
+import { clearAllScanThumbnails, clearPendingFaceState } from '../utils/pendingScan';
+import { clearFreeScanDayMarker } from '../utils/dailyScanLimit';
 
 interface GlobalAppHeaderProps {
     user: any;
@@ -90,41 +93,27 @@ const GlobalAppHeader: React.FC<GlobalAppHeaderProps> = ({ user, onLogout, onSho
         setDeleteError(null);
 
         try {
-            // Best-effort cloud cleanup. We do NOT block local sign-out on these:
-            // a stuck network must never trap the user inside their account.
-            if (user?.id) {
-                const tasks = [
-                    Promise.resolve(supabase.from('scans').delete().eq('user_id', user.id)),
-                    Promise.resolve(supabase.from('profiles').delete().eq('id', user.id)),
-                ];
-                const results = await Promise.allSettled(tasks);
-                results.forEach((r, i) => {
-                    if (r.status === 'rejected') {
-                        console.error('[DELETE_ACCOUNT] cloud cleanup task failed', i, r.reason);
-                    } else if ((r.value as any)?.error) {
-                        console.error('[DELETE_ACCOUNT] cloud cleanup task error', i, (r.value as any).error);
-                    }
-                });
-            }
+            // Full wipe via Edge Function (auth.users + scans + profile + rewards)
+            await deleteCurrentAccount();
 
-            // Local cleanup
             try {
                 localStorage.removeItem('face_analysis_history');
                 localStorage.removeItem('user_demographics');
                 localStorage.removeItem('is_premium');
+                localStorage.removeItem('facial_analysis_subscription');
+                clearAllScanThumbnails();
+                clearPendingFaceState();
+                clearFreeScanDayMarker();
             } catch (e) {
                 console.warn('[DELETE_ACCOUNT] local cleanup warning', e);
             }
 
-            // Sign out (also clears Supabase session locally)
             try {
                 await supabase.auth.signOut();
             } catch (e) {
                 console.warn('[DELETE_ACCOUNT] signOut warning', e);
             }
 
-            // Hand off to parent which will reset history/user/onboarding state
-            // and route the user back to the onboarding/landing flow.
             setIsDeleting(false);
             setShowDeleteModal(false);
             onLogout?.();

@@ -16,6 +16,11 @@ dist-ssr
 .env
 .env.local
 
+# Local DB restore artifacts
+db_cluster.backup
+db_cluster.backup.gz
+.supabase-restore-secrets.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

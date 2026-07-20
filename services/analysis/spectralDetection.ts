@@ -2,6 +2,7 @@ import type { ComprehensiveFaceState } from '../faceScan/faceState';
 import type { SpectralDetectionResult } from './types';
 import { Type } from "@google/genai";
 import { separateDiffuseSpecular, computeRednessIndex, computePigmentIndex, computeSallownessIndex, computeFrequencyMaps, computeTextureMetrics } from './spectralMath';
+import { callAnalyzeProxy } from '../analyzeProxy';
 
 // Helper: Decode Base64 to Uint8ClampedArray (RGBA)
 // Note: In a browser environment, we'd use Canvas API. In Node, we'd use sharp/jimp.
@@ -409,35 +410,25 @@ async function generateDescriptions(findings: any): Promise<any> {
   const prompt = `
     You are an advanced Dermatological AI. Analyze these spectral findings and provide a unique "AI Insight" for each category.
     This insight should explain WHAT the specific metric reveals about the user's skin health today.
-    Keep it personal, scientific,/insightful, and short (max 15 words).
+    Keep it personal, scientific, insightful, and short (max 15 words).
     
     Findings:
     ${JSON.stringify(findings, null, 2)}
     `;
 
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      pigmentUniformity: { type: Type.STRING },
+      rednessSignal: { type: Type.STRING },
+      opticalClarity: { type: Type.STRING },
+      subsurfaceScatter: { type: Type.STRING },
+      specularNoise: { type: Type.STRING },
+    },
+  };
+
   try {
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        temperature: 0,
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`AI Request failed: ${response.statusText}`);
-    }
-
-    const responseData = await response.json();
-    const text = responseData.text;
-    try {
-      return JSON.parse(text);
-    } catch (e) {
-      const fixedText = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-      return JSON.parse(fixedText);
-    }
+    return await callAnalyzeProxy(prompt, schema, { model: 'gemini-2.5-flash' });
   } catch (error) {
     console.error("Gemini Spectral Description Failed", error);
     throw error;

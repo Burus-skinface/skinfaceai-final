@@ -1,15 +1,15 @@
 /**
  * Referral Service
- * 
+ *
  * Handles referral tracking, premium rewards, and referral code management.
- * Uses Supabase for persistent storage and localStorage for pending referrals.
- * 
+ * Uses Supabase for persistent storage and localStorage for pending referral codes.
+ *
  * Flow:
  * 1. User A shares referral link → ?ref=CODE
  * 2. User B opens link → code saved to localStorage
- * 3. User B signs up → referral record created in Supabase
- * 4. User B completes first scan → referral marked as complete
- * 5. When User A has 5 completed referrals → 3 days premium granted
+ * 3. User B signs up → referral record created in Supabase (scan not yet credited)
+ * 4. User B's first authenticated scans INSERT → DB trigger marks complete + grants rewards
+ * 5. When User A has 5 completed referrals → 3 days premium granted (server-side)
  */
 
 import { supabase } from './supabase';
@@ -18,7 +18,6 @@ import { supabase } from './supabase';
 const REFERRALS_NEEDED = 5;
 const PREMIUM_DAYS_REWARD = 3;
 const PENDING_REFERRAL_KEY = 'pending_referral_code';
-const PENDING_GUEST_SCAN_KEY = 'pending_guest_scan_for_referral';
 
 // ─── Types ─────────────────────────────────────────────────
 export interface ReferralStats {
@@ -45,7 +44,7 @@ export interface PremiumStatus {
  * Generate a unique referral code.
  * Uses cryptographically secure random values to prevent brute-forcing.
  */
-export function generateReferralCode(userId: string): string {
+export function generateReferralCode(_userId: string): string {
   const array = new Uint8Array(4); // 4 bytes = 8 hex chars
   window.crypto.getRandomValues(array);
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -112,22 +111,11 @@ export function hasPendingReferral(): boolean {
   return !!localStorage.getItem(PENDING_REFERRAL_KEY);
 }
 
-/** Guest completed a scan before auth — credit referrer after signup. */
-export function markGuestScanPendingReferral(): void {
-  localStorage.setItem(PENDING_GUEST_SCAN_KEY, 'true');
-}
-
-export async function applyPendingGuestScanReferral(userId: string): Promise<void> {
-  if (localStorage.getItem(PENDING_GUEST_SCAN_KEY) !== 'true') return;
-  localStorage.removeItem(PENDING_GUEST_SCAN_KEY);
-  await markReferralScanComplete(userId);
-}
-
 // ─── Referral Tracking (Supabase) ──────────────────────────
 
 /**
  * When a new user signs up, link them to the referrer.
- * Called after authentication is confirmed.
+ * Scan completion + premium grants are handled by DB trigger on scans INSERT.
  */
 export async function trackReferralSignup(newUserId: string): Promise<void> {
   const referralCode = consumePendingReferral();
@@ -146,7 +134,7 @@ export async function trackReferralSignup(newUserId: string): Promise<void> {
       return;
     }
 
-    // Create referral record
+    // Create referral record — completion is trigger-only after a real scan
     const { error } = await supabase
       .from('referrals')
       .insert({
@@ -172,94 +160,12 @@ export async function trackReferralSignup(newUserId: string): Promise<void> {
       .eq('id', newUserId);
 
     console.log('✅ Referral tracked:', referralCode, '→', newUserId);
-    await applyPendingGuestScanReferral(newUserId);
   } catch (err) {
     console.error('Referral tracking error:', err);
   }
 }
 
-/**
- * Mark a user's referral as "scan completed".
- * Called after the referred user completes their first scan.
- */
-export async function markReferralScanComplete(userId: string): Promise<void> {
-  try {
-    // Update the referral record
-    const { data, error } = await supabase
-      .from('referrals')
-      .update({ referred_scan_completed: true })
-      .eq('referred_id', userId)
-      .eq('referred_scan_completed', false)
-      .select('referrer_id')
-      .single();
-
-    if (error || !data) {
-      // No pending referral for this user, or already completed
-      return;
-    }
-
-    console.log('✅ Referral scan completed for user:', userId);
-
-    // Check if the referrer has earned a new reward
-    await checkAndGrantReward(data.referrer_id);
-  } catch (err) {
-    console.error('Mark referral scan error:', err);
-  }
-}
-
-// ─── Reward Management ─────────────────────────────────────
-
-/**
- * Check if the referrer has reached the threshold and grant premium.
- */
-async function checkAndGrantReward(referrerId: string): Promise<void> {
-  try {
-    // Count completed referrals
-    const { count } = await supabase
-      .from('referrals')
-      .select('*', { count: 'exact', head: true })
-      .eq('referrer_id', referrerId)
-      .eq('referred_scan_completed', true);
-
-    if (!count) return;
-
-    // Count existing rewards
-    const { count: rewardCount } = await supabase
-      .from('premium_rewards')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', referrerId)
-      .eq('reward_type', 'referral');
-
-    const currentRewards = rewardCount || 0;
-    const deservedRewards = Math.floor(count / REFERRALS_NEEDED);
-
-    if (deservedRewards > currentRewards) {
-      // Grant new reward(s)
-      const newRewards = deservedRewards - currentRewards;
-      
-      for (let i = 0; i < newRewards; i++) {
-        const now = new Date();
-        const expiresAt = new Date(now.getTime() + PREMIUM_DAYS_REWARD * 24 * 60 * 60 * 1000);
-
-        await supabase
-          .from('premium_rewards')
-          .insert({
-            user_id: referrerId,
-            reward_type: 'referral',
-            days_granted: PREMIUM_DAYS_REWARD,
-            starts_at: now.toISOString(),
-            expires_at: expiresAt.toISOString(),
-          });
-      }
-
-      console.log(`🎉 Granted ${newRewards} premium reward(s) to ${referrerId}`);
-    }
-  } catch (err) {
-    console.error('Check/grant reward error:', err);
-  }
-}
-
-// ─── Stats & Status ────────────────────────────────────────
+// ─── Stats & Status (read-only) ────────────────────────────
 
 /**
  * Get referral statistics for a user.
@@ -307,7 +213,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
     if (rewards && rewards.length > 0) {
       defaults.rewardsEarned = rewards.length;
       defaults.totalPremiumDays = rewards.reduce((sum: number, r: any) => sum + (r.days_granted || 0), 0);
-      
+
       // Check if any premium is still active
       const now = new Date();
       const activeReward = rewards.find((r: any) => new Date(r.expires_at) > now);
@@ -343,7 +249,7 @@ export async function getPremiumStatus(userId: string): Promise<PremiumStatus> {
     if (rewards && rewards.length > 0) {
       const expiresAt = new Date(rewards[0].expires_at);
       const now = new Date();
-      
+
       if (expiresAt > now) {
         const remainingMs = expiresAt.getTime() - now.getTime();
         return {

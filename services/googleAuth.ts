@@ -12,7 +12,14 @@ export interface GoogleUser {
 
 // Google OAuth Client ID
 // Get from: https://console.cloud.google.com/apis/credentials
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '47706620391-f73bk69cs5jgkbq55idbeh5lroudnjlu.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+function requireGoogleClientId(): string {
+  if (!GOOGLE_CLIENT_ID) {
+    throw new Error('VITE_GOOGLE_CLIENT_ID is not configured');
+  }
+  return GOOGLE_CLIENT_ID;
+}
 
 /**
  * Initialize Google Sign-In
@@ -24,7 +31,7 @@ export function initGoogleSignIn(onSuccess: (user: GoogleUser) => void) {
   }
 
   (window as any).google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: requireGoogleClientId(),
     callback: (response: any) => {
       handleCredentialResponse(response, onSuccess);
     },
@@ -63,11 +70,11 @@ export function showGoogleSignIn(onSuccess: (user: GoogleUser) => void) {
   // Wait for Google library to load
   waitForGoogle(() => {
     try {
-      console.log('🔐 Initializing Google Sign-In with Client ID:', GOOGLE_CLIENT_ID);
+      console.log('🔐 Initializing Google Sign-In with Client ID:', requireGoogleClientId());
       
       // Use the simpler Identity Services method
       (window as any).google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
+        client_id: requireGoogleClientId(),
         callback: (response: any) => {
           handleCredentialResponse(response, onSuccess);
         },

@@ -1,15 +1,16 @@
 /**
- * Subscription Management Hook
+ * Subscription Management Hook — single PRO tier
  */
 
 import { useState, useEffect } from 'react';
-import { 
-  SubscriptionState, 
+import {
+  SubscriptionState,
   SubscriptionTier,
   getDefaultSubscription,
   getSubscriptionByTier,
+  getProSubscription,
   isSubscriptionExpired,
-  canAccessFeature
+  canAccessFeature,
 } from '../types/subscription';
 import { getPremiumStatus } from '../services/referralService';
 import { Purchases } from '@revenuecat/purchases-capacitor';
@@ -32,12 +33,10 @@ export function useSubscription(userId?: string | null) {
   const [subscription, setSubscription] = useState<SubscriptionState>(getDefaultSubscription());
   const [loading, setLoading] = useState(true);
 
-  // Load subscription from the strongest available source.
   useEffect(() => {
     refreshSubscription();
   }, [userId]);
 
-  // Save the resolved state locally for fast startup. Server/native sources still win on refresh.
   useEffect(() => {
     if (!loading) {
       saveSubscription(subscription);
@@ -49,8 +48,10 @@ export function useSubscription(userId?: string | null) {
       const stored = localStorage.getItem(SUBSCRIPTION_STORAGE_KEY);
       if (stored) {
         const parsed: SubscriptionState = JSON.parse(stored);
-        
-        // Check if subscription is expired
+        // Migrate legacy pro_plus → pro
+        if ((parsed as any).tier === 'pro_plus') {
+          parsed.tier = SubscriptionTier.PRO;
+        }
         if (isSubscriptionExpired(parsed)) {
           return getDefaultSubscription();
         }
@@ -68,7 +69,7 @@ export function useSubscription(userId?: string | null) {
       if (DEV_PREMIUM_UNLOCKED) {
         const expiresAt = new Date();
         expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, expiresAt.toISOString()), 'dev'));
+        setSubscription(withSource(getProSubscription(expiresAt.toISOString(), 'dev'), 'dev'));
         return;
       }
 
@@ -77,7 +78,7 @@ export function useSubscription(userId?: string | null) {
           const { customerInfo } = await Purchases.getCustomerInfo();
           if (customerInfo.entitlements.active[ENTITLEMENT_ID]) {
             const expiresAt = customerInfo.entitlements.active[ENTITLEMENT_ID].expirationDate ?? undefined;
-            setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, expiresAt), 'subscription'));
+            setSubscription(withSource(getProSubscription(expiresAt, 'subscription'), 'subscription'));
             return;
           }
         } catch (error) {
@@ -88,13 +89,14 @@ export function useSubscription(userId?: string | null) {
       if (userId) {
         const referralStatus = await getPremiumStatus(userId);
         if (referralStatus.isActive) {
-          setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, referralStatus.expiresAt || undefined), 'referral'));
+          setSubscription(
+            withSource(getProSubscription(referralStatus.expiresAt || undefined, 'referral'), 'referral')
+          );
           return;
         }
       }
 
       const stored = loadStoredSubscription();
-      // Stored paid state is only trusted for explicit dev unlock. Otherwise fall back to free.
       setSubscription(stored.source === 'dev' && DEV_PREMIUM_UNLOCKED ? stored : getDefaultSubscription());
     } finally {
       setLoading(false);
@@ -115,7 +117,7 @@ export function useSubscription(userId?: string | null) {
     }
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-    setSubscription(withSource(getSubscriptionByTier(SubscriptionTier.PRO_PLUS, expiresAt.toISOString()), 'dev'));
+    setSubscription(withSource(getProSubscription(expiresAt.toISOString(), 'dev'), 'dev'));
   };
 
   const cancelSubscription = () => {
@@ -127,9 +129,8 @@ export function useSubscription(userId?: string | null) {
   };
 
   const isPro = subscription.tier === SubscriptionTier.PRO;
-  const isProPlus = subscription.tier === SubscriptionTier.PRO_PLUS;
   const isFree = subscription.tier === SubscriptionTier.FREE;
-  const isPremium = isPro || isProPlus;
+  const isPremium = isPro;
 
   return {
     subscription,
@@ -139,11 +140,10 @@ export function useSubscription(userId?: string | null) {
     cancelSubscription,
     hasAccess,
     isPro,
-    isProPlus,
+    /** @deprecated Use isPro — single PRO tier */
+    isProPlus: isPro,
     isFree,
     isPremium,
     premiumSource: subscription.source,
   };
 }
-
-

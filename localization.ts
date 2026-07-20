@@ -484,15 +484,24 @@ const translations = {
 
 export type SupportedLanguage = 'en' | 'tr';
 
+const LANG_KEY = 'skinface_lang_v1';
+
 let currentLanguage: SupportedLanguage = 'en';
 
-if (typeof navigator !== 'undefined') {
-  const preferredLanguage = navigator.languages?.[0] || navigator.language || 'en';
-  const userLang = preferredLanguage.toLowerCase().split('-')[0];
-  if (userLang === 'tr') {
-    currentLanguage = 'tr';
+function detectLanguage(): SupportedLanguage {
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === 'tr' || saved === 'en') return saved;
+  } catch { /* ignore */ }
+  if (typeof navigator !== 'undefined') {
+    const preferredLanguage = navigator.languages?.[0] || navigator.language || 'en';
+    const userLang = preferredLanguage.toLowerCase().split('-')[0];
+    if (userLang === 'tr') return 'tr';
   }
+  return 'en';
 }
+
+currentLanguage = detectLanguage();
 
 export type Translation = typeof translations.en;
 export const t: Translation = translations[currentLanguage] as Translation;
@@ -500,6 +509,17 @@ export const t: Translation = translations[currentLanguage] as Translation;
 export const getLanguage = (): SupportedLanguage => currentLanguage;
 export const getLocale = () => currentLanguage === 'tr' ? 'tr-TR' : 'en-US';
 export const localized = <T,>(en: T, tr: T): T => currentLanguage === 'tr' ? tr : en;
+
+/** Persist language and reload so `t` dictionary rebinds. */
+export function setLanguage(lang: SupportedLanguage): void {
+  try {
+    localStorage.setItem(LANG_KEY, lang);
+  } catch { /* ignore */ }
+  currentLanguage = lang;
+  if (typeof window !== 'undefined') {
+    window.location.reload();
+  }
+}
 
 export const translateDynamicNote = (text: string | undefined): string => {
   if (!text) return '';

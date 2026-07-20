@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { localized } from '../../localization';
+import LegalModal, { LegalTab } from '../LegalModal';
+import { trackEvent } from '../../utils/analytics';
 
 interface WelcomeScreenProps {
     onNext: () => void;
@@ -8,7 +10,7 @@ interface WelcomeScreenProps {
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
-    const [showTerms, setShowTerms] = useState(false);
+    const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -20,6 +22,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
         if (newIndex !== activeIndex) {
             setActiveIndex(newIndex);
         }
+    };
+
+    const handleStart = () => {
+        trackEvent('onboarding_complete');
+        onNext();
     };
 
     return (
@@ -168,7 +175,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
                     transition={{ delay: 0.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onNext}
+                    onClick={handleStart}
                     className="w-full h-[60px] rounded-full font-bold text-[18px] bg-[#1D1D1F] text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center"
                 >
                     {localized('Start first task', 'İlk görevi başlat')}
@@ -183,70 +190,33 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNext, onDevSkip }) => {
                     </button>
                 )}
 
-                {/* Subtle Terms Footer */}
                 <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.9, duration: 0.6 }}
                     className="text-[12px] text-center text-[#86868B] leading-[1.6] max-w-[280px] mx-auto"
                 >
-                    By proceeding to use Skinface.ai, you agree to our{' '}
+                    {localized('By proceeding you agree to our', 'Devam ederek kabul etmiş olursunuz:')}{' '}
                     <button
-                        onClick={() => setShowTerms(true)}
-                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 hover:decoration-[#1D1D1F]/100 transition-colors font-medium"
+                        onClick={() => setLegalTab('terms')}
+                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 font-medium"
                     >
-                        terms of use
+                        {localized('terms of use', 'kullanım koşulları')}
                     </button>
-                    {' '}and acknowledge that you have read our{' '}
+                    {' '}{localized('and', 've')}{' '}
                     <button
-                        onClick={() => setShowTerms(true)}
-                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 hover:decoration-[#1D1D1F]/100 transition-colors font-medium"
+                        onClick={() => setLegalTab('privacy')}
+                        className="text-[#1D1D1F] underline decoration-[#1D1D1F]/30 underline-offset-2 font-medium"
                     >
-                        privacy policy
+                        {localized('privacy policy', 'gizlilik politikası')}
                     </button>
+                    . {localized('Scan images are deleted within 24 hours; scores stay for progress.', 'Tarama görselleri 24 saat içinde silinir; skorlar ilerleme için saklanır.')}
                 </motion.p>
             </div>
 
-            {/* Terms Modal */}
-            <AnimatePresence>
-                {showTerms && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-50 flex items-end justify-center bg-[#1D1D1F]/40 backdrop-blur-sm"
-                        onClick={() => setShowTerms(false)}
-                    >
-                        <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="w-full h-[85vh] bg-[#FFFFFF] rounded-t-[2.5rem] p-8 pb-12 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="w-12 h-1.5 bg-[#E5E5EA] rounded-full mx-auto mb-8" />
-                            <h3 className="text-2xl font-bold mb-6 tracking-tight text-[#1D1D1F]">Legal Terms</h3>
-                            <div className="flex-1 overflow-y-auto pr-4 space-y-6 text-[#48484A] leading-relaxed">
-                                <p>
-                                    <strong>1. Introduction</strong><br />
-                                    Welcome to Skinface.ai. By using our service, you agree to these terms...
-                                </p>
-                                <p>
-                                    <strong>2. Privacy Policy</strong><br />
-                                    Your photos are processed securely and are never shared with third parties without your explicit consent...
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setShowTerms(false)}
-                                className="mt-8 w-full py-4 rounded-full font-bold text-[#1D1D1F] bg-[#F2F2F7] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] transition-colors"
-                            >
-                                Close
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {legalTab && (
+                <LegalModal isOpen={!!legalTab} initialTab={legalTab} onClose={() => setLegalTab(null)} />
+            )}
         </div>
     );
 };

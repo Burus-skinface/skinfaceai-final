@@ -1,112 +1,50 @@
-# Google OAuth Setup
+# Google OAuth Setup (Skinface)
 
-## 🔑 Google Client ID Alma
+App uses **Supabase Auth** Google provider (`signInWithOAuth`), not the old GIS popup alone.
 
-### Adım 1: Google Cloud Console'a Git
-https://console.cloud.google.com/
+## Why Google shows the wrong name
 
-### Adım 2: Yeni Proje Oluştur (veya mevcut projeyi seç)
-1. Üstteki "Select a project" → "New Project"
-2. Proje adı ver (örn: "Facial Analysis App")
-3. "Create" tıkla
+| What you see | Where it comes from |
+|---|---|
+| “Continue to **Skinface**” | Google Cloud → **OAuth consent screen → App name** |
+| URL `….supabase.co` | Normal for hosted Supabase Auth (not the product name) |
+| Dashboard project name | Cosmetic only — we renamed the cloud project to **Skinface** |
 
-### Adım 3: OAuth Consent Screen Ayarla
-1. Sol menüden "APIs & Services" → "OAuth consent screen"
-2. "External" seç → "Create"
-3. Uygulama bilgilerini doldur:
-   - App name: Facial Analysis
-   - User support email: Senin email'in
-   - Developer contact: Senin email'in
-4. "Save and Continue"
-5. Scopes ekranında "Save and Continue" (default scopes yeterli)
-6. Test users ekranında kendi email'ini ekle
-7. "Save and Continue"
+## Steps
 
-### Adım 4: OAuth Client ID Oluştur
-1. Sol menüden "Credentials" → "Create Credentials" → "OAuth client ID"
-2. Application type: "Web application"
-3. Name: "Facial Analysis Web"
-4. Authorized JavaScript origins:
+### 1. Google Cloud → OAuth consent screen
+1. https://console.cloud.google.com/apis/credentials/consent
+2. **App name: `Skinface`** (this is what users see)
+3. Support + developer emails → Save
+
+### 2. Create OAuth Web client
+1. Credentials → Create → OAuth client ID → **Web application**
+2. Name: `Skinface Web`
+3. Authorized redirect URI (required):
+   ```
+   https://rgybwdcutguvyjmxdtxq.supabase.co/auth/v1/callback
+   ```
+4. Optional JS origins for local web:
    ```
    http://localhost:3000
-   http://localhost:3001
-   http://localhost:3002
+   http://localhost:3003
    ```
-5. "Create" tıkla
-6. **Client ID'yi kopyala!**
+5. Copy **Client ID** + **Client Secret**
 
-### Adım 5: .env Dosyasına Ekle
+### 3. Enable Google in Supabase
+Dashboard → Authentication → Providers → **Google** → Enable  
+Paste Client ID + Secret → Save
+
+Auth → URL Configuration (already set via API for local):
+- Site URL: `http://localhost:3000`
+- Redirect allow list includes `localhost:3000/3003` and `capacitor://localhost`
+
+### 4. App env (optional GIS / native extras)
 ```env
-VITE_GOOGLE_CLIENT_ID=YOUR_CLIENT_ID_HERE.apps.googleusercontent.com
+VITE_GOOGLE_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
 ```
 
-### Adım 6: Server'ı Restart Et
-```bash
-# Terminal'de Ctrl+C ile durdur
-npm run dev
-```
-
----
-
-## 🧪 Test Etme
-
-1. Login ekranında "Continue with Google" tıkla
-2. Google hesap seçme popup'ı açılacak
-3. Hesabını seç
-4. Onboarding sorularını doldur
-5. Upload screen'e gideceksin!
-
----
-
-## ⚠️ Sorun Giderme
-
-### "Google Sign-In library not loaded"
-- Tarayıcı console'unda bu hatayı görürsen:
-- index.html'deki Google script tag'inin yüklendiğinden emin ol
-- Sayfayı yenile (F5)
-
-### Demo Mode
-- Eğer Google Client ID yoksa veya hata varsa, otomatik demo mode'a geçer
-- Demo mode'da "demo@gmail.com" ile giriş olur
-
-### Test Users
-- OAuth consent screen'de TEST MODE'dayken
-- Sadece eklediğin test users giriş yapabilir
-- Production'a almak için Google review gerekir
-
----
-
-## 🚀 Production'a Alma
-
-1. OAuth consent screen'i "PUBLISH" yap
-2. Google review için başvur
-3. Domain verification yap
-4. Authorized domains ekle
-
----
-
-## 📝 Mevcut Durum
-
-✅ Google OAuth entegrasyonu hazır
-✅ Fallback demo mode var
-✅ JWT token parsing
-✅ User info extraction (email, name, photo)
-
-Şu an Google Client ID eklenmezse demo mode çalışır!
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## Notes
+- New project Google provider starts **disabled** until you paste ID/Secret (secrets cannot be copied from the old paused project).
+- After changing consent **App name**, wait a few minutes and hard-refresh Google’s login page.
+- Revoke any access token you pasted in chat: https://supabase.com/dashboard/account/tokens

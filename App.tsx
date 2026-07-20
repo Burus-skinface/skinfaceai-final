@@ -21,37 +21,74 @@ import GlobalAppHeader from "./components/GlobalAppHeader";
 import NotificationSettings from "./components/NotificationSettings";
 import AuthGate from "./components/AuthGate";
 import SplashScreen from "./components/SplashScreen";
+import { NotifAskOnce } from "./components/NotifAskOnce";
 import { ToastProvider, useToast } from "./components/ui/Toast";
 import { scheduleAllNotifications, getNotificationPreferences } from "./utils/notifications";
-import { updateStreak } from "./utils/streak";
+import { updateStreak, syncStreakToCloud, hydrateStreakFromCloud } from "./utils/streak";
 import { savePendingReferral, trackReferralSignup } from "./services/referralService";
-import { saveScanThumbnail } from "./utils/pendingScan";
+import {
+  saveScanThumbnail,
+  purgeExpiredThumbnails,
+  clearAllScanThumbnails,
+  clearPendingFaceState,
+} from "./utils/pendingScan";
+import {
+  purgeExpiredBiometrics,
+  isBiometricExpired,
+  cloudBiometricPurgePayload,
+  stripFaceStateImages,
+} from "./utils/biometricRetention";
+import { canStartScan, markFreeScanUsedToday } from "./utils/dailyScanLimit";
+import { mergeGuestHistoryOnLogin } from "./utils/guestHistoryMerge";
 import { trackEvent } from "./utils/analytics";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useSubscription } from "./hooks/useSubscription";
 import { Purchases } from "@revenuecat/purchases-capacitor";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
+import { localized } from "./localization";
+
+function loadPurgedHistory(): DailyReport[] {
+  try {
+    const saved = localStorage.getItem("face_analysis_history");
+    if (!saved) return [];
+    const purged = purgeExpiredBiometrics(JSON.parse(saved) as DailyReport[]);
+    localStorage.setItem(
+      "face_analysis_history",
+      JSON.stringify(
+        purged.map((report) => ({
+          ...report,
+          imageUrl: isBiometricExpired(report.date) ? undefined : report.imageUrl,
+          faceState: isBiometricExpired(report.date)
+            ? stripFaceStateImages(report.faceState)
+            : report.faceState
+              ? {
+                  ...report.faceState,
+                  primaryImageJpegBase64: undefined,
+                  retainedCropJpegBase64: undefined,
+                }
+              : undefined,
+        }))
+      )
+    );
+    purgeExpiredThumbnails();
+    return purged;
+  } catch {
+    return [];
+  }
+}
 
 
 const AppInner: React.FC = () => {
-  // Load history from localStorage on mount
-  const [history, setHistory] = useState<DailyReport[]>(() => {
-    const saved = localStorage.getItem("face_analysis_history");
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Load history from localStorage on mount (strip biometrics older than 24h; scores stay)
+  const [history, setHistory] = useState<DailyReport[]>(() => loadPurgedHistory());
   const [user, setUser] = useState<any>(null);
 
   // State variables
   const [activeTab, setActiveTab] = useState("results");
   const [analysisData, setAnalysisData] = useState<DailyReport | null>(() => {
-    // On mount, load the last report if exists
-    const saved = localStorage.getItem("face_analysis_history");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length > 0) return parsed[parsed.length - 1];
-    }
-    return null;
+    const purged = loadPurgedHistory();
+    return purged.length > 0 ? purged[purged.length - 1] : null;
   });
   const [contentKey, setContentKey] = useState(0);
   const [isPaywallVisible, setIsPaywallVisible] = useState(false);
@@ -93,6 +130,7 @@ const AppInner: React.FC = () => {
     const captureRef = (refCode: string | null) => {
       if (!refCode) return;
       savePendingReferral(refCode);
+      trackEvent('referral_captured', { code: refCode });
       console.log('📎 Referral code detected:', refCode);
     };
 
@@ -408,7 +446,10 @@ const AppInner: React.FC = () => {
 
       // Track referral signup when user authenticates
       if (session?.user && event === 'SIGNED_IN') {
+        trackEvent('auth_success', { provider: session.user.app_metadata?.provider });
         trackReferralSignup(session.user.id).catch(console.error);
+        hydrateStreakFromCloud(session.user.id).catch(console.warn);
+        mergeGuestHistoryOnLogin(session.user.id, loadPurgedHistory()).catch(console.warn);
         if (Capacitor.isNativePlatform()) {
           try { await Purchases.logIn({ appUserID: session.user.id }); } catch(e){}
         }
@@ -440,21 +481,39 @@ const AppInner: React.FC = () => {
             .order('created_at', { ascending: true });
 
           if (cloudHistory && cloudHistory.length > 0) {
-            const validHistory = (cloudHistory as any[]).map(h => {
-              const scoring = h.scoring ?? h.analysis_results?.scoring;
-              const analysis = h.analysis_results ?? h.analysis;
-              return {
-                id: h.id,
-                date: h.created_at,
-                imageUrl: h.image_url || undefined,
-                faceState: h.face_state,
-                analysis,
-                scoring,
-                recommendations: h.recommendations,
-                timestamp: new Date(h.created_at).getTime(),
-                global_score: scoring?.globalScore ?? analysis?.scoring?.globalScore ?? 0,
-              };
-            }) as DailyReport[];
+            // Strip cloud biometrics older than 24h (scores / analysis remain)
+            for (const row of cloudHistory as any[]) {
+              if (!isBiometricExpired(row.created_at)) continue;
+              if (!row.image_url && !row.face_state?.primaryImageJpegBase64) continue;
+              const payload = cloudBiometricPurgePayload(row.face_state);
+              supabase
+                .from('scans')
+                .update(payload)
+                .eq('id', row.id)
+                .eq('user_id', session.user.id)
+                .then(({ error }) => {
+                  if (error) console.warn('[BIOMETRIC] cloud purge failed', row.id, error.message);
+                });
+            }
+
+            const validHistory = purgeExpiredBiometrics(
+              (cloudHistory as any[]).map(h => {
+                const scoring = h.scoring ?? h.analysis_results?.scoring;
+                const analysis = h.analysis_results ?? h.analysis;
+                const expired = isBiometricExpired(h.created_at);
+                return {
+                  id: h.id,
+                  date: h.created_at,
+                  imageUrl: expired ? undefined : (h.image_url || undefined),
+                  faceState: expired ? stripFaceStateImages(h.face_state) : h.face_state,
+                  analysis,
+                  scoring,
+                  recommendations: h.recommendations,
+                  timestamp: new Date(h.created_at).getTime(),
+                  global_score: scoring?.globalScore ?? analysis?.scoring?.globalScore ?? 0,
+                };
+              }) as DailyReport[]
+            );
 
             // 3. SAFE MERGE: Combine Cloud + Local
             setHistory(prevLocal => {
@@ -467,7 +526,10 @@ const AppInner: React.FC = () => {
                 }
               });
 
-              const sorted = combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              const sorted = purgeExpiredBiometrics(
+                combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              );
+              purgeExpiredThumbnails();
 
               // Save to localStorage WITHOUT base64 data to prevent QuotaExceededError
               const historyToSave = sorted.map(report => ({
@@ -476,7 +538,9 @@ const AppInner: React.FC = () => {
                   faceState: report.faceState ? {
                       ...report.faceState,
                       primaryImageJpegBase64: undefined,
-                      retainedCropJpegBase64: undefined
+                      retainedCropJpegBase64: undefined,
+                      leftAngleImageJpegBase64: undefined,
+                      rightAngleImageJpegBase64: undefined,
                   } : undefined
               }));
               localStorage.setItem("face_analysis_history", JSON.stringify(historyToSave));
@@ -504,6 +568,7 @@ const AppInner: React.FC = () => {
   // UploadScreen via `forceStartAnalysis` + the in-component `pendingFaceState` queue.
 
   const handleShowPaywall = () => {
+    trackEvent('paywall_viewed', { from: 'explicit' });
     setIsPaywallVisible(true);
   };
 
@@ -515,22 +580,12 @@ const AppInner: React.FC = () => {
   const handleUpgrade = async () => {
     await refreshSubscription();
     setIsPaywallVisible(false);
-    // Persist premium status to Supabase so other devices also know
-    if (user) {
-      try {
-        await supabase.from('profiles').upsert({
-          id: user.id,
-          is_premium: true,
-          premium_since: new Date().toISOString(),
-        });
-      } catch (e) {
-        console.error('Failed to sync premium status to cloud:', e);
-      }
-    }
+    // Entitlement is RevenueCat (+ referral premium_rewards). Do not write is_premium from client.
   };
 
   const changeTab = (tab: string) => {
     if ((tab === 'face' && !hasAccess('face')) || (tab === 'recommendations' && !hasAccess('recommendations'))) {
+      trackEvent('paywall_viewed', { from: tab });
       setIsPaywallVisible(true);
       return;
     }
@@ -538,16 +593,37 @@ const AppInner: React.FC = () => {
   };
 
   const handleStartScan = () => {
+    if (!canStartScan(hasAccess('unlimitedScans'))) {
+      toast.error(
+        localized(
+          "You've used today's free scan. Upgrade to PRO for unlimited scans, or come back tomorrow.",
+          "Bugünkü ücretsiz taramayı kullandın. Sınırsız tarama için PRO'ya geç veya yarın tekrar gel."
+        )
+      );
+      trackEvent('paywall_viewed', { from: 'daily_scan_limit' });
+      setIsPaywallVisible(true);
+      return;
+    }
     setShowReadyToScan(true);
   };
 
   const handleConfirmScan = () => {
+    if (!canStartScan(hasAccess('unlimitedScans'))) {
+      setShowReadyToScan(false);
+      trackEvent('paywall_viewed', { from: 'daily_scan_limit' });
+      setIsPaywallVisible(true);
+      return;
+    }
+    trackEvent('scan_started');
     setShowReadyToScan(false);
     setShowScanCamera(true);
   };
 
   const handleAnalysisComplete = async (newReport: DailyReport) => {
     saveScanThumbnail(newReport.id, newReport.imageUrl);
+    if (!hasAccess('unlimitedScans')) {
+      markFreeScanUsedToday();
+    }
 
     // Pipeline only runs after auth (user or guest), so always save
     // 1. Add to history (Optimistic UI Update)
@@ -557,6 +633,9 @@ const AppInner: React.FC = () => {
     // Advance daily streak (idempotent within the same day)
     try {
       updateStreak();
+      if (user?.id) {
+        syncStreakToCloud(user.id).catch(console.warn);
+      }
     } catch (e) {
       console.warn("[STREAK] update failed", e);
     }
@@ -568,10 +647,13 @@ const AppInner: React.FC = () => {
           faceState: report.faceState ? {
               ...report.faceState,
               primaryImageJpegBase64: undefined,
-              retainedCropJpegBase64: undefined
+              retainedCropJpegBase64: undefined,
+              leftAngleImageJpegBase64: undefined,
+              rightAngleImageJpegBase64: undefined,
           } : undefined
       }));
       localStorage.setItem("face_analysis_history", JSON.stringify(historyToSave));
+      purgeExpiredThumbnails();
     } catch (err: any) {
       console.error("Storage Save Failed:", err);
       toast.error("Couldn't save history locally — device storage is full. Your analysis still loads, but old scans may not persist.");
@@ -721,6 +803,8 @@ const AppInner: React.FC = () => {
     setSessionOnboardingComplete(false);
     localStorage.removeItem('user_demographics');
     localStorage.removeItem('face_analysis_history');
+    clearAllScanThumbnails();
+    clearPendingFaceState();
     setHistory([]);
     setAnalysisData(null);
     if (Capacitor.isNativePlatform()) {
@@ -731,7 +815,8 @@ const AppInner: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "results": return <Results
+      case "results": return <>
+        <Results
         data={analysisData}
         dayNumber={dayNumberForReport}
         onShowPaywall={handleShowPaywall}
@@ -743,7 +828,9 @@ const AppInner: React.FC = () => {
         onShowNotificationSettings={() => setShowNotifSettings(true)}
         isFreeUser={!isPremium}
         onNavigateToRecommendations={() => changeTab("recommendations")}
-      />;
+      />
+      <NotifAskOnce />
+      </>;
       case "progress": {
         return <Progress history={history} onSelectReport={handleSelectReport} compliment={null} onNewScan={handleStartScan} userId={user?.id ?? null} />;
       }

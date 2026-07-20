@@ -6,6 +6,7 @@ import { Purchases, PurchasesPackage, PACKAGE_TYPE } from '@revenuecat/purchases
 import { Capacitor } from '@capacitor/core';
 import { useToast } from './ui/Toast';
 import { localized } from '../localization';
+import { trackEvent } from '../utils/analytics';
 
 interface PaywallProps {
     onClose: () => void;
@@ -69,10 +70,12 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
         if (Capacitor.isNativePlatform() && selectedPackage) {
             const ENTITLEMENT_ID = import.meta.env.VITE_RC_ENTITLEMENT_ID || 'premium';
             try {
+                trackEvent('purchase_started', { package: selectedPackage.identifier });
                 const { customerInfo } = await Purchases.purchasePackage({ aPackage: selectedPackage });
                 if (typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== "undefined") {
+                    trackEvent('purchase_success');
                     toast.success(localized('Glow plan unlocked — premium signals are open.', 'Glow planı açıldı — premium sinyallerin açık.'), { title: localized('Purchase complete', 'Satın alma tamamlandı') });
-                    onUpgrade(selectedPlan as SubscriptionTier);
+                    onUpgrade(SubscriptionTier.PRO);
                 } else {
                     setStatusMessage({ kind: 'error', text: "Purchase didn't finalize. If you were charged, tap Restore — otherwise try again." });
                 }
@@ -107,7 +110,7 @@ const Paywall: React.FC<PaywallProps> = ({ onClose, onUpgrade }) => {
                 const { customerInfo } = await Purchases.restorePurchases();
                 if (typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== "undefined") {
                     toast.success(localized('Purchases restored — Premium is active again.', 'Satın alımlar geri yüklendi — Premium tekrar aktif.'), { title: localized('Restored', 'Geri yüklendi') });
-                    onUpgrade(selectedPlan as SubscriptionTier);
+                    onUpgrade(SubscriptionTier.PRO);
                 } else {
                     setStatusMessage({ kind: 'info', text: 'No active premium purchases found on this account.' });
                 }

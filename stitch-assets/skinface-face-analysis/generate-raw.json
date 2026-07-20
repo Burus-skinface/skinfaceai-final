@@ -1,0 +1,469 @@
+{
+  "outputComponents": [
+    {
+      "designSystem": {
+        "designSystem": {
+          "displayName": "Clinical Radiance",
+          "styleGuidelines": "## Brand & Style\nThe design system is built upon a \"Clinical Beauty\" aesthetic, merging medical precision with high-end luxury skincare. The target audience seeks data-driven results wrapped in a premium, calming experience. \n\nThe style is **Refined Minimalism** with a focus on high-clarity information architecture. It utilizes ample whitespace to evoke a sense of purity and hygiene, while the sophisticated color palette ensures the product feels authoritative yet accessible. The UI should feel like a high-end apothecary: organized, translucent, and meticulously composed.\n\n## Layout & Spacing\nThe layout follows a **Fluid Grid** model with a standard 8px baseline rhythm. \n- **Mobile:** 4-column grid with 24px side margins to allow the content to breathe.\n- **Desktop:** 12-column centered grid with a maximum content width of 1200px.\n- **Rhythm:** Use large vertical gaps (40px+) between major sections to maintain a \"high-end\" minimalist feel. Content within cards should use a generous 24px internal padding.\n\n## Elevation & Depth\nDepth is created through **Ambient Shadows** rather than harsh borders. This mimics the soft lighting found in professional dermatology clinics.\n- **Surface Elevation:** Cards use a very soft shadow: `0px 4px 20px rgba(46, 47, 114, 0.04)`.\n- **Active Elevation:** Interactive elements like buttons or pressed cards use a slightly deeper, more concentrated shadow: `0px 8px 24px rgba(123, 97, 255, 0.15)`.\n- **Tonal Layering:** The background is #FBF9F9, while the elevated surfaces are pure #FFFFFF, providing a subtle but clear hierarchy without the need for heavy outlines.\n\n## Components\n- **Buttons:** Primary buttons are solid Purple (#7B61FF) with white text. Secondary buttons are ghost-style with a Navy (#2E2F72) border. All buttons should have a minimum height of 48px to ensure accessibility.\n- **Cards:** Pure white background, 24px corner radius, and the defined ambient shadow. Used for product displays, skin analysis results, and routine steps.\n- **Chips:** Used for \"Skin Type\" or \"Ingredient\" tags. These should have a light Purple background at 10% opacity with Purple text.\n- **Input Fields:** Minimalist design with a light gray bottom border that transforms into a Purple border on focus. Labels should persist above the field in Navy.\n- **Progress Gauges:** Used for \"Skin Health Scores.\" Use a circular stroke with the Primary Purple. The track should be the Background color (#FBF9F9) to look \"etched\" into the surface.\n- **Lists:** Clean dividers using 1px lines at 5% opacity of Navy. Use chevron-right icons for navigation cues in Secondary Navy.",
+          "theme": {
+            "bodyFont": "INTER",
+            "bodyFontFamily": "Inter",
+            "colorMode": "LIGHT",
+            "colorVariant": "FIDELITY",
+            "customColor": "#7b61ff",
+            "designMd": "---\nname: Clinical Radiance\ncolors:\n  surface: '#fbf9f9'\n  surface-dim: '#dbdada'\n  surface-bright: '#fbf9f9'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f5f3f3'\n  surface-container: '#efeded'\n  surface-container-high: '#e9e8e8'\n  surface-container-highest: '#e4e2e2'\n  on-surface: '#1b1c1c'\n  on-surface-variant: '#484555'\n  inverse-surface: '#303031'\n  inverse-on-surface: '#f2f0f0'\n  outline: '#797587'\n  outline-variant: '#c9c4d8'\n  surface-tint: '#5d3fe0'\n  primary: '#5b3cdd'\n  on-primary: '#ffffff'\n  primary-container: '#7459f7'\n  on-primary-container: '#fffbff'\n  inverse-primary: '#c9bfff'\n  secondary: '#56579c'\n  on-secondary: '#ffffff'\n  secondary-container: '#b1b2fe'\n  on-secondary-container: '#404285'\n  tertiary: '#8d4b00'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#b15f00'\n  on-tertiary-container: '#fffbff'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#e5deff'\n  primary-fixed-dim: '#c9bfff'\n  on-primary-fixed: '#1a0063'\n  on-primary-fixed-variant: '#441cc8'\n  secondary-fixed: '#e1dfff'\n  secondary-fixed-dim: '#c1c1ff'\n  on-secondary-fixed: '#100f56'\n  on-secondary-fixed-variant: '#3e3f83'\n  tertiary-fixed: '#ffdcc3'\n  tertiary-fixed-dim: '#ffb77d'\n  on-tertiary-fixed: '#2f1500'\n  on-tertiary-fixed-variant: '#6e3900'\n  background: '#fbf9f9'\n  on-background: '#1b1c1c'\n  surface-variant: '#e4e2e2'\ntypography:\n  headline-lg:\n    fontFamily: Inter\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-lg-mobile:\n    fontFamily: Inter\n    fontSize: 28px\n    fontWeight: '700'\n    lineHeight: 36px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  body-lg:\n    fontFamily: Inter\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.05em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 14px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  container-padding: 24px\n  stack-gap: 16px\n  section-margin: 40px\n  gutter: 16px\n  unit: 8px\n---\n\n## Brand & Style\nThe design system is built upon a \"Clinical Beauty\" aesthetic, merging medical precision with high-end luxury skincare. The target audience seeks data-driven results wrapped in a premium, calming experience. \n\nThe style is **Refined Minimalism** with a focus on high-clarity information architecture. It utilizes ample whitespace to evoke a sense of purity and hygiene, while the sophisticated color palette ensures the product feels authoritative yet accessible. The UI should feel like a high-end apothecary: organized, translucent, and meticulously composed.\n\n## Colors\nThis design system employs a restricted, high-contrast palette to maintain its clinical focus.\n- **Primary Purple (#7B61FF):** Used for primary actions, active states, and highlighting key scientific data. It represents the \"tech\" in beauty-tech.\n- **Secondary Navy (#2E2F72):** Used for headings and primary text to provide a grounded, authoritative contrast against the light background.\n- **Background (#FBF9F9):** A warm, off-white \"clinical\" base that reduces eye strain and feels more premium than pure hex white.\n- **Surface (#FFFFFF):** Reserved for floating cards and interactive containers to create clear separation from the background.\n\n## Typography\nThe typography utilizes **Inter** exclusively to lean into a systematic, modern, and neutral appearance. \n- **Headlines:** Set in Secondary Navy with tight letter-spacing to appear confident and structured.\n- **Body Text:** Uses high line-heights to ensure readability of clinical descriptions and ingredient lists.\n- **Labels:** Small caps or increased letter spacing are used for technical metadata (e.g., pH levels, percentages) to distinguish them from prose.\n\n## Layout & Spacing\nThe layout follows a **Fluid Grid** model with a standard 8px baseline rhythm. \n- **Mobile:** 4-column grid with 24px side margins to allow the content to breathe.\n- **Desktop:** 12-column centered grid with a maximum content width of 1200px.\n- **Rhythm:** Use large vertical gaps (40px+) between major sections to maintain a \"high-end\" minimalist feel. Content within cards should use a generous 24px internal padding.\n\n## Elevation & Depth\nDepth is created through **Ambient Shadows** rather than harsh borders. This mimics the soft lighting found in professional dermatology clinics.\n- **Surface Elevation:** Cards use a very soft shadow: `0px 4px 20px rgba(46, 47, 114, 0.04)`.\n- **Active Elevation:** Interactive elements like buttons or pressed cards use a slightly deeper, more concentrated shadow: `0px 8px 24px rgba(123, 97, 255, 0.15)`.\n- **Tonal Layering:** The background is #FBF9F9, while the elevated surfaces are pure #FFFFFF, providing a subtle but clear hierarchy without the need for heavy outlines.\n\n## Shapes\nThe design system uses **Rounded** geometry to soften the clinical precision, making the app feel more approachable and \"human.\" \n- **Base Components:** 8px (0.5rem) for buttons and input fields.\n- **Large Containers:** 16px to 24px for cards and image carousels to create a modern, app-centric feel.\n- **Interactive Elements:** Checkboxes and progress bars use a 4px radius to maintain a sense of precision within smaller scales.\n\n## Components\n- **Buttons:** Primary buttons are solid Purple (#7B61FF) with white text. Secondary buttons are ghost-style with a Navy (#2E2F72) border. All buttons should have a minimum height of 48px to ensure accessibility.\n- **Cards:** Pure white background, 24px corner radius, and the defined ambient shadow. Used for product displays, skin analysis results, and routine steps.\n- **Chips:** Used for \"Skin Type\" or \"Ingredient\" tags. These should have a light Purple background at 10% opacity with Purple text.\n- **Input Fields:** Minimalist design with a light gray bottom border that transforms into a Purple border on focus. Labels should persist above the field in Navy.\n- **Progress Gauges:** Used for \"Skin Health Scores.\" Use a circular stroke with the Primary Purple. The track should be the Background color (#FBF9F9) to look \"etched\" into the surface.\n- **Lists:** Clean dividers using 1px lines at 5% opacity of Navy. Use chevron-right icons for navigation cues in Secondary Navy.",
+            "font": "INTER",
+            "headlineFont": "INTER",
+            "headlineFontFamily": "Inter",
+            "labelFont": "INTER",
+            "labelFontFamily": "Inter",
+            "namedColors": {
+              "background": "#fbf9f9",
+              "error": "#ba1a1a",
+              "error_container": "#ffdad6",
+              "inverse_on_surface": "#f2f0f0",
+              "inverse_primary": "#c9bfff",
+              "inverse_surface": "#303031",
+              "on_background": "#1b1c1c",
+              "on_error": "#ffffff",
+              "on_error_container": "#93000a",
+              "on_primary": "#ffffff",
+              "on_primary_container": "#fffbff",
+              "on_primary_fixed": "#1a0063",
+              "on_primary_fixed_variant": "#441cc8",
+              "on_secondary": "#ffffff",
+              "on_secondary_container": "#404285",
+              "on_secondary_fixed": "#100f56",
+              "on_secondary_fixed_variant": "#3e3f83",
+              "on_surface": "#1b1c1c",
+              "on_surface_variant": "#484555",
+              "on_tertiary": "#ffffff",
+              "on_tertiary_container": "#fffbff",
+              "on_tertiary_fixed": "#2f1500",
+              "on_tertiary_fixed_variant": "#6e3900",
+              "outline": "#797587",
+              "outline_variant": "#c9c4d8",
+              "primary": "#5b3cdd",
+              "primary_container": "#7459f7",
+              "primary_fixed": "#e5deff",
+              "primary_fixed_dim": "#c9bfff",
+              "secondary": "#56579c",
+              "secondary_container": "#b1b2fe",
+              "secondary_fixed": "#e1dfff",
+              "secondary_fixed_dim": "#c1c1ff",
+              "surface": "#fbf9f9",
+              "surface_bright": "#fbf9f9",
+              "surface_container": "#efeded",
+              "surface_container_high": "#e9e8e8",
+              "surface_container_highest": "#e4e2e2",
+              "surface_container_low": "#f5f3f3",
+              "surface_container_lowest": "#ffffff",
+              "surface_dim": "#dbdada",
+              "surface_tint": "#5d3fe0",
+              "surface_variant": "#e4e2e2",
+              "tertiary": "#8d4b00",
+              "tertiary_container": "#b15f00",
+              "tertiary_fixed": "#ffdcc3",
+              "tertiary_fixed_dim": "#ffb77d"
+            },
+            "overrideNeutralColor": "#fbf9f9",
+            "overridePrimaryColor": "#7b61ff",
+            "overrideSecondaryColor": "#2e2f72",
+            "roundness": "ROUND_EIGHT",
+            "spacing": {
+              "container-padding": "24px",
+              "gutter": "16px",
+              "section-margin": "40px",
+              "stack-gap": "16px",
+              "unit": "8px"
+            },
+            "spacingScale": 2,
+            "typography": {
+              "body-lg": {
+                "fontFamily": "Inter",
+                "fontSize": "18px",
+                "fontWeight": "400",
+                "lineHeight": "28px"
+              },
+              "body-md": {
+                "fontFamily": "Inter",
+                "fontSize": "16px",
+                "fontWeight": "400",
+                "lineHeight": "24px"
+              },
+              "body-sm": {
+                "fontFamily": "Inter",
+                "fontSize": "14px",
+                "fontWeight": "400",
+                "lineHeight": "20px"
+              },
+              "headline-lg": {
+                "fontFamily": "Inter",
+                "fontSize": "32px",
+                "fontWeight": "700",
+                "letterSpacing": "-0.02em",
+                "lineHeight": "40px"
+              },
+              "headline-lg-mobile": {
+                "fontFamily": "Inter",
+                "fontSize": "28px",
+                "fontWeight": "700",
+                "letterSpacing": "-0.01em",
+                "lineHeight": "36px"
+              },
+              "headline-md": {
+                "fontFamily": "Inter",
+                "fontSize": "24px",
+                "fontWeight": "600",
+                "letterSpacing": "-0.01em",
+                "lineHeight": "32px"
+              },
+              "label-md": {
+                "fontFamily": "Inter",
+                "fontSize": "14px",
+                "fontWeight": "600",
+                "letterSpacing": "0.05em",
+                "lineHeight": "16px"
+              },
+              "label-sm": {
+                "fontFamily": "Inter",
+                "fontSize": "12px",
+                "fontWeight": "500",
+                "lineHeight": "14px"
+              }
+            }
+          }
+        },
+        "name": "assets/b825e0a0952043b0896fa937730f1be0",
+        "version": "1"
+      }
+    },
+    {
+      "design": {
+        "screens": [
+          {
+            "generatedBy": "interactive_ui_controller",
+            "height": "1024",
+            "id": "e288ae1067ab483185d528255427820d",
+            "name": "projects/12128396166952111108/screens/e288ae1067ab483185d528255427820d",
+            "prompt": "High-quality studio portrait of a beautiful woman with clear skin, looking directly at camera, soft lighting, neutral background, for a beauty analysis app. Premium, clean, high-end skincare aesthetic.",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "screenType": "IMAGE",
+            "screenshot": {
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtk82gG8b_D9ujBOCaWnLUYE-SJZna83loJiVPg4BPJGX4oyxojDkwwT_6F9-vcaRUIVCjas1sw92yq2FSUAIuZNfd6Yp-1Yfqy-m31mCau5rui0yV-Nreqb5mck5ZmAYRqkjhpafM3QHAngX5ed0ZyhehZI2xJ9pDIddZ-rbUFq7aaHC-B0fqndym_Fcf-vAG55ySEzrZq6TjO70ir5ad37xOh34WSBmZulTfRjLRqHdRX05zODmzAOM_w",
+              "name": "projects/12128396166952111108/files/3b7b7f827ed7481e8133407e4e2c0d68"
+            },
+            "theme": {},
+            "title": "High-quality studio portrait of a beautiful woman with clear skin, looking directly at camera, soft lighting, neutral background, for a beauty analysis app. Premium, clean, high-end skincare aesthetic.",
+            "width": "1024"
+          },
+          {
+            "designSystem": {
+              "designSystem": {
+                "displayName": "Clinical Radiance",
+                "styleGuidelines": "## Brand & Style\nThe design system is built upon a \"Clinical Beauty\" aesthetic, merging medical precision with high-end luxury skincare. The target audience seeks data-driven results wrapped in a premium, calming experience. \n\nThe style is **Refined Minimalism** with a focus on high-clarity information architecture. It utilizes ample whitespace to evoke a sense of purity and hygiene, while the sophisticated color palette ensures the product feels authoritative yet accessible. The UI should feel like a high-end apothecary: organized, translucent, and meticulously composed.\n\n## Layout & Spacing\nThe layout follows a **Fluid Grid** model with a standard 8px baseline rhythm. \n- **Mobile:** 4-column grid with 24px side margins to allow the content to breathe.\n- **Desktop:** 12-column centered grid with a maximum content width of 1200px.\n- **Rhythm:** Use large vertical gaps (40px+) between major sections to maintain a \"high-end\" minimalist feel. Content within cards should use a generous 24px internal padding.\n\n## Elevation & Depth\nDepth is created through **Ambient Shadows** rather than harsh borders. This mimics the soft lighting found in professional dermatology clinics.\n- **Surface Elevation:** Cards use a very soft shadow: `0px 4px 20px rgba(46, 47, 114, 0.04)`.\n- **Active Elevation:** Interactive elements like buttons or pressed cards use a slightly deeper, more concentrated shadow: `0px 8px 24px rgba(123, 97, 255, 0.15)`.\n- **Tonal Layering:** The background is #FBF9F9, while the elevated surfaces are pure #FFFFFF, providing a subtle but clear hierarchy without the need for heavy outlines.\n\n## Components\n- **Buttons:** Primary buttons are solid Purple (#7B61FF) with white text. Secondary buttons are ghost-style with a Navy (#2E2F72) border. All buttons should have a minimum height of 48px to ensure accessibility.\n- **Cards:** Pure white background, 24px corner radius, and the defined ambient shadow. Used for product displays, skin analysis results, and routine steps.\n- **Chips:** Used for \"Skin Type\" or \"Ingredient\" tags. These should have a light Purple background at 10% opacity with Purple text.\n- **Input Fields:** Minimalist design with a light gray bottom border that transforms into a Purple border on focus. Labels should persist above the field in Navy.\n- **Progress Gauges:** Used for \"Skin Health Scores.\" Use a circular stroke with the Primary Purple. The track should be the Background color (#FBF9F9) to look \"etched\" into the surface.\n- **Lists:** Clean dividers using 1px lines at 5% opacity of Navy. Use chevron-right icons for navigation cues in Secondary Navy.",
+                "theme": {
+                  "bodyFont": "INTER",
+                  "bodyFontFamily": "Inter",
+                  "colorMode": "LIGHT",
+                  "colorVariant": "FIDELITY",
+                  "customColor": "#7b61ff",
+                  "designMd": "---\nname: Clinical Radiance\ncolors:\n  surface: '#fbf9f9'\n  surface-dim: '#dbdada'\n  surface-bright: '#fbf9f9'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f5f3f3'\n  surface-container: '#efeded'\n  surface-container-high: '#e9e8e8'\n  surface-container-highest: '#e4e2e2'\n  on-surface: '#1b1c1c'\n  on-surface-variant: '#484555'\n  inverse-surface: '#303031'\n  inverse-on-surface: '#f2f0f0'\n  outline: '#797587'\n  outline-variant: '#c9c4d8'\n  surface-tint: '#5d3fe0'\n  primary: '#5b3cdd'\n  on-primary: '#ffffff'\n  primary-container: '#7459f7'\n  on-primary-container: '#fffbff'\n  inverse-primary: '#c9bfff'\n  secondary: '#56579c'\n  on-secondary: '#ffffff'\n  secondary-container: '#b1b2fe'\n  on-secondary-container: '#404285'\n  tertiary: '#8d4b00'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#b15f00'\n  on-tertiary-container: '#fffbff'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#e5deff'\n  primary-fixed-dim: '#c9bfff'\n  on-primary-fixed: '#1a0063'\n  on-primary-fixed-variant: '#441cc8'\n  secondary-fixed: '#e1dfff'\n  secondary-fixed-dim: '#c1c1ff'\n  on-secondary-fixed: '#100f56'\n  on-secondary-fixed-variant: '#3e3f83'\n  tertiary-fixed: '#ffdcc3'\n  tertiary-fixed-dim: '#ffb77d'\n  on-tertiary-fixed: '#2f1500'\n  on-tertiary-fixed-variant: '#6e3900'\n  background: '#fbf9f9'\n  on-background: '#1b1c1c'\n  surface-variant: '#e4e2e2'\ntypography:\n  headline-lg:\n    fontFamily: Inter\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-lg-mobile:\n    fontFamily: Inter\n    fontSize: 28px\n    fontWeight: '700'\n    lineHeight: 36px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  body-lg:\n    fontFamily: Inter\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.05em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 14px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  container-padding: 24px\n  stack-gap: 16px\n  section-margin: 40px\n  gutter: 16px\n  unit: 8px\n---\n\n## Brand & Style\nThe design system is built upon a \"Clinical Beauty\" aesthetic, merging medical precision with high-end luxury skincare. The target audience seeks data-driven results wrapped in a premium, calming experience. \n\nThe style is **Refined Minimalism** with a focus on high-clarity information architecture. It utilizes ample whitespace to evoke a sense of purity and hygiene, while the sophisticated color palette ensures the product feels authoritative yet accessible. The UI should feel like a high-end apothecary: organized, translucent, and meticulously composed.\n\n## Colors\nThis design system employs a restricted, high-contrast palette to maintain its clinical focus.\n- **Primary Purple (#7B61FF):** Used for primary actions, active states, and highlighting key scientific data. It represents the \"tech\" in beauty-tech.\n- **Secondary Navy (#2E2F72):** Used for headings and primary text to provide a grounded, authoritative contrast against the light background.\n- **Background (#FBF9F9):** A warm, off-white \"clinical\" base that reduces eye strain and feels more premium than pure hex white.\n- **Surface (#FFFFFF):** Reserved for floating cards and interactive containers to create clear separation from the background.\n\n## Typography\nThe typography utilizes **Inter** exclusively to lean into a systematic, modern, and neutral appearance. \n- **Headlines:** Set in Secondary Navy with tight letter-spacing to appear confident and structured.\n- **Body Text:** Uses high line-heights to ensure readability of clinical descriptions and ingredient lists.\n- **Labels:** Small caps or increased letter spacing are used for technical metadata (e.g., pH levels, percentages) to distinguish them from prose.\n\n## Layout & Spacing\nThe layout follows a **Fluid Grid** model with a standard 8px baseline rhythm. \n- **Mobile:** 4-column grid with 24px side margins to allow the content to breathe.\n- **Desktop:** 12-column centered grid with a maximum content width of 1200px.\n- **Rhythm:** Use large vertical gaps (40px+) between major sections to maintain a \"high-end\" minimalist feel. Content within cards should use a generous 24px internal padding.\n\n## Elevation & Depth\nDepth is created through **Ambient Shadows** rather than harsh borders. This mimics the soft lighting found in professional dermatology clinics.\n- **Surface Elevation:** Cards use a very soft shadow: `0px 4px 20px rgba(46, 47, 114, 0.04)`.\n- **Active Elevation:** Interactive elements like buttons or pressed cards use a slightly deeper, more concentrated shadow: `0px 8px 24px rgba(123, 97, 255, 0.15)`.\n- **Tonal Layering:** The background is #FBF9F9, while the elevated surfaces are pure #FFFFFF, providing a subtle but clear hierarchy without the need for heavy outlines.\n\n## Shapes\nThe design system uses **Rounded** geometry to soften the clinical precision, making the app feel more approachable and \"human.\" \n- **Base Components:** 8px (0.5rem) for buttons and input fields.\n- **Large Containers:** 16px to 24px for cards and image carousels to create a modern, app-centric feel.\n- **Interactive Elements:** Checkboxes and progress bars use a 4px radius to maintain a sense of precision within smaller scales.\n\n## Components\n- **Buttons:** Primary buttons are solid Purple (#7B61FF) with white text. Secondary buttons are ghost-style with a Navy (#2E2F72) border. All buttons should have a minimum height of 48px to ensure accessibility.\n- **Cards:** Pure white background, 24px corner radius, and the defined ambient shadow. Used for product displays, skin analysis results, and routine steps.\n- **Chips:** Used for \"Skin Type\" or \"Ingredient\" tags. These should have a light Purple background at 10% opacity with Purple text.\n- **Input Fields:** Minimalist design with a light gray bottom border that transforms into a Purple border on focus. Labels should persist above the field in Navy.\n- **Progress Gauges:** Used for \"Skin Health Scores.\" Use a circular stroke with the Primary Purple. The track should be the Background color (#FBF9F9) to look \"etched\" into the surface.\n- **Lists:** Clean dividers using 1px lines at 5% opacity of Navy. Use chevron-right icons for navigation cues in Secondary Navy.",
+                  "font": "INTER",
+                  "headlineFont": "INTER",
+                  "headlineFontFamily": "Inter",
+                  "labelFont": "INTER",
+                  "labelFontFamily": "Inter",
+                  "namedColors": {
+                    "background": "#fbf9f9",
+                    "error": "#ba1a1a",
+                    "error_container": "#ffdad6",
+                    "inverse_on_surface": "#f2f0f0",
+                    "inverse_primary": "#c9bfff",
+                    "inverse_surface": "#303031",
+                    "on_background": "#1b1c1c",
+                    "on_error": "#ffffff",
+                    "on_error_container": "#93000a",
+                    "on_primary": "#ffffff",
+                    "on_primary_container": "#fffbff",
+                    "on_primary_fixed": "#1a0063",
+                    "on_primary_fixed_variant": "#441cc8",
+                    "on_secondary": "#ffffff",
+                    "on_secondary_container": "#404285",
+                    "on_secondary_fixed": "#100f56",
+                    "on_secondary_fixed_variant": "#3e3f83",
+                    "on_surface": "#1b1c1c",
+                    "on_surface_variant": "#484555",
+                    "on_tertiary": "#ffffff",
+                    "on_tertiary_container": "#fffbff",
+                    "on_tertiary_fixed": "#2f1500",
+                    "on_tertiary_fixed_variant": "#6e3900",
+                    "outline": "#797587",
+                    "outline_variant": "#c9c4d8",
+                    "primary": "#5b3cdd",
+                    "primary_container": "#7459f7",
+                    "primary_fixed": "#e5deff",
+                    "primary_fixed_dim": "#c9bfff",
+                    "secondary": "#56579c",
+                    "secondary_container": "#b1b2fe",
+                    "secondary_fixed": "#e1dfff",
+                    "secondary_fixed_dim": "#c1c1ff",
+                    "surface": "#fbf9f9",
+                    "surface_bright": "#fbf9f9",
+                    "surface_container": "#efeded",
+                    "surface_container_high": "#e9e8e8",
+                    "surface_container_highest": "#e4e2e2",
+                    "surface_container_low": "#f5f3f3",
+                    "surface_container_lowest": "#ffffff",
+                    "surface_dim": "#dbdada",
+                    "surface_tint": "#5d3fe0",
+                    "surface_variant": "#e4e2e2",
+                    "tertiary": "#8d4b00",
+                    "tertiary_container": "#b15f00",
+                    "tertiary_fixed": "#ffdcc3",
+                    "tertiary_fixed_dim": "#ffb77d"
+                  },
+                  "overrideNeutralColor": "#fbf9f9",
+                  "overridePrimaryColor": "#7b61ff",
+                  "overrideSecondaryColor": "#2e2f72",
+                  "roundness": "ROUND_EIGHT",
+                  "spacing": {
+                    "container-padding": "24px",
+                    "gutter": "16px",
+                    "section-margin": "40px",
+                    "stack-gap": "16px",
+                    "unit": "8px"
+                  },
+                  "spacingScale": 2,
+                  "typography": {
+                    "body-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "18px",
+                      "fontWeight": "400",
+                      "lineHeight": "28px"
+                    },
+                    "body-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "16px",
+                      "fontWeight": "400",
+                      "lineHeight": "24px"
+                    },
+                    "body-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "400",
+                      "lineHeight": "20px"
+                    },
+                    "headline-lg": {
+                      "fontFamily": "Inter",
+                      "fontSize": "32px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.02em",
+                      "lineHeight": "40px"
+                    },
+                    "headline-lg-mobile": {
+                      "fontFamily": "Inter",
+                      "fontSize": "28px",
+                      "fontWeight": "700",
+                      "letterSpacing": "-0.01em",
+                      "lineHeight": "36px"
+                    },
+                    "headline-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "24px",
+                      "fontWeight": "600",
+                      "letterSpacing": "-0.01em",
+                      "lineHeight": "32px"
+                    },
+                    "label-md": {
+                      "fontFamily": "Inter",
+                      "fontSize": "14px",
+                      "fontWeight": "600",
+                      "letterSpacing": "0.05em",
+                      "lineHeight": "16px"
+                    },
+                    "label-sm": {
+                      "fontFamily": "Inter",
+                      "fontSize": "12px",
+                      "fontWeight": "500",
+                      "lineHeight": "14px"
+                    }
+                  }
+                }
+              },
+              "name": "assets/b825e0a0952043b0896fa937730f1be0",
+              "version": "1"
+            },
+            "deviceType": "MOBILE",
+            "generatedBy": "figaro_agent",
+            "height": "2698",
+            "htmlCode": {
+              "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sX2M2YzE4OTdkNzVhYjRjOWE5ZjM2ZmRiY2UzZDIzYTg3EgsSBxCTgurs9B0YAZIBJAoKcHJvamVjdF9pZBIWQhQxMjEyODM5NjE2Njk1MjExMTEwOA&filename=&opi=96797242",
+              "mimeType": "text/html",
+              "name": "projects/12128396166952111108/files/d2a114e5ce6d4576a078c8209bf89057"
+            },
+            "id": "87149a3e5c7c4cd397a170d9367e0f21",
+            "name": "projects/12128396166952111108/screens/87149a3e5c7c4cd397a170d9367e0f21",
+            "prompt": "Mobile iPhone UI for Skinface app — Face Analysis tab. \n\nLayout Sections:\n1) Top App Bar: \"Good morning, Sofia\", notification icon with red dot.\n2) Horizontal Tabs: Skin, Face (active, purple underline), Scan, Glow Up, Progress.\n3) Hero \"Your Face Score\" Card: \n   - Feature {{DATA:IMAGE:IMAGE_3}} with a purple glow/arc overlay.\n   - Large score \"8.1/10\" (Very Good).\n   - \"Potential 8.9/10\" (Excellent).\n   - Progress slider showing current vs potential.\n4) Face Identity Card: \n   - Headline \"Balanced Classic\".\n   - Purple pill badge \"Top 18% of users\".\n   - Abstract wireframe mesh head graphic (purple lines).\n   - Chips: Symmetrical, Elegant, Balanced, Timeless.\n5) \"What shapes your face\" List:\n   - Rows for Eye Area (8.4 Great), Jawline (8.1 Good), Harmony (7.8 Good), Symmetry (8.0 Great), Proportions (7.6 Good), Midface (7.2 Average).\n   - Each row has a thumbnail, title, horizontal thin progress bar, and chevron.\n6) \"Biggest Opportunities\" Section: \n   - List items with icon and score impact values (e.g., +0.4 for Eye Area).\n7) \"Face Journey\" Chart: \n   - Line chart showing progress over time.\n8) Bottom Nav: \n   - Icons for Skin, Face (active), elevated purple circular \"Scan\" FAB in center, Glow Up, Progress.\n\nStyle: Light clinical beauty. Background #fbf9f9. White cards, 24px radius, soft elevation. Inter font. Purple #7B61FF and Navy #2e2f72 accents. No dark mode.\n## Available Images\nYou MUST include the following images in this design. You must reference them\nby putting their exact placeholder IDs in `src` attributes or CSS\n`background-image` rules. Do NOT use external URLs or generate new\nplaceholders. Preserve these IDs exactly as written. Read each image's\nDescription to understand its subject, intended section, and visual role.\n\n- {{DATA:IMAGE:IMAGE_3}}\n  Alt Text: High-quality studio portrait of a beautiful woman with clear skin, looking directly at camera, soft lighting, neutral background, for a beauty analysis app. Premium, clean, high-end skincare aesthetic.\n  Description: High-quality studio portrait of a beautiful woman with clear skin, looking directly at camera, soft lighting, neutral background, for a beauty analysis app. Premium, clean, high-end skincare aesthetic.\n  Dimensions: 1024x1024\n  Aspect Ratio: 1.00\n",
+            "screenMetadata": {
+              "agentType": "PRO_AGENT",
+              "status": "COMPLETE"
+            },
+            "screenType": "DESIGN",
+            "screenshot": {
+              "downloadUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtCrF8lr2ZoxLHVMdBP3lm4dVUnyF88ncgM3RGpicFK7iR_YnzYslJNk0PKcJchJnndgZHGMDZ3BoU_CsO8b0l6CP6MBJ0AXuKTPJuCxRUQKeVKkbQ3giZ8toc_2X7d9wBVBSQnfTCedg9nLgn1AhtsN6atX1Afkb_AJAGI9TxjnYNkjwwYhiehNCAJypJElfCKxFFuVsntQODx83ie11HrgjNnrf7GKjbTboOdwqR6UY592BayZIFQjshQ",
+              "name": "projects/12128396166952111108/files/97846a3ea5cc4c31be509c170141bd84"
+            },
+            "theme": {
+              "bodyFont": "INTER",
+              "bodyFontFamily": "Inter",
+              "colorMode": "LIGHT",
+              "colorVariant": "FIDELITY",
+              "customColor": "#7b61ff",
+              "font": "INTER",
+              "headlineFont": "INTER",
+              "headlineFontFamily": "Inter",
+              "labelFont": "INTER",
+              "labelFontFamily": "Inter",
+              "namedColors": {
+                "background": "#fbf9f9",
+                "error": "#ba1a1a",
+                "error_container": "#ffdad6",
+                "inverse_on_surface": "#f2f0f0",
+                "inverse_primary": "#c9bfff",
+                "inverse_surface": "#303031",
+                "on_background": "#1b1c1c",
+                "on_error": "#ffffff",
+                "on_error_container": "#93000a",
+                "on_primary": "#ffffff",
+                "on_primary_container": "#fffbff",
+                "on_primary_fixed": "#1a0063",
+                "on_primary_fixed_variant": "#441cc8",
+                "on_secondary": "#ffffff",
+                "on_secondary_container": "#404285",
+                "on_secondary_fixed": "#100f56",
+                "on_secondary_fixed_variant": "#3e3f83",
+                "on_surface": "#1b1c1c",
+                "on_surface_variant": "#484555",
+                "on_tertiary": "#ffffff",
+                "on_tertiary_container": "#fffbff",
+                "on_tertiary_fixed": "#2f1500",
+                "on_tertiary_fixed_variant": "#6e3900",
+                "outline": "#797587",
+                "outline_variant": "#c9c4d8",
+                "primary": "#5b3cdd",
+                "primary_container": "#7459f7",
+                "primary_fixed": "#e5deff",
+                "primary_fixed_dim": "#c9bfff",
+                "secondary": "#56579c",
+                "secondary_container": "#b1b2fe",
+                "secondary_fixed": "#e1dfff",
+                "secondary_fixed_dim": "#c1c1ff",
+                "surface": "#fbf9f9",
+                "surface_bright": "#fbf9f9",
+                "surface_container": "#efeded",
+                "surface_container_high": "#e9e8e8",
+                "surface_container_highest": "#e4e2e2",
+                "surface_container_low": "#f5f3f3",
+                "surface_container_lowest": "#ffffff",
+                "surface_dim": "#dbdada",
+                "surface_tint": "#5d3fe0",
+                "surface_variant": "#e4e2e2",
+                "tertiary": "#8d4b00",
+                "tertiary_container": "#b15f00",
+                "tertiary_fixed": "#ffdcc3",
+                "tertiary_fixed_dim": "#ffb77d"
+              },
+              "overrideNeutralColor": "#fbf9f9",
+              "overridePrimaryColor": "#7b61ff",
+              "overrideSecondaryColor": "#2e2f72",
+              "roundness": "ROUND_EIGHT",
+              "spacing": {
+                "container-padding": "24px",
+                "gutter": "16px",
+                "section-margin": "40px",
+                "stack-gap": "16px",
+                "unit": "8px"
+              },
+              "spacingScale": 2,
+              "typography": {
+                "body-lg": {
+                  "fontFamily": "Inter",
+                  "fontSize": "18px",
+                  "fontWeight": "400",
+                  "lineHeight": "28px"
+                },
+                "body-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "16px",
+                  "fontWeight": "400",
+                  "lineHeight": "24px"
+                },
+                "body-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "400",
+                  "lineHeight": "20px"
+                },
+                "headline-lg": {
+                  "fontFamily": "Inter",
+                  "fontSize": "32px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.02em",
+                  "lineHeight": "40px"
+                },
+                "headline-lg-mobile": {
+                  "fontFamily": "Inter",
+                  "fontSize": "28px",
+                  "fontWeight": "700",
+                  "letterSpacing": "-0.01em",
+                  "lineHeight": "36px"
+                },
+                "headline-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "24px",
+                  "fontWeight": "600",
+                  "letterSpacing": "-0.01em",
+                  "lineHeight": "32px"
+                },
+                "label-md": {
+                  "fontFamily": "Inter",
+                  "fontSize": "14px",
+                  "fontWeight": "600",
+                  "letterSpacing": "0.05em",
+                  "lineHeight": "16px"
+                },
+                "label-sm": {
+                  "fontFamily": "Inter",
+                  "fontSize": "12px",
+                  "fontWeight": "500",
+                  "lineHeight": "14px"
+                }
+              }
+            },
+            "title": "Face Analysis",
+            "width": "780"
+          }
+        ],
+        "theme": {}
+      }
+    },
+    {
+      "text": "I've designed the high-fidelity \"Face Analysis\" screen for the Skinface app, focusing on a premium, clinical beauty aesthetic.\n\n### Design Highlights:\n*   **Clinical Radiance Design System:** Established a clean, sophisticated visual language using your specified #fbf9f9 background and a palette of Clinical Purple (#7B61FF) and Deep Navy (#2e2f72).\n*   **Hero Analysis Card:** Integrated the studio portrait with a custom glow arc to visualize the \"Face Score\" journey from current (8.1) to potential (8.9).\n*   **Data-Rich Identity:** Created the \"Face Identity\" section with interactive chips and a stylized wireframe mesh to ground the AI analysis in a scientific context.\n*   **Structured Metrics:** Implemented the \"What shapes your face\" list with progress-based rows and the \"Biggest Opportunities\" section to provide actionable insights.\n*   **Custom Navigation:** Built a specialized bottom navigation bar featuring the elevated circular Scan FAB for primary user engagement.\n\nThe layout uses 24px rounded cards and soft shadows to achieve that high-end, approachable feel characteristic of top-tier skincare technology.\n\nHow would you like to proceed? We could build out the \"Skin\" analysis tab or perhaps detail the \"Scan\" flow next."
+    },
+    {
+      "suggestion": "Design the \"Skin\" tab with moisture and texture metrics"
+    },
+    {
+      "suggestion": "Create the \"Scan\" animation interface"
+    },
+    {
+      "suggestion": "Add a \"Full Analysis\" report modal"
+    }
+  ],
+  "projectId": "12128396166952111108",
+  "sessionId": "12806333196742399427"
+}

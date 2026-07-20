@@ -1,9 +1,23 @@
 /**
  * Shared client for the secure /api/analyze backend proxy.
+ * Production / Capacitor: set VITE_API_BASE_URL (e.g. https://api.skinface.ai).
+ * Local Vite: leave unset — relative /api uses the Vite proxy to localhost:3003.
  */
 
-const API_ENDPOINT = '/api/analyze';
+import { supabase } from './supabase';
+
 const DEFAULT_TIMEOUT_MS = 60_000;
+
+function analyzeUrl(): string {
+  const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+  if (!base) return '/api/analyze';
+  // Supabase Edge Function host: .../functions/v1 → /analyze
+  if (base.includes('/functions/v1')) {
+    return base.endsWith('/analyze') ? base : `${base}/analyze`;
+  }
+  // Express (or similar): host root → /api/analyze
+  return `${base}/api/analyze`;
+}
 
 export async function callAnalyzeProxy<T = Record<string, unknown>>(
   prompt: string,
@@ -15,9 +29,23 @@ export async function callAnalyzeProxy<T = Record<string, unknown>>(
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(API_ENDPOINT, {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      /* guest — no session */
+    }
+
+    const response = await fetch(analyzeUrl(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         prompt,
         schema,

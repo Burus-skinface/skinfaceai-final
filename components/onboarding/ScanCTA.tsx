@@ -111,10 +111,14 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
                     For <span className="text-[#007AFF]">Accurate Results</span>
                 </h2>
 
-                <div className="text-[#86868B] text-[15px] leading-relaxed mb-8 max-w-[280px] mx-auto text-balance">
+                <div className="text-[#86868B] text-[15px] leading-relaxed mb-6 max-w-[280px] mx-auto text-balance">
                     <p className="mb-2 font-medium text-[#48484A]">Capture your face in its natural state.</p>
                     <p className="text-[13px]">Filters, expressions, and angles reduce analysis accuracy.</p>
                 </div>
+
+                <p className="text-[11px] text-[#86868B] mb-4 max-w-[300px] mx-auto leading-snug">
+                    By tapping continue you consent to a short camera scan for cosmetic analysis. Scan photos are deleted within 24 hours; scores remain for progress.
+                </p>
 
                 <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -122,7 +126,7 @@ const ScanCTA: React.FC<ScanCTAProps> = ({ onStart, onBack }) => {
                     onClick={handleStartClick}
                     className="w-full h-[60px] rounded-[2rem] font-bold text-[18px] bg-[#1D1D1F] text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center gap-2 mx-auto max-w-sm"
                 >
-                    {streamReady ? "Got it" : (
+                    {streamReady ? "Got it — start scan" : (
                        <>
                          <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                          Starting Camera...

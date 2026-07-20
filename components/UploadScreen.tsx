@@ -8,7 +8,6 @@ import { t, localized } from '../localization';
 import FaceScanCamera from './FaceScanCamera';
 import type { ComprehensiveFaceState } from '../services/faceScan/faceState';
 import { runFullPipeline } from '../services/pipeline/analysisPipeline';
-import { markReferralScanComplete, markGuestScanPendingReferral } from '../services/referralService';
 import { savePendingFaceState, loadPendingFaceState, clearPendingFaceState } from '../utils/pendingScan';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from './ui/Toast';
@@ -388,11 +387,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onAnalysisComplete, onNeedA
             addLog('✅ Report created, navigating...');
             setLoading(false);
 
-            if (user?.id) {
-                markReferralScanComplete(user.id).catch(console.error);
-            } else {
-                markGuestScanPendingReferral();
-            }
+            // Referral scan credit: DB trigger on authenticated scans INSERT (not client-writable)
 
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
                 navigator.vibrate([20, 50, 20]);
